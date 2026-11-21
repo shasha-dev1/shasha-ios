@@ -66,28 +66,54 @@ final class Library: ObservableObject {
 
     func select(_ s: Source) { activeId = s.id; save(); Task { await reload() } }
 
+    /// 1.0.3: lists, search and copies are read from this index (built off the main thread after each load).
+    @Published private(set) var index = LibraryIndex()
+    /// Bumped when the lists or the index change, so screens recompute their lists once.
+    @Published private(set) var version = 0
+    private var reloadTask: Task<Void, Never>?
+    private var reloadSource: UUID?
+    private var reloadGen = 0
+
     /// Reads the whole playlist (lists only; details are read when a title is opened).
+    /// 1.0.3: a second call for the same playlist while it loads joins the running load (no duplicate download);
+    /// a call for another playlist cancels the old load, whose results are then dropped.
     func reload() async {
+        let sid = active?.id
+        if let t = reloadTask, reloadSource == sid { await t.value; return }
+        reloadTask?.cancel()
+        reloadGen += 1
+        let gen = reloadGen
+        reloadSource = sid
+        let t = Task { await performReload(gen) }
+        reloadTask = t
+        await t.value
+        if reloadGen == gen { reloadTask = nil; reloadSource = nil }
+    }
+
+    private func performReload(_ gen: Int) async {
         guard let s = active else { clear(); return }
         loading = true; error = nil
         let t0 = Perf.now()
         defer {
-            loading = false
-            let d = sizeText
-            Perf.shared.record("تحميل المكتبة كاملة", since: t0, d + (error == nil ? "" : " | فشل"))
-            if error == nil { Perf.shared.libraryReadyAfterLaunch(d) }
+            if reloadGen == gen {
+                loading = false
+                let d = sizeText
+                Perf.shared.record("تحميل المكتبة كاملة", since: t0, d + (error == nil ? "" : " | فشل"))
+                if error == nil { Perf.shared.libraryReadyAfterLaunch(d) }
+            }
         }
         do {
+            var lc: [Category] = [], ch: [Channel] = [], vc: [Category] = [], mv: [Movie] = [], sc: [Category] = [], sh: [Show] = []
             if let x = xtream {
-                async let lc = x.categories("get_live_categories")
-                async let ch = x.channels()
-                async let vc = x.categories("get_vod_categories")
-                async let mv = x.movies()
-                async let sc = x.categories("get_series_categories")
-                async let sh = x.shows()
-                liveCats = try await lc; channels = try await ch
-                vodCats = (try? await vc) ?? []; movies = (try? await mv) ?? []
-                seriesCats = (try? await sc) ?? []; shows = (try? await sh) ?? []
+                async let alc = x.categories("get_live_categories")
+                async let ach = x.channels()
+                async let avc = x.categories("get_vod_categories")
+                async let amv = x.movies()
+                async let asc = x.categories("get_series_categories")
+                async let ash = x.shows()
+                lc = try await alc; ch = try await ach
+                vc = (try? await avc) ?? []; mv = (try? await amv) ?? []
+                sc = (try? await asc) ?? []; sh = (try? await ash) ?? []
             } else {
                 guard let url = URL(string: s.server) else { throw LoadError.badAddress }
                 let tn = Perf.now()
@@ -97,14 +123,43 @@ final class Library: ObservableObject {
                 let r = await Task.detached { () -> (cats: [Category], channels: [Channel], movies: [Movie]) in
                     let tp = Perf.now(); let r = M3U.parse(text); Perf.shared.record("تحليل M3U", since: tp); return r
                 }.value
-                liveCats = r.cats; channels = r.channels; movies = r.movies
-                vodCats = r.cats.filter { c in r.movies.contains { $0.categoryId == c.id } }
-                seriesCats = []; shows = []
+                lc = r.cats; ch = r.channels; mv = r.movies
+                vc = r.cats.filter { c in r.movies.contains { $0.categoryId == c.id } }
             }
-            if channels.isEmpty && movies.isEmpty && shows.isEmpty { throw LoadError.empty }
+            if ch.isEmpty && mv.isEmpty && sh.isEmpty { throw LoadError.empty }
+            let ti = Perf.now()
+            let ix = await Task.detached(priority: .userInitiated) { LibraryIndex.build(channels: ch, movies: mv, shows: sh) }.value
+            Perf.shared.record("فهرسة المكتبة (بحث وترتيب ونسخ)", since: ti)
+            // A newer load (other playlist, or cancelled) must not overwrite what it brought.
+            guard reloadGen == gen, !Task.isCancelled else { return }
+            // One update for all lists (was six separate redraws).
+            liveCats = lc; channels = ch; vodCats = vc; movies = mv; seriesCats = sc; shows = sh
+            index = ix; version += 1
         } catch {
+            guard reloadGen == gen, !Task.isCancelled else { return }
             self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    /// Categories hidden or locked right now (for list queries off the main thread).
+    func blocked(_ s: GroupSection) -> Set<String> {
+        set(s, "hidden").union(isUnlocked ? [] : set(s, "locked"))
+    }
+
+    /// Other copies of a title (other provider groups), from the index.
+    func copies(of show: Show) -> [Show] {
+        guard let i = index.showPos[show.id], i < index.showKey.count else { return [] }
+        let k = index.showKey[i]
+        guard !k.isEmpty else { return [] }
+        let b = blocked(.series)
+        return (index.showCopies[k] ?? []).compactMap { $0 < shows.count ? shows[$0] : nil }.filter { $0.id != show.id && !b.contains($0.categoryId) }
+    }
+    func copies(of movie: Movie) -> [Movie] {
+        guard let i = index.moviePos[movie.id], i < index.movieKey.count else { return [] }
+        let k = index.movieKey[i]
+        guard !k.isEmpty else { return [] }
+        let b = blocked(.movies)
+        return (index.movieCopies[k] ?? []).compactMap { $0 < movies.count ? movies[$0] : nil }.filter { $0.id != movie.id && !b.contains($0.categoryId) }
     }
 
     /// Library size for the measurements (counts only).
@@ -112,7 +167,7 @@ final class Library: ObservableObject {
         "قنوات \(channels.count) · أفلام \(movies.count) · مسلسلات \(shows.count) · مجموعات \(liveCats.count)/\(vodCats.count)/\(seriesCats.count)"
     }
 
-    private func clear() { liveCats = []; channels = []; vodCats = []; movies = []; seriesCats = []; shows = [] }
+    private func clear() { liveCats = []; channels = []; vodCats = []; movies = []; seriesCats = []; shows = []; index = LibraryIndex(); version += 1 }
 
     // MARK: Groups: order, hide, lock (per playlist, on this phone)
 

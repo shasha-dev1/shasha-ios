@@ -278,3 +278,19 @@ final class CopyRuleTests: XCTestCase {
         XCTAssertFalse(CopyRule.isDolbyVision5(["فيديو color_transfer: bt709"]))
     }
 }
+
+final class SearchRuleTests: XCTestCase {
+    func testArabicVariantsMatch() {
+        XCTAssertTrue(SearchRule.matches(SearchRule.fold("مسلسل الأميرة"), SearchRule.fold("الاميره")))
+        XCTAssertTrue(SearchRule.matches(SearchRule.fold("مُسَلْسَل"), SearchRule.fold("مسلسل")))
+        XCTAssertTrue(SearchRule.matches(SearchRule.fold("على مسؤولية"), SearchRule.fold("علي مسوولية")))
+    }
+    func testLatinCaseAndAccents() {
+        XCTAssertTrue(SearchRule.matches(SearchRule.fold("The Rings of Power"), SearchRule.fold("rings OF")))
+        XCTAssertTrue(SearchRule.matches(SearchRule.fold("Amélie"), SearchRule.fold("amelie")))
+        XCTAssertFalse(SearchRule.matches(SearchRule.fold("Dune"), SearchRule.fold("dun2")))
+    }
+    func testEmptyQueryMatchesAll() {
+        XCTAssertTrue(SearchRule.matches(SearchRule.fold("anything"), ""))
+    }
+}

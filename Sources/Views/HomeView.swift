@@ -7,6 +7,9 @@ struct HomeView: View {
     @Binding var play: PlayItem?
     @State private var query = ""
     @State private var tick = 0
+    /// 1.0.3: search results computed off the main thread; an older search can't overwrite a newer one.
+    @State private var found = Found()
+    struct Found { var q = ""; var ch: [Channel] = []; var mv: [Movie] = []; var sh: [Show] = [] }
 
     var body: some View {
         NavigationStack {
@@ -20,6 +23,31 @@ struct HomeView: View {
             .refreshable { await library.reload() }
             .onAppear { tick += 1; Perf.shared.firstScreen("الرئيسية") }
             .onChange(of: query) { _ in Perf.shared.mark("بحث الرئيسية") }
+            .task(id: "\(query)|\(library.version)|\(library.groupsTick)") {
+                let q = query.trimmingCharacters(in: .whitespaces)
+                guard !q.isEmpty else { found = Found(); return }
+                try? await Task.sleep(nanoseconds: 200_000_000)        // wait for a pause in typing
+                guard !Task.isCancelled else { return }
+                let ch = library.channels, mv = library.movies, sh = library.shows, ix = library.index
+                let bl = library.blocked(.live), bm = library.blocked(.movies), bs = library.blocked(.series)
+                let t0 = Perf.now()
+                let r = await Task.detached(priority: .userInitiated) { () -> Found in
+                    let f = SearchRule.fold(q)
+                    func pick<T>(_ all: [T], _ names: [String], _ cat: (T) -> String, _ blocked: Set<String>) -> [T] {
+                        var out: [T] = []
+                        for (i, n) in names.enumerated() where i < all.count && n.contains(f) && !blocked.contains(cat(all[i])) {
+                            out.append(all[i]); if out.count == 40 { break }
+                        }
+                        return out
+                    }
+                    return Found(q: q, ch: pick(ch, ix.channelSearch, { $0.categoryId }, bl),
+                                 mv: pick(mv, ix.movieSearch, { $0.categoryId }, bm),
+                                 sh: pick(sh, ix.showSearch, { $0.categoryId }, bs))
+                }.value
+                guard !Task.isCancelled else { return }
+                found = r
+                Perf.shared.record("بحث الرئيسية (خلفية)", since: t0, "\(q.count) حرف · \(r.ch.count)/\(r.mv.count)/\(r.sh.count)")
+            }
             .onChange(of: play?.id) { _ in tick += 1 }
         }
     }
@@ -41,7 +69,10 @@ struct HomeView: View {
                 }
             }
 
-            let favCh = Perf.shared.measure("الرئيسية: القنوات المفضلة") { library.channels.filter { Store.isFavorite($0.id) && okL($0.categoryId) } }
+            // 1.0.3: favourites looked up by id (was a settings read for each of the 52,989 channels).
+            let favCh = Perf.shared.measure("الرئيسية: القنوات المفضلة") {
+                Store.favorites.compactMap { id in library.index.channelPos[id].map { library.channels[$0] } }.filter { okL($0.categoryId) }
+            }
             if !favCh.isEmpty {
                 Shelf(title: "قنواتي المفضلة") {
                     ForEach(Array(favCh.prefix(30).enumerated()), id: \.element.id) { i, ch in
@@ -59,8 +90,13 @@ struct HomeView: View {
                 }
             }
 
-            let myMovies = Perf.shared.measure("الرئيسية: قائمتي (أفلام)") { library.movies.filter { okM($0.categoryId) && Store.isFavorite("movie:" + $0.id) } }
-            let myShows = Perf.shared.measure("الرئيسية: قائمتي (مسلسلات)") { library.shows.filter { okS($0.categoryId) && Store.isFavorite("show:" + $0.id) } }
+            let favs = Store.favorites
+            let myMovies = Perf.shared.measure("الرئيسية: قائمتي (أفلام)") {
+                favs.compactMap { k in k.hasPrefix("movie:") ? library.index.moviePos[String(k.dropFirst(6))].map { library.movies[$0] } : nil }.filter { okM($0.categoryId) }
+            }
+            let myShows = Perf.shared.measure("الرئيسية: قائمتي (مسلسلات)") {
+                favs.compactMap { k in k.hasPrefix("show:") ? library.index.showPos[String(k.dropFirst(5))].map { library.shows[$0] } : nil }.filter { okS($0.categoryId) }
+            }
             if !myMovies.isEmpty || !myShows.isEmpty {
                 Shelf(title: "قائمتي") {
                     ForEach(myShows.prefix(20)) { s in
@@ -72,7 +108,7 @@ struct HomeView: View {
                 }
             }
 
-            let newShows = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { library.shows.filter { okS($0.categoryId) }.sorted { $0.updated > $1.updated }.prefix(20) }
+            let newShows = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { library.index.showsNewest.lazy.compactMap { $0 < library.shows.count ? library.shows[$0] : nil }.filter { okS($0.categoryId) }.prefix(20).map { $0 } }
             if !newShows.isEmpty {
                 Shelf(title: "مسلسلات حديثة التحديث") {
                     ForEach(newShows) { s in
@@ -81,7 +117,7 @@ struct HomeView: View {
                 }
             }
 
-            let newMovies = Perf.shared.measure("الرئيسية: أفلام حديثة") { library.movies.filter { okM($0.categoryId) }.sorted { $0.added > $1.added }.prefix(20) }
+            let newMovies = Perf.shared.measure("الرئيسية: أفلام حديثة") { library.index.moviesNewest.lazy.compactMap { $0 < library.movies.count ? library.movies[$0] : nil }.filter { okM($0.categoryId) }.prefix(20).map { $0 } }
             if !newMovies.isEmpty {
                 Shelf(title: "أفلام أضيفت حديثًا") {
                     ForEach(newMovies) { m in
@@ -103,16 +139,15 @@ struct HomeView: View {
 
     /// Recently played films (with a resume point) and series (any episode played), newest first.
     private func continueItems(_ okM: (String) -> Bool, _ okS: (String) -> Bool) -> [ContinueItem] {
-        let moviesById = Dictionary(library.movies.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        let showsById = Dictionary(library.shows.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let ix = library.index
         var out: [ContinueItem] = []
         var seenShows = Set<String>()
         for key in Store.recent {
             if key.hasPrefix("movie:") {
-                guard let m = moviesById[String(key.dropFirst(6))], okM(m.categoryId), Store.position(key) != nil else { continue }
+                guard let mi = ix.moviePos[String(key.dropFirst(6))], mi < library.movies.count, case let m = library.movies[mi], okM(m.categoryId), Store.position(key) != nil else { continue }
                 out.append(ContinueItem(id: key, title: m.name, poster: m.poster, progress: progress(key),
                                         destination: AnyView(MovieDetail(movie: m, play: $play))))
-            } else if key.hasPrefix("ep:"), let sid = Store.show(forEpisode: key), let s = showsById[sid],
+            } else if key.hasPrefix("ep:"), let sid = Store.show(forEpisode: key), let si = ix.showPos[sid], si < library.shows.count, case let s = library.shows[si],
                       okS(s.categoryId), seenShows.insert(sid).inserted {
                 out.append(ContinueItem(id: "show:" + sid, title: s.name, poster: s.poster, progress: progress(key),
                                         destination: AnyView(SeriesDetail(show: s, play: $play))))
@@ -126,16 +161,11 @@ struct HomeView: View {
 
     @ViewBuilder private var results: some View {
         let q = query.trimmingCharacters(in: .whitespaces)
-        let okM = library.allowedFilter(.movies)
-        let okS = library.allowedFilter(.series)
-        let okL = library.allowedFilter(.live)
-        let (ch, mv, sh) = Perf.shared.measure("بحث الرئيسية", "\(q.count) حرف") { (
-            Array(library.channels.lazy.filter { okL($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40)),
-            Array(library.movies.lazy.filter { okM($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40)),
-            Array(library.shows.lazy.filter { okS($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40))
-        ) }
+        let ch = found.ch, mv = found.mv, sh = found.sh
         VStack(alignment: .leading, spacing: 22) {
-            if ch.isEmpty && mv.isEmpty && sh.isEmpty {
+            if ch.isEmpty && mv.isEmpty && sh.isEmpty && found.q != q {
+                ProgressView().frame(maxWidth: .infinity).padding(.top, 40)    // first results on their way
+            } else if ch.isEmpty && mv.isEmpty && sh.isEmpty {
                 Text("لا توجد نتائج لـ «\(q)».").foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.top, 40)
             }
             if !sh.isEmpty {

@@ -149,8 +149,11 @@ final class MPVCore {
         note("[مرحلة] إغلاق طبيعي")
         MPVMetalLayer.onEDR = nil
         mpv_set_wakeup_callback(h, nil, nil)
+        let t0 = Perf.now()
         events.sync { self.mpv = nil }       // never destroy while the event queue is inside mpv_wait_event
         mpv_terminate_destroy(h)
+        // 1.0.3 measurement only: is closing mpv part of the ~900 ms stall when leaving the player?
+        Perf.shared.record("mpv: إغلاق المحرّك", since: t0)
         createdLab = nil
     }
 

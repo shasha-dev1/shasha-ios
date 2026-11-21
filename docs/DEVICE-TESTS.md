@@ -27,3 +27,19 @@ Settings → «قياسات الأداء». Records (step names and counts only,
 counts, Home shelves and search, Movies/Series list filter+sort, channel list filter, series detail open → episodes shown,
 return from the player (until the next frame), and every frame longer than 50 ms attributed to the step running.
 Device model, iOS version and memory footprint are in the report. The log survives restarts (Caches/perf.log).
+
+## 1.0.2 baseline — owner's report, 2026-11-21
+Device iPhone14,3, iOS 27.2.1. Library: 52,989 channels, 0 movies, 24,103 series; groups 826/181/214. Memory 557 MB.
+- Launch → first screen 809 ms; → library ready 5,964 ms (network: get_series 4.2 s / 36.7 MB, get_live_streams 3.2 s / 19.6 MB; JSON parse 546 + 163 ms and conversion 343 ms already off the main thread).
+- Return from the player: stalls of 883 and 914 ms; the measured list computations were only ~70 ms of that.
+- Series detail: a 285 ms stall on opening (before the network), 817 ms after the episodes arrived; open → episodes shown 450 ms (3 episodes) and 1,605 ms (123 episodes, network 1.36 s).
+- Browsing: 15 frames > 50 ms, longest 764 ms. Home + series list recomputed 2–3 times per navigation (4–30 ms each).
+
+## 1.0.3 (built only, not tested on device)
+- Library index built once per load off the main thread: folded search names (Arabic variants, case, accents), the three sort orders, copy groups, id → position.
+- Movies/Series lists and Home search run off the main thread when their inputs change (200 ms pause while typing); a newer request cancels the older, which can't overwrite it; grids add posters 90 at a time while scrolling.
+- Series/movie "other copies" from the index (was CopyRule.key over all 24,103 series on every redraw — the likely cause of the opening stall).
+- Channel list recomputed only when search/library/favourites change (was on every guide update); favourites looked up by id.
+- Library load: a second request for the same playlist joins the running one; switching playlist cancels the old load and drops its results; all lists published in one update.
+- Bounded image cache (40 MB memory / 200 MB disk).
+- Measurement added: time of closing mpv (to check whether it causes the stall when leaving the player). No mpv playback setting changed.

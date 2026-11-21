@@ -12,7 +12,7 @@ struct LiveView: View {
                 LoadingOrError()
                 let _ = library.groupsTick
                 let ok = library.allowedFilter(.live)
-                NavigationLink { ChannelList(title: "المفضلة", filter: { Store.isFavorite($0.id) && ok($0.categoryId) }, play: $play) } label: {
+                NavigationLink { ChannelList(title: "المفضلة", filter: { ok($0.categoryId) }, favoritesOnly: true, play: $play) } label: {
                     Label("المفضلة", systemImage: "star.fill").foregroundStyle(Theme.accent)
                 }
                 NavigationLink { ChannelList(title: "كل القنوات", filter: { ok($0.categoryId) }, play: $play) } label: {
@@ -49,15 +49,16 @@ struct ChannelList: View {
     @EnvironmentObject var epg: EPG
     let title: String
     let filter: (Channel) -> Bool
+    var favoritesOnly = false
     @Binding var play: PlayItem?
+    /// 1.0.3: computed when the search, the library or the favourites change — not on every guide update
+    /// (each programme that arrived used to re-filter all 52,989 channels).
+    @State private var list: [Channel] = []
     @State private var query = ""
     @State private var favTick = 0
     @State private var guide: Channel?
 
     var body: some View {
-        let list = Perf.shared.measure("قائمة القنوات", "\(title.count > 0 ? "مجموعة" : "") بحث \(query.count) حرف") {
-            library.channels.filter(filter).filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }
-        }
         List(Array(list.enumerated()), id: \.element.id) { i, ch in
             Button { play = .live(list: list, index: i) } label: {
                 HStack(spacing: 12) {
@@ -87,6 +88,14 @@ struct ChannelList: View {
             }
         }
         .id(favTick)
+        .task(id: "\(query)|\(library.version)|\(library.groupsTick)|\(favTick)") {
+            if !query.isEmpty { try? await Task.sleep(nanoseconds: 150_000_000) }
+            guard !Task.isCancelled else { return }
+            let fav: Set<String>? = favoritesOnly ? Set(Store.favorites) : nil
+            list = Perf.shared.measure("قائمة القنوات", "بحث \(query.count) حرف") {
+                ListQuery.channels(library.channels, library.index, query: query) { c in (fav?.contains(c.id) ?? true) && filter(c) }
+            }
+        }
         .searchable(text: $query, prompt: "بحث في القنوات")
         .navigationTitle(title)
         .sheet(item: $guide) { ch in

@@ -1,6 +1,13 @@
 import SwiftUI
 
 private let grid = [GridItem(.adaptive(minimum: 108), spacing: 12)]
+/// 1.0.3: posters are added to the grid page by page while scrolling (a 24,000-item grid made every redraw slow).
+private let pageSize = 90
+
+/// Inputs of one list request: when any changes, the old request is cancelled and a new one runs.
+struct ListKey: Equatable {
+    let query: String, cat: String?, sort: String, mine: Bool, version: Int, groups: Int
+}
 
 /// Movies: continue watching, category chips, newest first, search.
 struct MoviesView: View {
@@ -11,6 +18,9 @@ struct MoviesView: View {
     @AppStorage("sort.movies") private var sort: VodSort = .newest
     @State private var mine = false
     @State private var tick = 0
+    /// 1.0.3: the list is computed off the main thread when its inputs change, and shown in pages.
+    @State private var items: [Movie] = []
+    @State private var shown = pageSize
 
     var body: some View {
         NavigationStack {
@@ -33,31 +43,34 @@ struct MoviesView: View {
                 }
                 Chips(cats: library.cats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library)).padding(.vertical, 6)
                 let _ = tick
-                let list = Perf.shared.measure("قائمة الأفلام", "بحث \(query.count) حرف · \(cat == nil ? "الكل" : "مجموعة") · \(sort.rawValue)") {
-                    sortedMovies(library.movies.filter { ok($0.categoryId) && (cat == nil || $0.categoryId == cat) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query))
-                    && (!mine || Store.isFavorite("movie:" + $0.id)) }) }
-                if mine && list.isEmpty { Text("قائمتك فارغة — افتح فيلمًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
+                if mine && items.isEmpty { Text("قائمتك فارغة — افتح فيلمًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
                 LazyVGrid(columns: grid, spacing: 16) {
-                    ForEach(list) { m in
+                    ForEach(items.prefix(shown)) { m in
                         NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster) }.buttonStyle(.plain)
+                            .onAppear { if m.id == items.prefix(shown).last?.id { shown += pageSize } }
                     }
                 }.padding(.horizontal)
             }
             .searchable(text: $query, prompt: "بحث في الأفلام")
             .onChange(of: query) { _ in Perf.shared.mark("بحث الأفلام") }
+            .task(id: ListKey(query: query, cat: cat, sort: sort.rawValue, mine: mine, version: library.version, groups: library.groupsTick)) {
+                if !query.isEmpty { try? await Task.sleep(nanoseconds: 200_000_000) }   // typing: wait for a pause
+                guard !Task.isCancelled else { return }
+                let all = library.movies, ix = library.index, q = query, c = cat, so = sort
+                let fav: Set<String>? = mine ? Set(Store.favorites) : nil, blocked = library.blocked(.movies)
+                let t0 = Perf.now()
+                let r = await Task.detached(priority: .userInitiated) {
+                    ListQuery.movies(all, ix, query: q, cat: c, sort: so, favorites: fav, blocked: blocked)
+                }.value
+                guard !Task.isCancelled else { return }       // a newer request owns the screen
+                items = r; shown = pageSize
+                Perf.shared.record("قائمة الأفلام (خلفية)", since: t0, "\(r.count) · بحث \(q.count) حرف · \(c == nil ? "الكل" : "مجموعة") · \(so.rawValue)")
+            }
             .navigationTitle(mine ? "قائمتي · الأفلام" : "الأفلام")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
             .onAppear { tick += 1 }
             .onChange(of: play?.id) { _ in tick += 1 }   // back from the player: refresh "Continue watching"
-        }
-    }
-
-    private func sortedMovies(_ l: [Movie]) -> [Movie] {
-        switch sort {
-        case .newest: return l.sorted { $0.added > $1.added }
-        case .rating: return l.sorted { ratingValue($0.rating) > ratingValue($1.rating) }
-        case .name: return l.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         }
     }
 }
@@ -136,12 +149,7 @@ struct MovieDetail: View {
     let movie: Movie
     @Binding var play: PlayItem?
 
-    private var otherMovies: [Movie] {
-        let k = CopyRule.key(movie.name)
-        guard !k.isEmpty else { return [] }
-        let ok = library.allowedFilter(.movies)
-        return library.movies.filter { $0.id != movie.id && ok($0.categoryId) && CopyRule.key($0.name) == k }
-    }
+    private var otherMovies: [Movie] { library.copies(of: movie) }
     @State private var info = MovieInfo()
     @Environment(\.openURL) private var openURL
 
@@ -201,6 +209,8 @@ struct SeriesView: View {
     @AppStorage("sort.series") private var sort: VodSort = .newest
     @State private var mine = false
     @State private var tick = 0
+    @State private var items: [Show] = []
+    @State private var shown = pageSize
 
     var body: some View {
         NavigationStack {
@@ -225,31 +235,34 @@ struct SeriesView: View {
                 }
                 Chips(cats: library.cats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library)).padding(.vertical, 6)
                 let _ = tick
-                let list = Perf.shared.measure("قائمة المسلسلات", "بحث \(query.count) حرف · \(cat == nil ? "الكل" : "مجموعة") · \(sort.rawValue)") {
-                    sortedShows(library.shows.filter { ok($0.categoryId) && (cat == nil || $0.categoryId == cat) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query))
-                    && (!mine || Store.isFavorite("show:" + $0.id)) }) }
-                if mine && list.isEmpty { Text("قائمتك فارغة — افتح مسلسلًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
+                if mine && items.isEmpty { Text("قائمتك فارغة — افتح مسلسلًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
                 LazyVGrid(columns: grid, spacing: 16) {
-                    ForEach(list) { s in
+                    ForEach(items.prefix(shown)) { s in
                         NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster) }.buttonStyle(.plain)
+                            .onAppear { if s.id == items.prefix(shown).last?.id { shown += pageSize } }
                     }
                 }.padding(.horizontal)
             }
             .searchable(text: $query, prompt: "بحث في المسلسلات")
             .onChange(of: query) { _ in Perf.shared.mark("بحث المسلسلات") }
+            .task(id: ListKey(query: query, cat: cat, sort: sort.rawValue, mine: mine, version: library.version, groups: library.groupsTick)) {
+                if !query.isEmpty { try? await Task.sleep(nanoseconds: 200_000_000) }
+                guard !Task.isCancelled else { return }
+                let all = library.shows, ix = library.index, q = query, c = cat, so = sort
+                let fav: Set<String>? = mine ? Set(Store.favorites) : nil, blocked = library.blocked(.series)
+                let t0 = Perf.now()
+                let r = await Task.detached(priority: .userInitiated) {
+                    ListQuery.shows(all, ix, query: q, cat: c, sort: so, favorites: fav, blocked: blocked)
+                }.value
+                guard !Task.isCancelled else { return }
+                items = r; shown = pageSize
+                Perf.shared.record("قائمة المسلسلات (خلفية)", since: t0, "\(r.count) · بحث \(q.count) حرف · \(c == nil ? "الكل" : "مجموعة") · \(so.rawValue)")
+            }
             .navigationTitle(mine ? "قائمتي · المسلسلات" : "المسلسلات")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
             .onAppear { tick += 1 }
             .onChange(of: play?.id) { _ in tick += 1 }   // back from the player: refresh "Continue watching"
-        }
-    }
-
-    private func sortedShows(_ l: [Show]) -> [Show] {
-        switch sort {
-        case .newest: return l.sorted { $0.updated > $1.updated }
-        case .rating: return l.sorted { ratingValue($0.rating) > ratingValue($1.rating) }
-        case .name: return l.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         }
     }
 }
@@ -260,12 +273,8 @@ struct SeriesDetail: View {
     @Binding var play: PlayItem?
 
     /// The same series in other provider groups (4K / FHD / Arabic-subbed copies…).
-    private var otherShows: [Show] {
-        let k = CopyRule.key(show.name)
-        guard !k.isEmpty else { return [] }
-        let ok = library.allowedFilter(.series)
-        return library.shows.filter { $0.id != show.id && ok($0.categoryId) && CopyRule.key($0.name) == k }
-    }
+    /// 1.0.3: from the index (was CopyRule.key over every series on each redraw: the 285 ms stall on opening).
+    private var otherShows: [Show] { library.copies(of: show) }
     @State private var episodes: [Episode] = []
     @State private var season = 1
     @State private var loading = true

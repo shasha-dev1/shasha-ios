@@ -285,3 +285,29 @@ enum CopyRule {
         return p5 && (compat == nil || compat!.hasSuffix("=0"))
     }
 }
+
+/// 1.0.3: search text folded once per title (off the main thread) and once per query, then compared with a plain
+/// `contains`. Case, accents and width are ignored, and common Arabic spelling variants match:
+/// أ إ آ ٱ → ا, ة → ه, ى → ي, ؤ → و, ئ → ي, tatweel and harakat removed.
+enum SearchRule {
+    static func fold(_ s: String) -> String {
+        let base = s.folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: nil)
+        var out = String.UnicodeScalarView()
+        out.reserveCapacity(base.unicodeScalars.count)
+        for u in base.unicodeScalars {
+            switch u.value {
+            case 0x0623, 0x0625, 0x0622, 0x0671: out.append("\u{0627}")
+            case 0x0629: out.append("\u{0647}")
+            case 0x0649, 0x0626: out.append("\u{064A}")
+            case 0x0624: out.append("\u{0648}")
+            case 0x0640, 0x064B...0x0652, 0x0670: continue
+            default: out.append(u)
+            }
+        }
+        return String(out)
+    }
+
+    static func matches(_ foldedName: String, _ foldedQuery: String) -> Bool {
+        foldedQuery.isEmpty || foldedName.contains(foldedQuery)
+    }
+}

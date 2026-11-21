@@ -20,6 +20,9 @@ struct ShashaApp: App {
         // channels (spatial audio on AirPods, AirPlay, HDMI) are offered them; mpv then asks for up to the file's channels.
         if #available(iOS 15.0, *) { try? AVAudioSession.sharedInstance().setSupportsMultichannelContent(true) }
         try? AVAudioSession.sharedInstance().setActive(true)
+        // 1.0.3: posters/logos (AsyncImage → URLSession.shared → URLCache.shared) kept in a bounded cache, so
+        // scrolling back or returning to a screen doesn't download them again. iOS evicts it under pressure.
+        URLCache.shared = URLCache(memoryCapacity: 40 * 1024 * 1024, diskCapacity: 200 * 1024 * 1024)
     }
 
     var body: some Scene {
