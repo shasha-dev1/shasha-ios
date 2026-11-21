@@ -1,6 +1,5 @@
 import SwiftUI
 import AVFoundation
-import VLCKit
 
 enum Theme {
     static let bg = Color(red: 14 / 255, green: 20 / 255, blue: 27 / 255)
@@ -21,8 +20,6 @@ struct ShashaApp: App {
         // channels (spatial audio on AirPods, AirPlay, HDMI) are offered them; mpv then asks for up to the file's channels.
         if #available(iOS 15.0, *) { try? AVAudioSession.sharedInstance().setSupportsMultichannelContent(true) }
         try? AVAudioSession.sharedInstance().setActive(true)
-        // VLC errors/warnings kept in memory for "Copy playback diagnostics".
-        VLCLibrary.shared().loggers = [DiagLog.shared]
     }
 
     var body: some Scene {

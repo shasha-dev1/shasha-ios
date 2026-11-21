@@ -1,14 +1,15 @@
 import Foundation
-import VLCKit
 
-/// Keeps the VLC log of the current playback in memory for "Copy playback diagnostics". Nothing is written to disk or sent.
+/// Keeps the app's event log of the current playback in memory for "Copy playback diagnostics". Nothing is written to disk or sent.
 /// - Default: errors and warnings. "Detailed" adds debug lines, but only those about decoders, subtitles and video output
 ///   (module choice, libass/freetype/subsdec, vout), so the useful lines are not pushed out by noise.
 /// - Repeated messages are folded into one line with a count.
 /// - Cleared when a new item starts, so the report belongs to what is on screen.
-final class DiagLog: NSObject, VLCLogging {
+final class DiagLog: NSObject {
     static let shared = DiagLog()
-    var level: VLCLogLevel = .warning
+    /// Kept for the diagnostics toggle (detailed logging); mpv's own log level is set by the engine.
+    enum Level { case warning, debug }
+    var level: Level = .warning
     private let lock = NSLock()
     /// First lines of the playback (module choices, decoders, output) — never pushed out.
     private var head: [String] = []
@@ -27,44 +28,6 @@ final class DiagLog: NSObject, VLCLogging {
 
     func beginSession(_ title: String) {
         lock.lock(); head.removeAll(); tail.removeAll(); counts.removeAll(); lock.unlock()
-    }
-
-    func handleMessage(_ message: String, logLevel level: VLCLogLevel, context: VLCLogContext?) {
-        let module = context?.module ?? "?"
-        let objectType = context?.objectType ?? ""
-        if level == .debug || level == .info {
-            let probe = module + " " + objectType + " " + message
-            guard Self.interesting.firstMatch(in: probe, range: NSRange(probe.startIndex..., in: probe)) != nil else { return }
-        }
-        let tag: String
-        switch level {
-        case .error: tag = "E"
-        case .warning: tag = "W"
-        case .info: tag = "I"
-        default: tag = "D"
-        }
-        lock.lock(); defer { lock.unlock() }
-        if let n = Self.noisy.first(where: { message.contains($0.match) }) {
-            let c = (counts[n.key] ?? 0) + 1
-            counts[n.key] = c
-            if c > keepFirst * 5 { return }      // the clock family logs 5 lines per event
-        }
-        let line = "[\(tag)] \(module)\(objectType.isEmpty ? "" : "/" + objectType): \(message)"
-        if head.count < headMax { head.append(line); return }
-        tail.append(line)
-        if tail.count > tailMax { tail.removeFirst(tail.count - tailMax) }
-    }
-
-    /// Module choices VLC actually made in this playback ("using vout display module \"…\"" and similar).
-    func moduleChoices() -> [String] {
-        lock.lock(); let all = head + tail; lock.unlock()
-        var out: [String] = []
-        for l in all {
-            guard let r = l.range(of: #"using [a-z ]+ module "[^"]+""#, options: .regularExpression) else { continue }
-            let m = String(l[r])
-            if !out.contains(m) { out.append(m) }
-        }
-        return out
     }
 
     /// App-side event (track request, open position, lab switch, engine track change) — always kept, time-stamped.

@@ -3,8 +3,8 @@ import UIKit
 import Libmpv
 
 // mpv engine (MPVKit: libmpv + FFmpeg + libplacebo + libdovi + libass, drawn with Vulkan via MoltenVK on a CAMetalLayer).
-// Stage 1: a hand-off player like the Apple one — proves on the device whether mpv shows the files VLCKit can't
-// (Dolby Vision profile 5 colours, embedded ASS subtitles) before the engine replaces VLC in the main player.
+// Stage 1 (historical): the hand-off mpv player used before mpv became the only engine. MPVController/MPVPlayerView
+// are no longer shown; the shared helpers here (MPVLab, MPVMetalLayer, MPVSessionFile, MPVFonts, MPVSubScale) are used.
 
 /// mpv lab: exactly one factor changed at a time (exclusive choice), for the current hand-off only.
 enum MPVLab: String, CaseIterable {
@@ -314,7 +314,7 @@ struct MPVPlayerView: View {
         VStack {
             HStack(spacing: 14) {
                 Button { finish() } label: {
-                    Label("رجوع لمشغّل VLC", systemImage: "chevron.down").font(.callout.bold())
+                    Label("رجوع", systemImage: "chevron.down").font(.callout.bold())
                         .padding(.horizontal, 12).padding(.vertical, 8).background(.black.opacity(0.55), in: Capsule())
                 }
                 Text(playback.title).font(.headline).lineLimit(1)

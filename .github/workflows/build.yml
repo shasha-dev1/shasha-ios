@@ -46,8 +46,7 @@ jobs:
             scripts/vendor-mpvkit.sh "$MPVKIT_TAG" .libmpv
             brew install xcodegen
             xcodegen generate
-            pod install --repo-update
-            xcodebuild -workspace ShashaIOS.xcworkspace -scheme ShashaIOS -configuration Release \
+            xcodebuild -project ShashaIOS.xcodeproj -scheme ShashaIOS -configuration Release \
               -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" SHASHA_CREDIT="$SHASHA_CREDIT" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build
           } 2>&1 | tee all.log
@@ -59,11 +58,10 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/ShashaIOS.app Payload/
           zip -qry Shasha-unsigned.ipa Payload
           ls -la Shasha-unsigned.ipa
-          # Which mpv-side library symbols does the app take from VLCKit? Must be 0 (see project.yml OTHER_LDFLAGS).
+          # 1.0.0: VLC removed — the app must not link any VLCKit/libVLC.
           B=build/Build/Products/Release-iphoneos/ShashaIOS.app/ShashaIOS
-          { echo "== symbols bound to VLCKit (pl_/av_/dovi_/ass_/sws_/swr_)";
-            nm -m "$B" | grep "(from VLCKit)" | grep -E " _(pl_|av_|avcodec_|avformat_|dovi_|ass_|sws_|swr_)" | wc -l;
-            nm -m "$B" | grep "(from VLCKit)" | grep -E " _(pl_|av_|avcodec_|avformat_|dovi_|ass_|sws_|swr_)" | head -15; } > symbols.txt 2>&1 || true
+          { echo "== linked VLC (must be 0)"; otool -L "$B" | grep -ci vlc;
+            ls build/Build/Products/Release-iphoneos/ShashaIOS.app/Frameworks 2>/dev/null | grep -ci vlc; } > symbols.txt 2>&1 || true
           cat symbols.txt
 
       - uses: actions/upload-artifact@v4

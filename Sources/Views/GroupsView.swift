@@ -75,17 +75,12 @@ struct LanguageSettingsSection: View {
     @AppStorage(PlayerPrefs.audioKey) private var audio = ""
     @AppStorage(PlayerPrefs.subsKey) private var subs = ""
     @AppStorage(PlayerPrefs.autoPiPKey) private var autoPiP = true
-    @AppStorage(PlayerPrefs.engineKey) private var engine = "mpv"
 
     var body: some View {
         Section {
-            Picker("المحرّك", selection: $engine) {
-                Text("mpv (الافتراضي)").tag("mpv")
-                Text("VLC").tag("vlc")
-            }
             Toggle("صورة داخل صورة عند الخروج من التطبيق", isOn: $autoPiP)
         } header: { Text("المشغّل") } footer: {
-            Text("mpv يعرض ألوان Dolby Vision وترجمات ASS بشكل صحيح، وصار يدعم صورة داخل صورة. إذا ما اشتغلت على ملف معيّن، التطبيق ينقلك لـVLC تلقائيًا.")
+            Text("المشغّل مبني على mpv: يعرض ألوان Dolby Vision وترجمات ASS بشكل صحيح ويدعم صورة داخل صورة.")
         }
         Section {
             Picker("الصوت", selection: $audio) {
@@ -106,9 +101,6 @@ struct LanguageSettingsSection: View {
 
 enum PlayerPrefs {
     static let audioKey = "pref.audio", subsKey = "pref.subs", autoPiPKey = "pref.autopip", softwareKey = "pref.swdecode"
-    static let engineKey = "pref.engine"
-    /// Engine the player opens with (stage 2: mpv by default; VLC is the fallback and has picture in picture).
-    static var engine: PlayerModel.Engine { PlayerModel.Engine(rawValue: UserDefaults.standard.string(forKey: engineKey) ?? "") ?? .mpv }
     /// Software decoding: slower and warmer, but fixes wrong colours on some HDR / Dolby Vision files.
     static var softwareDecoding: Bool { UserDefaults.standard.bool(forKey: softwareKey) }
     /// Leaving the app while a video plays moves it to the floating window (default on).
