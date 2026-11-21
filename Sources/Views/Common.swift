@@ -1,15 +1,48 @@
 import SwiftUI
 
-/// Poster / logo with a placeholder; AsyncImage cancels when the cell leaves the screen.
+/// Poster / logo with a placeholder. 1.0.5: decoded at display size (ImagePipeline) unless switched off for comparison.
 struct Art: View {
     let url: String?
     var fit = false
+    /// Longest side in pixels to decode (≈ shown size × screen scale).
+    var maxPixel: Int? = nil
     var body: some View {
-        AsyncImage(url: url.flatMap(URL.init(string:))) { phase in
-            switch phase {
-            case .success(let img): if fit { img.resizable().scaledToFit() } else { img.resizable().scaledToFill() }
-            default: ZStack { Theme.surface; Image(systemName: "photo").foregroundStyle(.secondary) }
+        if ImagePipeline.enabled, let u = url.flatMap(URL.init(string:)) {
+            SizedArt(url: u, fit: fit, maxPixel: maxPixel ?? (fit ? 300 : 600))
+        } else {
+            AsyncImage(url: url.flatMap(URL.init(string:))) { phase in
+                switch phase {
+                case .success(let img): if fit { img.resizable().scaledToFit() } else { img.resizable().scaledToFill() }
+                default: ArtPlaceholder()
+                }
             }
+        }
+    }
+}
+
+struct ArtPlaceholder: View {
+    var body: some View { ZStack { Theme.surface; Image(systemName: "photo").foregroundStyle(.secondary) } }
+}
+
+private struct SizedArt: View {
+    let url: URL
+    let fit: Bool
+    let maxPixel: Int
+    @State private var img: UIImage?
+
+    init(url: URL, fit: Bool, maxPixel: Int) {
+        self.url = url; self.fit = fit; self.maxPixel = maxPixel
+        _img = State(initialValue: ImagePipeline.shared.cached(url, maxPixel: maxPixel))
+    }
+
+    var body: some View {
+        Group {
+            if let img {
+                if fit { Image(uiImage: img).resizable().scaledToFit() } else { Image(uiImage: img).resizable().scaledToFill() }
+            } else { ArtPlaceholder() }
+        }
+        .task(id: url) {
+            if img == nil { img = await ImagePipeline.shared.load(url, maxPixel: maxPixel) }
         }
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// 1.0.4: the last good library of each playlist, saved on this phone, so the app shows it at once and refreshes in
 /// the background. One file per playlist (Application Support/LibraryCache/<playlist id>.json), not backed up,
@@ -28,23 +29,38 @@ struct LibraryCache: Codable {
         }
         return d
     }
-    static func file(_ source: UUID) -> URL? { dir?.appendingPathComponent(source.uuidString + ".json") }
+    /// 1.0.5: the file belongs to the playlist AND its account (type, server, user name): a copy saved for one
+    /// account is never shown for another, even under the same playlist entry. No password goes into the key.
+    static func key(for s: Source) -> String {
+        let id = "\(s.kind.rawValue)|\(s.server.lowercased())|\(s.username)"
+        let h = SHA256.hash(data: Data(id.utf8)).map { String(format: "%02x", $0) }.joined().prefix(16)
+        return s.id.uuidString + "-" + h
+    }
+    static func file(_ key: String) -> URL? { dir?.appendingPathComponent(key + ".json") }
 
     /// Called off the main thread.
-    static func save(_ c: LibraryCache, for source: UUID) throws {
-        guard let f = file(source) else { return }
+    static func save(_ c: LibraryCache, for key: String) throws {
+        guard let f = file(key) else { return }
         let data = try JSONEncoder().encode(c)
         try data.write(to: f, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
     }
 
     /// Called off the main thread. nil when missing, unreadable or of another format.
-    static func load(for source: UUID) -> LibraryCache? {
-        guard let f = file(source), let d = try? Data(contentsOf: f),
-              let c = try? JSONDecoder().decode(LibraryCache.self, from: d), c.format == format else { return nil }
+    static func load(for key: String) -> LibraryCache? {
+        let t0 = Perf.now()
+        guard let f = file(key), let d = try? Data(contentsOf: f) else { return nil }
+        Perf.shared.record("المحفوظ: قراءة الملف", since: t0, ByteCountFormatter.string(fromByteCount: Int64(d.count), countStyle: .file))
+        let t1 = Perf.now()
+        guard let c = try? JSONDecoder().decode(LibraryCache.self, from: d), c.format == format else { return nil }
+        Perf.shared.record("المحفوظ: تحليل JSON", since: t1)
         return c
     }
 
-    static func remove(_ source: UUID) { if let f = file(source) { try? FileManager.default.removeItem(at: f) } }
+    /// Every saved copy of this playlist entry (all accounts it ever had).
+    static func remove(_ source: UUID) {
+        guard let d = dir, let names = try? FileManager.default.contentsOfDirectory(atPath: d.path) else { return }
+        for n in names where n.hasPrefix(source.uuidString) { try? FileManager.default.removeItem(at: d.appendingPathComponent(n)) }
+    }
 
     // MARK: Conversion
 

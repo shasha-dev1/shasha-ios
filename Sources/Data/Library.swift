@@ -90,7 +90,13 @@ final class Library: ObservableObject {
     /// The background refresh failed while lists are shown (they stay; the full-screen error is only for "nothing at all").
     @Published private(set) var refreshError: String?
     /// Per section: was the list really received? A failed request is never shown as "none".
-    enum SectionState: Equatable { case unknown, received, failed(String) }
+    /// emptyReply(n): the provider sent an empty list where the saved copy has n titles — the saved list stays,
+    /// marked as not confirmed, until the viewer retries or confirms the list is really empty.
+    enum SectionState: Equatable {
+        case unknown, received, failed(String), emptyReply(Int)
+        var keepsOldList: Bool { switch self { case .failed, .emptyReply: return true; default: return false } }
+    }
+    enum Section { case movies, shows }
     @Published private(set) var moviesState: SectionState = .unknown
     @Published private(set) var showsState: SectionState = .unknown
 
@@ -103,22 +109,34 @@ final class Library: ObservableObject {
         guard let s = active else { clear(); return }
         lastSuccess = UserDefaults.standard.object(forKey: successKey(s.id)) as? Date
         if dataSource != s.id || !hasData {
-            let x = xtream, sid = s.id
+            let x = xtream, sid = s.id, ckey = LibraryCache.key(for: s)
             let t0 = Perf.now()
+            Perf.shared.memory("قبل قراءة المحفوظ")
+            // 1.0.5: each part timed inside the background task; the main thread only publishes the result.
             let loaded = await Task.detached(priority: .userInitiated) { () -> (LibraryCache, [Category], [Category], [Category], [Channel], [Movie], [Show], LibraryIndex)? in
-                guard let c = LibraryCache.load(for: sid) else { return nil }
+                guard let c = LibraryCache.load(for: ckey) else { return nil }
+                let tr = Perf.now()
                 let r = c.restore(x)
+                Perf.shared.record("المحفوظ: تحويل", since: tr)
+                let ti = Perf.now()
                 let ix = LibraryIndex.build(channels: r.ch, movies: r.mv, shows: r.sh)
+                Perf.shared.record("المحفوظ: فهرسة", since: ti)
                 return (c, r.lc, r.vc, r.sc, r.ch, r.mv, r.sh, ix)
             }.value
             if let l = loaded, active?.id == sid, !hasData || dataSource != sid {
-                liveCats = l.1; vodCats = l.2; seriesCats = l.3; channels = l.4; movies = l.5; shows = l.6
-                index = l.7; version += 1
-                dataSource = sid; fromCache = true
-                moviesState = l.0.moviesReceived ? .received : .unknown
-                showsState = l.0.showsReceived ? .received : .unknown
-                Perf.shared.record("المكتبة المحفوظة: قراءة وفهرسة", since: t0, sizeText)
+                Perf.shared.measure("المحفوظ: نشر القوائم على الواجهة", minMs: 0) {
+                    liveCats = l.1; vodCats = l.2; seriesCats = l.3; channels = l.4; movies = l.5; shows = l.6
+                    index = l.7; version += 1
+                    dataSource = sid; fromCache = true
+                    moviesState = l.0.moviesReceived ? .received : .unknown
+                    showsState = l.0.showsReceived ? .received : .unknown
+                }
+                Perf.shared.untilNextFrame("المحفوظ: من بدء القراءة حتى الظهور", since: t0, sizeText)
                 Perf.shared.libraryReadyAfterLaunch(sizeText, fromCache: true)
+                Perf.shared.memory("بعد عرض المحفوظ")
+                Perf.shared.memory("بعد عرض المحفوظ بـ 3 ث", after: 3)
+            } else {
+                Perf.shared.add("المحفوظ: غير موجود أو غير صالح", ms: 0)
             }
         }
         await reload()
@@ -144,6 +162,7 @@ final class Library: ObservableObject {
         guard let s = active else { clear(); return }
         loading = true; error = nil; refreshError = nil
         let t0 = Perf.now()
+        Perf.shared.memory("قبل التحميل من المزوّد")
         var failedText: String?
         defer {
             if reloadGen == gen {
@@ -182,18 +201,15 @@ final class Library: ObservableObject {
                 vc = r.cats.filter { c in r.movies.contains { $0.categoryId == c.id } }
                 sState = .received
             }
+            Perf.shared.memory("بعد الشبكة والتحليل والتحويل")
             // 1.0.4: an EMPTY list where this playlist had titles is treated as a failed reply, not as "none":
             // on the owner's phone get_vod_streams once answered "[]" in 0.5 s, and 56,207 movies on the next launch.
             let sameSource = dataSource == s.id
-            if mState == .received, mv.isEmpty, sameSource, !movies.isEmpty {
-                mState = .failed("ردّ المزوّد بقائمة أفلام فارغة، وكانت فيها \(movies.count) — غالبًا مؤقت")
-            }
-            if sState == .received, sh.isEmpty, sameSource, !shows.isEmpty {
-                sState = .failed("ردّ المزوّد بقائمة مسلسلات فارغة، وكانت فيها \(shows.count) — غالبًا مؤقت")
-            }
+            if mState == .received, mv.isEmpty, sameSource, !movies.isEmpty { mState = .emptyReply(movies.count) }
+            if sState == .received, sh.isEmpty, sameSource, !shows.isEmpty { sState = .emptyReply(shows.count) }
             // A failed section keeps what the screen already has for it (saved copy), never an empty "none".
-            if case .failed = mState, sameSource { mv = movies; vc = vodCats }
-            if case .failed = sState, sameSource { sh = shows; sc = seriesCats }
+            if mState.keepsOldList, sameSource { mv = movies; vc = vodCats }
+            if sState.keepsOldList, sameSource { sh = shows; sc = seriesCats }
             if ch.isEmpty && mv.isEmpty && sh.isEmpty { throw LoadError.empty }
             // 1.0.4: timed inside the background task (1.0.3 timed it from the main thread, which labelled it «واجهة»).
             let ix = await Task.detached(priority: .userInitiated) { () -> LibraryIndex in
@@ -208,21 +224,22 @@ final class Library: ObservableObject {
             liveCats = lc; channels = ch; vodCats = vc; movies = mv; seriesCats = sc; shows = sh
             index = ix; version += 1
             dataSource = s.id; fromCache = false
+            Perf.shared.memory("بعد الفهرسة ونشر القوائم")
+            Perf.shared.memory("مستقرة بعد التحميل بـ 5 ث", after: 5)
+            Perf.shared.memory("مستقرة بعد التحميل بـ 20 ث", after: 20)
             moviesState = mState; showsState = sState
             let now = Date()
             lastSuccess = now
             UserDefaults.standard.set(now, forKey: successKey(s.id))
-            if case .failed(let m) = mState { refreshError = "تعذّر جلب الأفلام: " + m }
-            if case .failed(let m) = sState { refreshError = "تعذّر جلب المسلسلات: " + m }
+
             // Saved only after a good download: the last good copy stays if a later refresh fails.
-            let xt = xtream != nil, sid = s.id
-            let mOK: Bool = { if case .failed = mState { return false }; return true }()
-            let sOK: Bool = { if case .failed = sState { return false }; return true }()
+            let xt = xtream != nil, ckey = LibraryCache.key(for: s)
+            let mOK = !mState.keepsOldList, sOK = !sState.keepsOldList
             Task.detached(priority: .utility) {
                 let tw = Perf.now()
                 let c = LibraryCache(savedAt: now, xtream: xt, liveCats: lc, vodCats: vc, seriesCats: sc,
                                      channels: ch, movies: mv, shows: sh, moviesReceived: mOK, showsReceived: sOK)
-                do { try LibraryCache.save(c, for: sid); Perf.shared.record("حفظ المكتبة على الجهاز", since: tw) }
+                do { try LibraryCache.save(c, for: ckey); Perf.shared.record("حفظ المكتبة على الجهاز", since: tw) }
                 catch { Perf.shared.add("حفظ المكتبة على الجهاز: فشل", ms: 0, (error as NSError).domain) }
             }
         } catch {
@@ -231,6 +248,24 @@ final class Library: ObservableObject {
             failedText = m
             // Lists on screen (saved copy or the previous download) stay; only "nothing at all" is a full-screen error.
             if hasData && dataSource == s.id { refreshError = m } else { self.error = m }
+        }
+    }
+
+    /// The viewer confirms that an empty reply is right: the section is emptied and the saved copy updated.
+    func confirmEmpty(_ section: Section) async {
+        guard let sid = dataSource, let src = active, sid == src.id else { return }
+        let ckey = LibraryCache.key(for: src)
+        if section == .movies { movies = []; vodCats = []; moviesState = .received }
+        else { shows = []; seriesCats = []; showsState = .received }
+        let ch = channels, mv = movies, sh = shows, lc = liveCats, vc = vodCats, sc = seriesCats, xt = xtream != nil
+        let ix = await Task.detached(priority: .userInitiated) { LibraryIndex.build(channels: ch, movies: mv, shows: sh) }.value
+        guard dataSource == sid else { return }
+        index = ix; version += 1
+        let mOK = !moviesState.keepsOldList, sOK = !showsState.keepsOldList
+        Task.detached(priority: .utility) {
+            let c = LibraryCache(savedAt: Date(), xtream: xt, liveCats: lc, vodCats: vc, seriesCats: sc,
+                                 channels: ch, movies: mv, shows: sh, moviesReceived: mOK, showsReceived: sOK)
+            try? LibraryCache.save(c, for: ckey)
         }
     }
 

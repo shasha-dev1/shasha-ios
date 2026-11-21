@@ -12,6 +12,8 @@ final class Perf: NSObject {
     private let lock = NSLock()
     private var lines: [String] = []
     private var stalls: [String: (count: Int, maxMs: Double, totalMs: Double)] = [:]
+    /// 1.0.5: every frame counted per step, so scrolling smoothness is a ratio (slow = longer than 25 ms).
+    private var frames: [String: (all: Int, slow: Int)] = [:]
     private var context = "تصفح"
     private var contextAt = CACurrentMediaTime()
     private var link: CADisplayLink?
@@ -105,6 +107,9 @@ final class Perf: NSObject {
 
     func startMonitor() {
         guard link == nil else { return }
+        NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { _ in
+            Perf.shared.memory("تحذير ذاكرة من النظام")
+        }
         let l = CADisplayLink(target: self, selector: #selector(frame(_:)))
         l.add(to: .main, forMode: .common)
         link = l
@@ -120,9 +125,13 @@ final class Perf: NSObject {
         for p in pending { add(p.name, ms: (now - p.t0) * 1000, p.detail) }
         guard lastFrame > 0 else { return }
         let gapMs = (t - lastFrame) * 1000
-        guard gapMs > 50, gapMs < 10_000 else { return }   // >10 s = app was in the background
+        guard gapMs < 10_000 else { return }   // >10 s = app was in the background
         lock.lock()
         let step = CACurrentMediaTime() - contextAt < 3 ? context : "تصفح"
+        var f = frames[step] ?? (0, 0)
+        f.all += 1; if gapMs > 25 { f.slow += 1 }
+        frames[step] = f
+        guard gapMs > 50 else { lock.unlock(); return }
         var s = stalls[step] ?? (0, 0, 0)
         s.count += 1; s.maxMs = max(s.maxMs, gapMs); s.totalMs += gapMs
         stalls[step] = s
@@ -138,14 +147,34 @@ final class Perf: NSObject {
         return "\(model) · iOS \(UIDevice.current.systemVersion)"
     }
 
-    /// App memory footprint in MB (what iOS counts against the app).
-    static var memoryMB: Double? {
+    private static func vmInfo() -> task_vm_info_data_t? {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
         let r = withUnsafeMutablePointer(to: &info) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count) }
         }
-        return r == KERN_SUCCESS ? Double(info.phys_footprint) / 1_048_576 : nil
+        return r == KERN_SUCCESS ? info : nil
+    }
+    /// App memory footprint in MB (what iOS counts against the app, the same number Xcode's gauge shows).
+    static var memoryMB: Double? { vmInfo().map { Double($0.phys_footprint) / 1_048_576 } }
+    /// Highest footprint since the app started (kernel ledger).
+    static var peakMB: Double? { vmInfo().map { Double($0.ledger_phys_footprint_peak) / 1_048_576 } }
+
+    /// 1.0.5: memory at a named point (footprint now + highest so far). Lines start with «ذاكرة».
+    func memory(_ stage: String) {
+        guard let m = Self.memoryMB else { return }
+        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; f.locale = Locale(identifier: "en_US_POSIX")
+        let line = String(format: "%@ ذاكرة %@: %.0f MB (أعلى حتى الآن %.0f MB)", f.string(from: Date()), stage, m, Self.peakMB ?? 0)
+        lock.lock()
+        lines.append(line); if lines.count > 400 { lines.removeFirst(lines.count - 400) }
+        let all = lines.joined(separator: "\n")
+        lock.unlock()
+        if let file { try? all.write(to: file, atomically: true, encoding: .utf8) }
+    }
+
+    /// The same, again after `seconds` (memory that stays = steady state; memory that drops = temporary peak).
+    func memory(_ stage: String, after seconds: Double) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { Perf.shared.memory(stage) }
     }
 
     func report(library: String) -> String {
@@ -153,14 +182,21 @@ final class Perf: NSObject {
         var out: [String] = []
         out.append("شاشة \(info?["CFBundleShortVersionString"] as? String ?? "?") (\(info?["CFBundleVersion"] as? String ?? "?")) — قياسات الأداء")
         out.append("الجهاز: \(Self.device)")
-        if let m = Self.memoryMB { out.append(String(format: "الذاكرة الآن: %.0f MB", m)) }
+        if let m = Self.memoryMB { out.append(String(format: "الذاكرة الآن: %.0f MB · أعلى منذ فتح التطبيق: %.0f MB", m, Self.peakMB ?? 0)) }
         out.append("المكتبة: \(library)")
+        out.append("الصور: " + (ImagePipeline.enabled ? "بحجم العرض" : "بالحجم الأصلي (AsyncImage)"))
         lock.lock()
         let st = stalls.sorted { $0.value.totalMs > $1.value.totalMs }
         let ls = lines
         lock.unlock()
         out.append("")
         out.append(contentsOf: summary(ls))
+        out.append("")
+        lock.lock(); let fr = frames.sorted { $0.value.all > $1.value.all }; lock.unlock()
+        out.append("— سلاسة الإطارات منذ فتح التطبيق (بطيء = أطول من 25 ms)")
+        for (k, v) in fr where v.all >= 30 {
+            out.append(String(format: "%@: %d إطار | بطيء %d (%.1f%%)", k, v.all, v.slow, Double(v.slow) * 100 / Double(max(1, v.all))))
+        }
         out.append("")
         out.append("— إطارات متأخرة (> 50 ms) منذ فتح التطبيق، حسب الخطوة")
         if st.isEmpty { out.append("لا يوجد") }
@@ -194,7 +230,7 @@ final class Perf: NSObject {
     }
 
     func clear() {
-        lock.lock(); lines = []; stalls = [:]; lock.unlock()
+        lock.lock(); lines = []; stalls = [:]; frames = [:]; lock.unlock()
         if let file { try? FileManager.default.removeItem(at: file) }
     }
 }

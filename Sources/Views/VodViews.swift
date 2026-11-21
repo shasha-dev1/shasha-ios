@@ -41,6 +41,7 @@ struct MoviesView: View {
                         }.padding(.horizontal)
                     }
                 }
+                SectionNotice(section: .movies)
                 Chips(cats: library.cats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library)).padding(.vertical, 6)
                 let _ = tick
                 if mine && items.isEmpty { Text("قائمتك فارغة — افتح فيلمًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
@@ -60,13 +61,16 @@ struct MoviesView: View {
                             Text("المزوّد ردّ بقائمة أفلام فارغة. أحيانًا يكون هذا مؤقتًا من المزوّد.").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
                             Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.bordered)
                         }.padding(.top, 40)
-                    case .unknown: EmptyView()
+                    case .unknown, .emptyReply: EmptyView()
                     }
                 }
                 LazyVGrid(columns: grid, spacing: 16) {
                     ForEach(items.prefix(shown)) { m in
                         NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster) }.buttonStyle(.plain)
-                            .onAppear { if m.id == items.prefix(shown).last?.id { shown += pageSize } }
+                            .onAppear {
+                                Perf.shared.mark("تمرير الأفلام")
+                                if m.id == items.prefix(shown).last?.id { shown += pageSize; if shown % (pageSize * 5) == 0 { Perf.shared.memory("تمرير الأفلام: \(shown) بوستر") } }
+                            }
                     }
                 }.padding(.horizontal)
             }
@@ -176,7 +180,7 @@ struct MovieDetail: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Art(url: info.backdrop ?? movie.poster).frame(height: 220).clipped()
+                Art(url: info.backdrop ?? movie.poster, maxPixel: 1400).frame(height: 220).clipped()
                     .overlay(LinearGradient(colors: [.clear, Theme.bg], startPoint: .center, endPoint: .bottom))
                 Text(movie.name).font(.title2.bold()).padding(.horizontal)
                 Text([info.year, info.genre, movie.rating.map { "★ " + $0 }, info.duration].compactMap { $0 }.joined(separator: " · "))
@@ -253,6 +257,7 @@ struct SeriesView: View {
                         }.padding(.horizontal)
                     }
                 }
+                SectionNotice(section: .shows)
                 Chips(cats: library.cats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library)).padding(.vertical, 6)
                 let _ = tick
                 if mine && items.isEmpty { Text("قائمتك فارغة — افتح مسلسلًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
@@ -271,13 +276,16 @@ struct SeriesView: View {
                             Text("المزوّد ردّ بقائمة مسلسلات فارغة. أحيانًا يكون هذا مؤقتًا من المزوّد.").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
                             Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.bordered)
                         }.padding(.top, 40)
-                    case .unknown: EmptyView()
+                    case .unknown, .emptyReply: EmptyView()
                     }
                 }
                 LazyVGrid(columns: grid, spacing: 16) {
                     ForEach(items.prefix(shown)) { s in
                         NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster) }.buttonStyle(.plain)
-                            .onAppear { if s.id == items.prefix(shown).last?.id { shown += pageSize } }
+                            .onAppear {
+                                Perf.shared.mark("تمرير المسلسلات")
+                                if s.id == items.prefix(shown).last?.id { shown += pageSize; if shown % (pageSize * 5) == 0 { Perf.shared.memory("تمرير المسلسلات: \(shown) بوستر") } }
+                            }
                     }
                 }.padding(.horizontal)
             }
@@ -376,6 +384,7 @@ struct SeriesDetail: View {
             guard let x = library.xtream else { loading = false; return }
             let t0 = Perf.now()
             Perf.shared.mark("تفاصيل مسلسل")
+            Perf.shared.memory("فتح تفاصيل مسلسل")
             episodes = (try? await x.episodes(seriesId: show.id)) ?? []
             season = nextEpisode?.season ?? episodes.first?.season ?? 1
             loading = false
@@ -404,5 +413,40 @@ struct SeriesDetail: View {
         }
         Store.remember(episodes: queue.map(\.key), show: show.id)
         play = .vod(list: queue, index: i)
+    }
+}
+
+/// 1.0.5: the list shown is the saved copy and its refresh wasn't confirmed (request failed, or an empty reply
+/// replaced a full list). An empty reply can be right, so it can be confirmed.
+struct SectionNotice: View {
+    @EnvironmentObject var library: Library
+    let section: Library.Section
+    @State private var confirming = false
+
+    var body: some View {
+        let state = section == .movies ? library.moviesState : library.showsState
+        let what = section == .movies ? "الأفلام" : "المسلسلات"
+        if state.keepsOldList && !library.loading {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("المعروض نسخة محفوظة لم يتأكد تحديثها", systemImage: "clock.arrow.circlepath").font(.subheadline.weight(.semibold))
+                switch state {
+                case .failed(let m): Text("تعذّر جلب \(what): \(m)").font(.footnote).foregroundStyle(.secondary)
+                case .emptyReply(let n): Text("ردّ المزوّد بقائمة \(what) فارغة، والنسخة المحفوظة فيها \(n). قد يكون الرد مؤقتًا أو صحيحًا.").font(.footnote).foregroundStyle(.secondary)
+                default: EmptyView()
+                }
+                if let t = library.lastSuccess { Text("آخر تحديث ناجح: \(LastUpdate.text(t))").font(.caption).foregroundStyle(.secondary) }
+                HStack {
+                    Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.borderedProminent)
+                    if case .emptyReply = state {
+                        Button("القائمة فعلًا فارغة") { confirming = true }.buttonStyle(.bordered)
+                    }
+                }.font(.footnote)
+            }
+            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12)).padding(.horizontal)
+            .confirmationDialog("حذف \(what) المحفوظة من هذه القائمة؟", isPresented: $confirming, titleVisibility: .visible) {
+                Button("نعم، القائمة فارغة", role: .destructive) { Task { await library.confirmEmpty(section) } }
+            } message: { Text("تقدر ترجعها بأي تحديث ناجح لاحقًا.") }
+        }
     }
 }

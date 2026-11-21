@@ -539,6 +539,7 @@ struct PlayerScreen: View {
                 show("صورة داخل صورة ما اشتغلت (\(msg))")
             }
             start(); Orientation.landscape(); UIApplication.shared.isIdleTimerDisabled = true
+            Perf.shared.memory("فتح المشغّل")
         }
         .onDisappear {
             // 1.0.4 measurement only: each part of leaving the player timed on its own (same order as before).
@@ -554,6 +555,7 @@ struct PlayerScreen: View {
             // Frames after this point: the app's screens redrawing (until mpv's own close marks itself).
             Perf.shared.untilNextFrame("رجوع: أول إطار بعد المشغّل")
             Perf.shared.mark("رجوع: تحديث الشاشات")
+            Perf.shared.memory("بعد إغلاق المشغّل بـ 3 ث", after: 3)
         }
     }
 

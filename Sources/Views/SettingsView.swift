@@ -60,6 +60,7 @@ struct SettingsView: View {
 /// 1.0.2: the measurements report, to copy and send.
 struct PerfView: View {
     @EnvironmentObject var library: Library
+    @AppStorage(ImagePipeline.key) private var downsample = true
     @State private var text = ""
     @State private var copied = false
 
@@ -74,6 +75,9 @@ struct PerfView: View {
                     Button(role: .destructive) { Perf.shared.clear(); text = Perf.shared.report(library: library.sizeText) } label: { Label("مسح", systemImage: "trash") }
                         .buttonStyle(.bordered)
                 }
+                Toggle("صور بحجم العرض (للمقارنة أطفئه)", isOn: $downsample)
+                    .font(.footnote)
+                    .onChange(of: downsample) { v in Perf.shared.add("تبديل الصور", ms: 0, v ? "بحجم العرض" : "أصلية") }
                 Text("للقياس: افتح التطبيق من جديد، انتظر المكتبة، ابحث في الرئيسية والأفلام، افتح مسلسلًا، شغّل حلقة وارجع، ثم اضغط «تحديث» و«نسخ».")
                     .font(.footnote).foregroundStyle(.secondary)
                 Text(text).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)

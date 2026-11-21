@@ -58,9 +58,17 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 | Longest browsing stall | 764 ms | 302 ms (still 42 frames > 50 ms) |
 | Home shelves / series list on main thread | 4–30 ms, 2–3× per navigation | < 4 ms (not logged) / 8 ms off main |
 
-## 1.0.4 (built only, not tested on device)
+## 1.0.4 — CI build 65 = commit `b9258b8` (built only, not tested on device)
 - An empty movies/series list where the playlist had titles is treated as a failed reply (keeps the saved list, says «غالبًا مؤقت»); timings of background work are now taken inside the background task.
 - Saved copy per playlist (Application Support/LibraryCache/<id>.json, excluded from backup, protected until first unlock; Xtream links not stored — rebuilt from the Keychain). Launch shows the saved copy, then refreshes in the background; a failed refresh keeps the shown lists and says so with retry and the time of the last good download. Saved only after a good download. Settings shows «آخر تحديث ناجح»; «تحديث القائمة الآن» is the manual refresh.
 - Movies/series: a request that fails (network, or a reply that is not a JSON array) is shown as «تعذّر جلب …» with retry and keeps the previous list; «لا توجد أفلام» only when the provider sent an empty array.
 - Leaving the player measured part by part: save resume, stop playback, rotate, first frame, screens redrawing, mpv destroy (still on the main thread — not moved).
 - Report starts with a summary of the last launch: network / background processing / main-thread work / stalls.
+
+## 1.0.5 (built only, not tested on device)
+- Memory measured at named points (footprint now + kernel peak since launch): before/after loading the saved copy, before the provider load, after network+parse+convert, after index+publish, steady 5 s / 20 s later, player open / 3 s after closing, series detail open, every 450 posters scrolled; iOS memory warnings logged. Instruments isn't available without a Mac, so this in-app sampling (same number as Xcode's gauge, `phys_footprint`) is the measuring tool.
+- Frame smoothness per step as a ratio (slow = longer than 25 ms), e.g. «تمرير الأفلام».
+- Saved copy timed in parts inside the background task (read file, JSON, convert, index) and the main-thread publish separately, plus read-start → on screen.
+- Images decoded at display size with a 60 MB / 600-image memory cache emptied on memory warnings; off/on switch in «قياسات الأداء» for an A/B on the same build.
+- Empty reply after a full list: state «emptyReply», saved list kept with a notice «المعروض نسخة محفوظة لم يتأكد تحديثها», retry, and «القائمة فعلًا فارغة» (with confirmation) to accept it.
+- Saved copy keyed by playlist id + SHA-256 of type/server/user name (no password); stale results still dropped after a playlist switch.
