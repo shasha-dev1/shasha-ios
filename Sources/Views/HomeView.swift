@@ -108,7 +108,7 @@ struct HomeView: View {
                 }
             }
 
-            let newShows = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { library.index.showsNewest.lazy.compactMap { $0 < library.shows.count ? library.shows[$0] : nil }.filter { okS($0.categoryId) }.prefix(20).map { $0 } }
+            let newShows: [Show] = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { Array(library.index.showsNewest.lazy.compactMap { $0 < library.shows.count ? library.shows[$0] : nil }.filter { okS($0.categoryId) }.prefix(20)) }
             if !newShows.isEmpty {
                 Shelf(title: "مسلسلات حديثة التحديث") {
                     ForEach(newShows) { s in
@@ -117,7 +117,7 @@ struct HomeView: View {
                 }
             }
 
-            let newMovies = Perf.shared.measure("الرئيسية: أفلام حديثة") { library.index.moviesNewest.lazy.compactMap { $0 < library.movies.count ? library.movies[$0] : nil }.filter { okM($0.categoryId) }.prefix(20).map { $0 } }
+            let newMovies: [Movie] = Perf.shared.measure("الرئيسية: أفلام حديثة") { Array(library.index.moviesNewest.lazy.compactMap { $0 < library.movies.count ? library.movies[$0] : nil }.filter { okM($0.categoryId) }.prefix(20)) }
             if !newMovies.isEmpty {
                 Shelf(title: "أفلام أضيفت حديثًا") {
                     ForEach(newMovies) { m in
