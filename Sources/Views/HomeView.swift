@@ -46,7 +46,7 @@ struct HomeView: View {
                 }.value
                 guard !Task.isCancelled else { return }
                 found = r
-                Perf.shared.record("بحث الرئيسية: حتى ظهور النتائج", since: t0, "\(q.count) حرف · \(r.ch.count)/\(r.mv.count)/\(r.sh.count)")
+                Perf.shared.record("بحث الرئيسية: حتى ظهور النتائج", since: t0, "\(q.count) حرف · \(r.ch.count)/\(r.mv.count)/\(r.sh.count)", span: true)
             }
             .onChange(of: play?.id) { _ in tick += 1 }
         }

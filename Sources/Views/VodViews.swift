@@ -389,6 +389,7 @@ struct SeriesDetail: View {
             season = nextEpisode?.season ?? episodes.first?.season ?? 1
             loading = false
             Perf.shared.untilNextFrame("تفاصيل مسلسل: فتح ← الحلقات معروضة", since: t0, "\(episodes.count) حلقة")
+            Perf.shared.mark("تفاصيل مسلسل: عرض الحلقات")
         }
     }
 

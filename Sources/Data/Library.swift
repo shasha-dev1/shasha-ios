@@ -168,7 +168,7 @@ final class Library: ObservableObject {
             if reloadGen == gen {
                 loading = false
                 let d = sizeText
-                Perf.shared.record("تحميل المكتبة من المزوّد", since: t0, d + (failedText.map { " | فشل: " + $0 } ?? ""))
+                Perf.shared.record("تحميل المكتبة من المزوّد", since: t0, d + (failedText.map { " | فشل: " + $0 } ?? ""), span: true)
                 if failedText == nil { Perf.shared.libraryReadyAfterLaunch(d) }
             }
         }

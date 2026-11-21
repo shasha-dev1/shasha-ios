@@ -47,7 +47,16 @@ final class PlayerModel: ObservableObject {
     /// The video is in the floating window.
     @Published var pipActive = false
 
+    /// 1.0.6 measurement: player models alive right now (should be 0 after leaving the player).
+    static var alive = 0
+    deinit {
+        PlayerModel.alive -= 1
+        Perf.shared.add("مشغّل: تحرير نموذج المشغّل", ms: 0, "الحية الآن \(PlayerModel.alive)")
+    }
+
     init() {
+        PlayerModel.alive += 1
+        Perf.shared.add("مشغّل: إنشاء نموذج المشغّل", ms: 0, "الحية الآن \(PlayerModel.alive) · محركات mpv \(MPVCore.alive)")
         mpvPiP.isPaused = { [weak self] in self?.viewerPaused ?? true }
         mpvPiP.setPlaying = { [weak self] on in self?.command(on ? .play : .pause) }
         mpvPiP.skip = { [weak self] s in self?.jump(Int32(s)) }
@@ -550,11 +559,15 @@ struct PlayerScreen: View {
             Perf.shared.mark("رجوع: إيقاف التشغيل")
             Perf.shared.measure("رجوع: إيقاف التشغيل", minMs: 0) { model.stop() }
             Perf.shared.mark("رجوع: تدوير الشاشة")
-            Perf.shared.measure("رجوع: تدوير الشاشة", minMs: 0) { Orientation.portrait() }
+            Perf.shared.measure("رجوع: طلب تدوير الشاشة", minMs: 0) { Orientation.portraitMeasured() }
             UIApplication.shared.isIdleTimerDisabled = false
             // Frames after this point: the app's screens redrawing (until mpv's own close marks itself).
             Perf.shared.untilNextFrame("رجوع: أول إطار بعد المشغّل")
-            Perf.shared.mark("رجوع: تحديث الشاشات")
+            Perf.shared.mark("رجوع: تحديث الشاشات قبل الدوران")
+            // Is the player (and its mpv) released? Logged 3 s later.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                Perf.shared.add("رجوع: بعد 3 ث", ms: 0, "نماذج المشغّل الحية \(PlayerModel.alive) · محركات mpv \(MPVCore.alive)")
+            }
             Perf.shared.memory("بعد إغلاق المشغّل بـ 3 ث", after: 3)
         }
     }
@@ -1409,6 +1422,19 @@ struct EpisodePickerSheet: View {
 enum Orientation {
     static func landscape() { request(.landscape) }
     static func portrait() { request(.portrait) }
+    /// 1.0.6 measurement: the rotation itself happens later; its end is marked so a stall after it is named.
+    static func portraitMeasured() {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        let t0 = Perf.now()
+        scene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { _ in }
+        func check(_ n: Int) {
+            if scene.interfaceOrientation.isPortrait || n > 40 {
+                Perf.shared.record("رجوع: اكتمال الدوران", since: t0, span: true)
+                Perf.shared.mark("رجوع: إعادة رسم بعد الدوران")
+            } else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.025) { check(n + 1) } }
+        }
+        check(0)
+    }
     private static func request(_ m: UIInterfaceOrientationMask) {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
         scene.requestGeometryUpdate(.iOS(interfaceOrientations: m)) { _ in }

@@ -65,11 +65,19 @@ final class MPVCore {
     }
     func logLines() -> [String] { lock.lock(); defer { lock.unlock() }; return log }
 
+    /// 1.0.6 measurement: mpv engines alive (each holds its decoder, Vulkan device and buffers).
+    static var alive = 0
+
     init() {
+        MPVCore.alive += 1
         NotificationCenter.default.addObserver(self, selector: #selector(background), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(foreground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
-    deinit { destroy() }
+    deinit {
+        destroy()
+        MPVCore.alive -= 1
+        Perf.shared.add("mpv: تحرير المحرّك", ms: 0, "الحية الآن \(MPVCore.alive)")
+    }
 
     // The Metal surface is lost in the background (fix from MPVKit's demo): drop video, keep audio.
     @objc private func background() { if mpv != nil, !pipOutput { setAsync("vid", "no") } }

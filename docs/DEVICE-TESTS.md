@@ -65,10 +65,21 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Leaving the player measured part by part: save resume, stop playback, rotate, first frame, screens redrawing, mpv destroy (still on the main thread — not moved).
 - Report starts with a summary of the last launch: network / background processing / main-thread work / stalls.
 
-## 1.0.5 (built only, not tested on device)
+## 1.0.5 — CI build 66 = commit `1e00fa0` (built only; superseded by 1.0.6 before install)
 - Memory measured at named points (footprint now + kernel peak since launch): before/after loading the saved copy, before the provider load, after network+parse+convert, after index+publish, steady 5 s / 20 s later, player open / 3 s after closing, series detail open, every 450 posters scrolled; iOS memory warnings logged. Instruments isn't available without a Mac, so this in-app sampling (same number as Xcode's gauge, `phys_footprint`) is the measuring tool.
 - Frame smoothness per step as a ratio (slow = longer than 25 ms), e.g. «تمرير الأفلام».
 - Saved copy timed in parts inside the background task (read file, JSON, convert, index) and the main-thread publish separately, plus read-start → on screen.
 - Images decoded at display size with a 60 MB / 600-image memory cache emptied on memory warnings; off/on switch in «قياسات الأداء» for an A/B on the same build.
 - Empty reply after a full list: state «emptyReply», saved list kept with a notice «المعروض نسخة محفوظة لم يتأكد تحديثها», retry, and «القائمة فعلًا فارغة» (with confirmation) to accept it.
 - Saved copy keyed by playlist id + SHA-256 of type/server/user name (no password); stale results still dropped after a playlist switch.
+
+## 1.0.4 (65) — owner's report, 2026-11-22 (first launch only; the relaunch from the saved copy was not in this report)
+- No saved copy yet: provider load 7.3 s (longest request get_series 5.1 s), launch → updated 7.9 s; index 1.4 s and saving 2.1 s, both off the main thread.
+- Leaving the player, by part: save resume 0–1 ms, stop 0 ms, rotate request 0 ms, first frame 10–198 ms; the 605 ms stall came after that («تحديث الشاشات»).
+- **No «mpv: إغلاق المحرّك» line in 3 player closes** → mpv's destroy never ran: the player model / mpv engine were apparently not released (possible leak, and a memory suspect). Not proven yet.
+- The 1.0.4 summary counted whole operations (e.g. the 7.3 s load) as main-thread work — fixed in 1.0.6 («مدة» tag).
+
+## 1.0.6 (built only, not tested on device)
+- Live counts of player models and mpv engines logged on create/release and 3 s after leaving the player.
+- Rotation back to portrait timed until it completes; stalls after it are attributed to «إعادة رسم بعد الدوران».
+- Whole-operation durations tagged «مدة» and excluded from main-thread work in the summary.

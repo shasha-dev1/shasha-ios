@@ -32,13 +32,14 @@ final class Perf: NSObject {
     static func now() -> Double { CACurrentMediaTime() }
 
     /// One measured step, in milliseconds since `t0` (from `Perf.now()`).
-    func record(_ name: String, since t0: Double, _ detail: String = "") {
-        add(name, ms: (CACurrentMediaTime() - t0) * 1000, detail)
+    /// `span`: elapsed time of a whole operation (waiting included), not work that blocked the main thread — tagged «مدة».
+    func record(_ name: String, since t0: Double, _ detail: String = "", span: Bool = false) {
+        add(name, ms: (CACurrentMediaTime() - t0) * 1000, detail, span: span)
     }
 
-    func add(_ name: String, ms: Double, _ detail: String = "") {
+    func add(_ name: String, ms: Double, _ detail: String = "", span: Bool = false) {
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; f.locale = Locale(identifier: "en_US_POSIX")
-        let main = Thread.isMainThread ? " [واجهة]" : ""
+        let main = span ? " [مدة]" : Thread.isMainThread ? " [واجهة]" : ""
         let line = "\(f.string(from: Date())) \(name): \(String(format: "%.0f", ms)) ms\(main)\(detail.isEmpty ? "" : " | " + detail)"
         lock.lock()
         lines.append(line); if lines.count > 400 { lines.removeFirst(lines.count - 400) }
@@ -90,7 +91,7 @@ final class Perf: NSObject {
     func firstScreen(_ what: String) {
         lock.lock(); let done = launchRecorded; launchRecorded = true; lock.unlock()
         guard !done, let ms = sinceLaunchMs() else { return }
-        add("فتح التطبيق ← أول شاشة", ms: ms, what)
+        add("فتح التطبيق ← أول شاشة", ms: ms, what, span: true)
     }
 
     /// Library ready after launch (once from the saved copy, once from the provider).
@@ -100,7 +101,7 @@ final class Perf: NSObject {
         if fromCache { cacheRecorded = true } else { libraryRecorded = true }
         lock.unlock()
         guard !done, let ms = sinceLaunchMs() else { return }
-        add(fromCache ? "فتح التطبيق ← المكتبة المحفوظة معروضة" : "فتح التطبيق ← المكتبة محدّثة من المزوّد", ms: ms, detail)
+        add(fromCache ? "فتح التطبيق ← المكتبة المحفوظة معروضة" : "فتح التطبيق ← المكتبة محدّثة من المزوّد", ms: ms, detail, span: true)
     }
 
     // MARK: Stalled frames
@@ -122,7 +123,7 @@ final class Perf: NSObject {
         let pending = nextFrame; nextFrame = []
         lock.unlock()
         let now = CACurrentMediaTime()
-        for p in pending { add(p.name, ms: (now - p.t0) * 1000, p.detail) }
+        for p in pending { add(p.name, ms: (now - p.t0) * 1000, p.detail, span: true) }
         guard lastFrame > 0 else { return }
         let gapMs = (t - lastFrame) * 1000
         guard gapMs < 10_000 else { return }   // >10 s = app was in the background
@@ -219,8 +220,9 @@ final class Perf: NSObject {
             if name.hasPrefix("فتح التطبيق") { continue }
             if name.hasPrefix("شبكة") { net.n += 1; net.sum += ms; net.max = max(net.max, ms) }
             else if name.hasPrefix("توقف الواجهة") { stall.n += 1; stall.sum += ms; stall.max = max(stall.max, ms) }
+            else if l.contains("[مدة]") || name.hasPrefix("تحميل المكتبة") { continue }      // whole operations, not work
             else if l.contains("[واجهة]") { ui.n += 1; ui.sum += ms }
-            else { bg.n += 1; bg.sum += ms }
+            else if ms > 0 { bg.n += 1; bg.sum += ms }
         }
         return ["— ملخص آخر فتح للتطبيق",
                 String(format: "الشبكة: %d طلب | أطول طلب %.0f ms | المجموع %.0f ms (الطلبات متوازية)", net.n, net.max, net.sum),
