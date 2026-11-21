@@ -44,7 +44,22 @@ Device iPhone14,3, iOS 27.2.1. Library: 52,989 channels, 0 movies, 24,103 series
 - Bounded image cache (40 MB memory / 200 MB disk).
 - Measurement added: time of closing mpv (to check whether it causes the stall when leaving the player). No mpv playback setting changed.
 
+## 1.0.3 (63) — owner's report, 2026-11-22 (same steps as 1.0.2)
+Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vod_streams in 0.5 s — a bad reply, not a real empty list), 24,103 series. Memory 852 MB.
+
+| Step | 1.0.2 | 1.0.3 |
+|---|---|---|
+| Launch → first screen | 809 ms | 485–497 ms |
+| Launch → library ready | 5,964 ms (no movies) | 11,151 ms (with 56k movies) |
+| — longest network request | get_series 4.2 s | get_vod_streams 8.5 s / 23 MB |
+| — background processing | parse 0.7 s + convert 0.4 s | parse 0.9 s + convert 0.7 s + index 1.4 s (shown as «واجهة» by a labelling mistake: it ran off the main thread) |
+| Return from player, stall | 883, 914 ms | 309, 333, 603 ms |
+| Series open → episodes, minus network | ~240 ms | ~30 ms |
+| Longest browsing stall | 764 ms | 302 ms (still 42 frames > 50 ms) |
+| Home shelves / series list on main thread | 4–30 ms, 2–3× per navigation | < 4 ms (not logged) / 8 ms off main |
+
 ## 1.0.4 (built only, not tested on device)
+- An empty movies/series list where the playlist had titles is treated as a failed reply (keeps the saved list, says «غالبًا مؤقت»); timings of background work are now taken inside the background task.
 - Saved copy per playlist (Application Support/LibraryCache/<id>.json, excluded from backup, protected until first unlock; Xtream links not stored — rebuilt from the Keychain). Launch shows the saved copy, then refreshes in the background; a failed refresh keeps the shown lists and says so with retry and the time of the last good download. Saved only after a good download. Settings shows «آخر تحديث ناجح»; «تحديث القائمة الآن» is the manual refresh.
 - Movies/series: a request that fails (network, or a reply that is not a JSON array) is shown as «تعذّر جلب …» with retry and keeps the previous list; «لا توجد أفلام» only when the provider sent an empty array.
 - Leaving the player measured part by part: save resume, stop playback, rotate, first frame, screens redrawing, mpv destroy (still on the main thread — not moved).

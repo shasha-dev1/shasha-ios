@@ -182,14 +182,26 @@ final class Library: ObservableObject {
                 vc = r.cats.filter { c in r.movies.contains { $0.categoryId == c.id } }
                 sState = .received
             }
-            // A failed section keeps what the screen already has for it (saved copy), never an empty "none".
+            // 1.0.4: an EMPTY list where this playlist had titles is treated as a failed reply, not as "none":
+            // on the owner's phone get_vod_streams once answered "[]" in 0.5 s, and 56,207 movies on the next launch.
             let sameSource = dataSource == s.id
+            if mState == .received, mv.isEmpty, sameSource, !movies.isEmpty {
+                mState = .failed("ردّ المزوّد بقائمة أفلام فارغة، وكانت فيها \(movies.count) — غالبًا مؤقت")
+            }
+            if sState == .received, sh.isEmpty, sameSource, !shows.isEmpty {
+                sState = .failed("ردّ المزوّد بقائمة مسلسلات فارغة، وكانت فيها \(shows.count) — غالبًا مؤقت")
+            }
+            // A failed section keeps what the screen already has for it (saved copy), never an empty "none".
             if case .failed = mState, sameSource { mv = movies; vc = vodCats }
             if case .failed = sState, sameSource { sh = shows; sc = seriesCats }
             if ch.isEmpty && mv.isEmpty && sh.isEmpty { throw LoadError.empty }
-            let ti = Perf.now()
-            let ix = await Task.detached(priority: .userInitiated) { LibraryIndex.build(channels: ch, movies: mv, shows: sh) }.value
-            Perf.shared.record("فهرسة المكتبة (بحث وترتيب ونسخ)", since: ti)
+            // 1.0.4: timed inside the background task (1.0.3 timed it from the main thread, which labelled it «واجهة»).
+            let ix = await Task.detached(priority: .userInitiated) { () -> LibraryIndex in
+                let ti = Perf.now()
+                let r = LibraryIndex.build(channels: ch, movies: mv, shows: sh)
+                Perf.shared.record("فهرسة المكتبة (بحث وترتيب ونسخ)", since: ti)
+                return r
+            }.value
             // A newer load (other playlist, or cancelled) must not overwrite what it brought.
             guard reloadGen == gen, !Task.isCancelled, active?.id == s.id else { return }
             // One update for all lists (was six separate redraws).

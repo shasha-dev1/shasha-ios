@@ -57,7 +57,8 @@ struct MoviesView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "film").font(.largeTitle).foregroundStyle(.secondary)
                             Text("لا توجد أفلام في هذه القائمة").font(.headline)
-                            Text("المزوّد ردّ بقائمة أفلام فارغة.").font(.footnote).foregroundStyle(.secondary)
+                            Text("المزوّد ردّ بقائمة أفلام فارغة. أحيانًا يكون هذا مؤقتًا من المزوّد.").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.bordered)
                         }.padding(.top, 40)
                     case .unknown: EmptyView()
                     }
@@ -76,13 +77,14 @@ struct MoviesView: View {
                 guard !Task.isCancelled else { return }
                 let all = library.movies, ix = library.index, q = query, c = cat, so = sort
                 let fav: Set<String>? = mine ? Set(Store.favorites) : nil, blocked = library.blocked(.movies)
-                let t0 = Perf.now()
-                let r = await Task.detached(priority: .userInitiated) {
-                    ListQuery.movies(all, ix, query: q, cat: c, sort: so, favorites: fav, blocked: blocked)
+                let r = await Task.detached(priority: .userInitiated) { () -> [Movie] in
+                    let t0 = Perf.now()
+                    let r = ListQuery.movies(all, ix, query: q, cat: c, sort: so, favorites: fav, blocked: blocked)
+                    Perf.shared.record("قائمة الأفلام (خلفية)", since: t0, "\(r.count) · بحث \(q.count) حرف · \(c == nil ? "الكل" : "مجموعة") · \(so.rawValue)")
+                    return r
                 }.value
                 guard !Task.isCancelled else { return }       // a newer request owns the screen
                 items = r; shown = pageSize
-                Perf.shared.record("قائمة الأفلام (خلفية)", since: t0, "\(r.count) · بحث \(q.count) حرف · \(c == nil ? "الكل" : "مجموعة") · \(so.rawValue)")
             }
             .navigationTitle(mine ? "قائمتي · الأفلام" : "الأفلام")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
@@ -266,7 +268,8 @@ struct SeriesView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "play.rectangle.on.rectangle").font(.largeTitle).foregroundStyle(.secondary)
                             Text("لا توجد مسلسلات في هذه القائمة").font(.headline)
-                            Text("المزوّد ردّ بقائمة مسلسلات فارغة.").font(.footnote).foregroundStyle(.secondary)
+                            Text("المزوّد ردّ بقائمة مسلسلات فارغة. أحيانًا يكون هذا مؤقتًا من المزوّد.").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.bordered)
                         }.padding(.top, 40)
                     case .unknown: EmptyView()
                     }
@@ -285,13 +288,14 @@ struct SeriesView: View {
                 guard !Task.isCancelled else { return }
                 let all = library.shows, ix = library.index, q = query, c = cat, so = sort
                 let fav: Set<String>? = mine ? Set(Store.favorites) : nil, blocked = library.blocked(.series)
-                let t0 = Perf.now()
-                let r = await Task.detached(priority: .userInitiated) {
-                    ListQuery.shows(all, ix, query: q, cat: c, sort: so, favorites: fav, blocked: blocked)
+                let r = await Task.detached(priority: .userInitiated) { () -> [Show] in
+                    let t0 = Perf.now()
+                    let r = ListQuery.shows(all, ix, query: q, cat: c, sort: so, favorites: fav, blocked: blocked)
+                    Perf.shared.record("قائمة المسلسلات (خلفية)", since: t0, "\(r.count) · بحث \(q.count) حرف · \(c == nil ? "الكل" : "مجموعة") · \(so.rawValue)")
+                    return r
                 }.value
                 guard !Task.isCancelled else { return }
                 items = r; shown = pageSize
-                Perf.shared.record("قائمة المسلسلات (خلفية)", since: t0, "\(r.count) · بحث \(q.count) حرف · \(c == nil ? "الكل" : "مجموعة") · \(so.rawValue)")
             }
             .navigationTitle(mine ? "قائمتي · المسلسلات" : "المسلسلات")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
