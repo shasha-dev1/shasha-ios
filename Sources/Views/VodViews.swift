@@ -182,7 +182,8 @@ struct MovieDetail: View {
         let t = tmdb.title
         let year = info.year ?? t?.year.map(String.init)
         let genre = info.genre ?? (t?.genres.isEmpty == false ? t!.genres.prefix(3).joined(separator: "، ") : nil)
-        let rating = movie.rating.flatMap { Double($0) }.flatMap { $0 > 0 ? $0 : nil } ?? t?.rating.flatMap { $0 > 0 ? $0 : nil }
+        let provider: Double? = movie.rating.flatMap { Double($0) }
+        let rating: Double? = (provider ?? 0) > 0 ? provider : (t?.rating ?? 0) > 0 ? t?.rating : nil
         return [year, genre, rating.map { String(format: "★ %.1f", $0) }, info.duration].compactMap { $0 }.joined(separator: " · ")
     }
 
@@ -343,13 +344,25 @@ struct SeriesDetail: View {
     @State private var copiesOpen = false
     @StateObject private var tmdb = TmdbLoader()
 
+    private var meta: String {
+        let t = tmdb.title
+        var parts: [String] = []
+        if let y = t?.year { parts.append(String(y)) }
+        if let g = t?.genres, !g.isEmpty { parts.append(g.prefix(3).joined(separator: "، ")) }
+        let provider: Double? = show.rating.flatMap { Double($0) }
+        let r: Double? = (provider ?? 0) > 0 ? provider : t?.rating
+        if let r, r > 0 { parts.append(String(format: "★ %.1f", r)) }
+        if !episodes.isEmpty {
+            let seasons = Set(episodes.map { $0.season }).count
+            parts.append("\(seasons) موسم · \(episodes.count) حلقة")
+        }
+        return parts.joined(separator: " · ")
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
                 let t = tmdb.title
-                let meta = [t?.year.map(String.init), t?.genres.isEmpty == false ? t!.genres.prefix(3).joined(separator: "، ") : nil,
-                            (show.rating.flatMap { Double($0) }.flatMap { $0 > 0 ? $0 : nil } ?? t?.rating.flatMap { $0 > 0 ? $0 : nil }).map { String(format: "★ %.1f", $0) },
-                            episodes.isEmpty ? nil : "\(Set(episodes.map(\.season)).count) موسم · \(episodes.count) حلقة"].compactMap { $0 }.joined(separator: " · ")
                 DetailHeader(backdrop: t?.backdrop, poster: show.poster ?? t?.poster, title: TmdbRule.split(show.name).title, meta: meta)
                 if let next = nextEpisode {
                     Button { open(next) } label: {
