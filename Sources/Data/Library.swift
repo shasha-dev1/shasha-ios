@@ -279,6 +279,40 @@ final class Library: ObservableObject {
         }
     }
 
+    // MARK: 1.0.9 — "available in your library" for TMDB lists
+
+    private var lookupCache: (version: Int, value: TitleLookup)?
+
+    /// Title keys of the library (built off the main thread on first use, again only after the library changes).
+    func lookup() async -> TitleLookup {
+        if let c = lookupCache, c.version == version { return c.value }
+        let v = version, mv = movies, sh = shows
+        let l = await Task.detached(priority: .utility) { TitleLookup.build(movies: mv, shows: sh) }.value
+        if version == v { lookupCache = (v, l) }
+        return l
+    }
+
+    enum Hit { case movie(Movie), show(Show) }
+
+    /// The library title for a TMDB title, if any (name or original name, year within one when both are known).
+    func hit(_ t: TmdbTitle, _ l: TitleLookup) -> Hit? {
+        let keys = Set([TmdbRule.key(t.name), TmdbRule.key(t.originalName)].filter { !$0.isEmpty })
+        if t.kind == .movie {
+            let b = blocked(.movies)
+            for k in keys { for i in l.movies[k] ?? [] where i < movies.count && !b.contains(movies[i].categoryId) {
+                if let y = t.year, let ly = l.movieYear[i], abs(y - ly) > 1 { continue }
+                return .movie(movies[i])
+            } }
+        } else {
+            let b = blocked(.series)
+            for k in keys { for i in l.shows[k] ?? [] where i < shows.count && !b.contains(shows[i].categoryId) {
+                if let y = t.year, let ly = l.showYear[i], abs(y - ly) > 1 { continue }
+                return .show(shows[i])
+            } }
+        }
+        return nil
+    }
+
     /// Categories hidden or locked right now (for list queries off the main thread).
     func blocked(_ s: GroupSection) -> Set<String> {
         set(s, "hidden").union(isUnlocked ? [] : set(s, "locked"))
@@ -453,4 +487,17 @@ final class OldLists: @unchecked Sendable {
     private var value: Any?
     init(_ v: Any?) { value = v }
     func release() { value = nil }
+}
+
+struct TitleLookup {
+    var movies: [String: [Int]] = [:], shows: [String: [Int]] = [:]
+    var movieYear: [Int?] = [], showYear: [Int?] = []
+    static func build(movies: [Movie], shows: [Show]) -> TitleLookup {
+        var l = TitleLookup()
+        l.movieYear = movies.map { TmdbRule.year($0.name) }
+        l.showYear = shows.map { TmdbRule.year($0.name) }
+        for (i, m) in movies.enumerated() { let k = TmdbRule.libraryKey(m.name); if !k.isEmpty { l.movies[k, default: []].append(i) } }
+        for (i, s) in shows.enumerated() { let k = TmdbRule.libraryKey(s.name); if !k.isEmpty { l.shows[k, default: []].append(i) } }
+        return l
+    }
 }

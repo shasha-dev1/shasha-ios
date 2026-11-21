@@ -53,16 +53,27 @@ struct PosterCard: View {
     var progress: Double? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Art(url: poster)
-                .aspectRatio(2 / 3, contentMode: .fill)
+            Color.clear
+                .aspectRatio(2 / 3, contentMode: .fit)
                 .frame(maxWidth: .infinity)
+                .overlay { PosterImage(url: poster, title: title) }
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(alignment: .bottom) {
                     if let p = progress { GeometryReader { g in Capsule().fill(Theme.accent).frame(width: g.size.width * p, height: 4) }.frame(height: 4).padding(6) }
                 }
-            Text(title).font(.caption).lineLimit(2).multilineTextAlignment(.leading)
+            Text(TmdbRule.split(title).title).font(.caption).lineLimit(2).multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+}
+
+struct SectionTitle: View {
+    let text: String
+    var body: some View { Text(text).font(.title3.bold()).padding(.horizontal) }
+}
+struct SubTitle: View {
+    let text: String
+    var body: some View { Text(text).font(.subheadline.weight(.semibold)).foregroundStyle(.secondary).padding(.horizontal) }
 }
 
 /// Horizontal row with a title (Home screen).
@@ -71,7 +82,7 @@ struct Shelf<Content: View>: View {
     @ViewBuilder let content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.title3.bold()).padding(.horizontal)
+            SectionTitle(text: title)
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top, spacing: 12) { content }.padding(.horizontal)
             }

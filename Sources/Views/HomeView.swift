@@ -9,6 +9,8 @@ struct HomeView: View {
     @State private var tick = 0
     /// 1.0.3: search results computed off the main thread; an older search can't overwrite a newer one.
     @State private var found = Found()
+    @StateObject private var tmdbRows = TmdbRows()
+    @State private var tmdbSheet: TmdbTitle?
     struct Found { var q = ""; var ch: [Channel] = []; var mv: [Movie] = []; var sh: [Show] = [] }
 
     var body: some View {
@@ -22,6 +24,8 @@ struct HomeView: View {
             .navigationTitle("الرئيسية")
             .refreshable { await library.reload() }
             .onAppear { tick += 1; Perf.shared.firstScreen("الرئيسية") }
+            .task(id: library.version) { await tmdbRows.load(library) }
+            .sheet(item: $tmdbSheet) { TmdbInfoSheet(title: $0) }
             .onChange(of: query) { _ in Perf.shared.mark("بحث الرئيسية") }
             .task(id: "\(query)|\(library.version)|\(library.groupsTick)") {
                 let q = query.trimmingCharacters(in: .whitespaces)
@@ -58,11 +62,14 @@ struct HomeView: View {
         let okM = library.allowedFilter(.movies)
         let okS = library.allowedFilter(.series)
         let okL = library.allowedFilter(.live)
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 26) {
             let cont = Perf.shared.measure("الرئيسية: متابعة المشاهدة") { continueItems(okM, okS) }
-            if !cont.isEmpty {
+            if let hero = cont.first {
+                NavigationLink { hero.destination } label: { HeroCard(item: hero) }.buttonStyle(.plain).padding(.horizontal)
+            }
+            if cont.count > 1 {
                 Shelf(title: "متابعة المشاهدة") {
-                    ForEach(cont) { c in
+                    ForEach(cont.dropFirst()) { c in
                         NavigationLink { c.destination } label: { PosterCard(title: c.title, poster: c.poster, progress: c.progress).frame(width: 112) }
                             .buttonStyle(.plain)
                     }
@@ -73,23 +80,6 @@ struct HomeView: View {
             let favCh = Perf.shared.measure("الرئيسية: القنوات المفضلة") {
                 Store.favorites.compactMap { id in library.index.channelPos[id].map { library.channels[$0] } }.filter { okL($0.categoryId) }
             }
-            if !favCh.isEmpty {
-                Shelf(title: "قنواتي المفضلة") {
-                    ForEach(Array(favCh.prefix(30).enumerated()), id: \.element.id) { i, ch in
-                        Button { play = .live(list: favCh, index: i) } label: {
-                            VStack(spacing: 6) {
-                                Art(url: ch.logo, fit: true).frame(width: 96, height: 60).padding(6)
-                                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
-                                Text(ch.name).font(.caption).lineLimit(1).frame(width: 108)
-                                if let n = epg.now[ch.id] { Text(n.title).font(.caption2).foregroundStyle(.secondary).lineLimit(1).frame(width: 108) }
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .task { epg.load(ch, from: library.xtream) }
-                    }
-                }
-            }
-
             let favs = Store.favorites
             let myMovies = Perf.shared.measure("الرئيسية: قائمتي (أفلام)") {
                 favs.compactMap { k in k.hasPrefix("movie:") ? library.index.moviePos[String(k.dropFirst(6))].map { library.movies[$0] } : nil }.filter { okM($0.categoryId) }
@@ -97,33 +87,101 @@ struct HomeView: View {
             let myShows = Perf.shared.measure("الرئيسية: قائمتي (مسلسلات)") {
                 favs.compactMap { k in k.hasPrefix("show:") ? library.index.showPos[String(k.dropFirst(5))].map { library.shows[$0] } : nil }.filter { okS($0.categoryId) }
             }
-            if !myMovies.isEmpty || !myShows.isEmpty {
-                Shelf(title: "قائمتي") {
-                    ForEach(myShows.prefix(20)) { s in
-                        NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
+            if !favCh.isEmpty || !myMovies.isEmpty || !myShows.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    SectionTitle(text: "المفضلة")
+                    if !favCh.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            LazyHStack(alignment: .top, spacing: 12) {
+                                ForEach(Array(favCh.prefix(30).enumerated()), id: \.element.id) { i, ch in
+                                    Button { play = .live(list: favCh, index: i) } label: {
+                                        VStack(spacing: 6) {
+                                            Art(url: ch.logo, fit: true).frame(width: 84, height: 52).padding(8)
+                                                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                            Text(ch.name).font(.caption).lineLimit(1).frame(width: 100)
+                                            if let n = epg.now[ch.id] { Text(n.title).font(.caption2).foregroundStyle(.secondary).lineLimit(1).frame(width: 100) }
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                    .task { epg.load(ch, from: library.xtream) }
+                                }
+                            }.padding(.horizontal)
+                        }
                     }
-                    ForEach(myMovies.prefix(20)) { m in
-                        NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
-                    }
-                }
-            }
-
-            let newShows: [Show] = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { Array(library.index.showsNewest.lazy.compactMap { $0 < library.shows.count ? library.shows[$0] : nil }.filter { okS($0.categoryId) }.prefix(20)) }
-            if !newShows.isEmpty {
-                Shelf(title: "مسلسلات حديثة التحديث") {
-                    ForEach(newShows) { s in
-                        NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
+                    if !myMovies.isEmpty || !myShows.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            LazyHStack(alignment: .top, spacing: 12) {
+                                ForEach(myShows.prefix(20)) { s in
+                                    NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
+                                }
+                                ForEach(myMovies.prefix(20)) { m in
+                                    NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
+                                }
+                            }.padding(.horizontal)
+                        }
                     }
                 }
             }
 
             let newMovies: [Movie] = Perf.shared.measure("الرئيسية: أفلام حديثة") { Array(library.index.moviesNewest.lazy.compactMap { $0 < library.movies.count ? library.movies[$0] : nil }.filter { okM($0.categoryId) }.prefix(20)) }
-            if !newMovies.isEmpty {
-                Shelf(title: "أفلام أضيفت حديثًا") {
-                    ForEach(newMovies) { m in
-                        NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
+            let newShows: [Show] = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { Array(library.index.showsNewest.lazy.compactMap { $0 < library.shows.count ? library.shows[$0] : nil }.filter { okS($0.categoryId) }.prefix(20)) }
+            if !newMovies.isEmpty || !newShows.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    SectionTitle(text: "أضيف حديثًا")
+                    if !newMovies.isEmpty {
+                        SubTitle(text: "أفلام")
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            LazyHStack(alignment: .top, spacing: 12) {
+                                ForEach(newMovies) { m in
+                                    NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
+                                }
+                            }.padding(.horizontal)
+                        }
+                    }
+                    if !newShows.isEmpty {
+                        SubTitle(text: "مسلسلات حُدّثت")
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            LazyHStack(alignment: .top, spacing: 12) {
+                                ForEach(newShows) { s in
+                                    NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
+                                }
+                            }.padding(.horizontal)
+                        }
                     }
                 }
+            }
+
+            // 1.0.9: TMDB rows, each card marked available / not available.
+            if TmdbKey.value != nil {
+                ForEach(tmdbRows.rows) { row in
+                    Shelf(title: row.name) {
+                        ForEach(row.items) { it in
+                            switch it.hit {
+                            case .movie(let m):
+                                NavigationLink { MovieDetail(movie: m, play: $play) } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
+                            case .show(let s):
+                                NavigationLink { SeriesDetail(show: s, play: $play) } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
+                            case nil:
+                                Button { tmdbSheet = it.title } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+                if tmdbRows.loading && tmdbRows.rows.isEmpty { ProgressView("جارٍ تحميل الرائج من TMDB…").frame(maxWidth: .infinity) }
+                if let e = tmdbRows.error {
+                    VStack(spacing: 8) {
+                        Text("تعذّر تحميل الرائج: \(e)").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        Button("إعادة المحاولة") { Task { await tmdbRows.load(library) } }.font(.footnote).buttonStyle(.bordered)
+                    }.frame(maxWidth: .infinity).padding(.horizontal)
+                }
+            }
+
+            if cont.isEmpty && favCh.isEmpty && myMovies.isEmpty && myShows.isEmpty && newMovies.isEmpty && newShows.isEmpty && library.hasData {
+                VStack(spacing: 8) {
+                    Image(systemName: "sparkles.tv").font(.largeTitle).foregroundStyle(Theme.accent)
+                    Text("ابدأ من القنوات أو الأفلام أو المسلسلات").font(.headline)
+                    Text("ما تشاهده وتضيفه للمفضلة يظهر هنا.").font(.footnote).foregroundStyle(.secondary)
+                }.frame(maxWidth: .infinity).padding(.top, 40)
             }
         }
         .padding(.vertical, 8)
@@ -199,5 +257,29 @@ struct HomeView: View {
             }
         }
         .padding(.vertical, 8)
+    }
+}
+
+/// The first "continue watching" title, large.
+struct HeroCard: View {
+    let item: HomeView.ContinueItem
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            PosterImage(url: item.poster, title: item.title).frame(width: 104, height: 156)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("تكملة المشاهدة").font(.caption.weight(.semibold)).foregroundStyle(Theme.teal)
+                Text(TmdbRule.split(item.title).title).font(.title3.bold()).lineLimit(3).minimumScaleFactor(0.8).multilineTextAlignment(.leading)
+                if let p = item.progress {
+                    ProgressView(value: p).tint(Theme.accent)
+                    Text("شاهدت \(Int(p * 100))٪").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                Label("استكمال", systemImage: "play.fill").font(.subheadline.weight(.bold))
+                    .padding(.horizontal, 16).padding(.vertical, 8).background(Theme.accent, in: Capsule()).foregroundStyle(.black)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 }
