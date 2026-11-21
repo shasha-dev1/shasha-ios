@@ -175,52 +175,67 @@ struct MovieDetail: View {
 
     private var otherMovies: [Movie] { library.copies(of: movie) }
     @State private var info = MovieInfo()
+    @StateObject private var tmdb = TmdbLoader()
     @Environment(\.openURL) private var openURL
+
+    private var meta: String {
+        let t = tmdb.title
+        let year = info.year ?? t?.year.map(String.init)
+        let genre = info.genre ?? (t?.genres.isEmpty == false ? t!.genres.prefix(3).joined(separator: "، ") : nil)
+        let rating = movie.rating.flatMap { Double($0) }.flatMap { $0 > 0 ? $0 : nil } ?? t?.rating.flatMap { $0 > 0 ? $0 : nil }
+        return [year, genre, rating.map { String(format: "★ %.1f", $0) }, info.duration].compactMap { $0 }.joined(separator: " · ")
+    }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Art(url: info.backdrop ?? movie.poster, maxPixel: 1400).frame(height: 220).clipped()
-                    .overlay(LinearGradient(colors: [.clear, Theme.bg], startPoint: .center, endPoint: .bottom))
-                Text(movie.name).font(.title2.bold()).padding(.horizontal)
-                Text([info.year, info.genre, movie.rating.map { "★ " + $0 }, info.duration].compactMap { $0 }.joined(separator: " · "))
-                    .foregroundStyle(Theme.accent).font(.subheadline).padding(.horizontal)
+            VStack(alignment: .leading, spacing: 16) {
+                DetailHeader(backdrop: tmdb.title?.backdrop ?? info.backdrop, poster: movie.poster ?? tmdb.title?.poster,
+                             title: TmdbRule.split(movie.name).title, meta: meta)
                 let key = "movie:" + movie.id
+                let resume = Store.position(key)
                 Button {
                     play = .vod(list: [VodPlay(title: movie.name, url: movie.url, key: key, query: SubQuery.clean(movie.name),
                                                   probe: info.probe, container: movie.ext)], index: 0)
                 } label: {
-                    Label(Store.position(key) != nil ? "استكمال" : "تشغيل", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 6)
-                }.buttonStyle(.borderedProminent).padding(.horizontal)
+                    VStack(spacing: 2) {
+                        Label(resume != nil ? "استكمال" : "تشغيل", systemImage: "play.fill").font(.headline)
+                        if let r = resume, r.dur > 0 { Text("من \(Clock.text(r.pos)) من أصل \(Clock.text(r.dur))").font(.caption) }
+                    }
+                    .frame(maxWidth: .infinity).padding(.vertical, 8)
+                }
+                .buttonStyle(.borderedProminent).padding(.horizontal)
                 if let t = info.trailerURL {
                     Button { openURL(t) } label: { Label("الإعلان", systemImage: "play.rectangle").frame(maxWidth: .infinity).padding(.vertical, 4) }
                         .buttonStyle(.bordered).padding(.horizontal)
                 }
                 if CopyRule.isDolbyVision5(info.probe) {
-                    Label("هذه النسخة Dolby Vision 5 بدون طبقة HDR10. ألوانها تطلع خضراء/بنفسجية على الآيفون (حسب بيانات المزوّد). اختر نسخة أخرى إن وجدت.",
+                    Label("هذه النسخة Dolby Vision 5 بدون طبقة HDR10 (حسب بيانات المزوّد). إذا ظهرت الألوان غريبة جرّب نسخة أخرى.",
                           systemImage: "exclamationmark.triangle.fill").font(.footnote).foregroundStyle(.orange).padding(.horizontal)
+                }
+                if let p = info.plot ?? tmdb.title?.overview {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ExpandableText(text: p)
+                        if info.plot == nil { Text("الملخص من TMDB").font(.caption2).foregroundStyle(.secondary) }
+                    }.padding(.horizontal)
                 }
                 let copies = otherMovies
                 if !copies.isEmpty {
                     Text("نسخ أخرى (\(copies.count))").font(.headline).padding(.horizontal)
                     ForEach(copies) { c in
-                        NavigationLink { MovieDetail(movie: c, play: $play) } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(c.name).lineLimit(2).foregroundStyle(.primary)
-                                Text(library.vodCats.first { $0.id == c.categoryId }?.name ?? "").font(.caption).foregroundStyle(.secondary)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading).padding(10)
-                            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
-                        }
-                        .padding(.horizontal)
+                        NavigationLink { MovieDetail(movie: c, play: $play) } label: { CopyRow(name: c.name, group: library.vodCats.first { $0.id == c.categoryId }?.name) }
+                            .padding(.horizontal)
                     }
                 }
-                if let p = info.plot { Text(p).padding(.horizontal) }
             }
+            .padding(.bottom, 24)
         }
+        .background(Theme.bg)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) { FavButton(key: "movie:" + movie.id) } }
-        .task { if let x = library.xtream { info = await x.movieInfo(movie.id) } }
+        .task {
+            if let x = library.xtream { info = await x.movieInfo(movie.id) }
+            await tmdb.load(.movie, name: movie.name, providerId: info.tmdbId)
+        }
     }
 }
 
@@ -319,78 +334,115 @@ struct SeriesDetail: View {
     let show: Show
     @Binding var play: PlayItem?
 
-    /// The same series in other provider groups (4K / FHD / Arabic-subbed copies…).
-    /// 1.0.3: from the index (was CopyRule.key over every series on each redraw: the 285 ms stall on opening).
+    /// The same series in other provider groups (4K / FHD / Arabic-subbed copies…). 1.0.3: from the index.
     private var otherShows: [Show] { library.copies(of: show) }
     @State private var episodes: [Episode] = []
     @State private var season = 1
     @State private var loading = true
+    @State private var loadError = false
+    @State private var copiesOpen = false
+    @StateObject private var tmdb = TmdbLoader()
 
     var body: some View {
-        List {
-            Section {
-                HStack(alignment: .top, spacing: 12) {
-                    Art(url: show.poster).frame(width: 100, height: 150).clipShape(RoundedRectangle(cornerRadius: 8))
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(show.name).font(.title3.bold())
-                        if let r = show.rating { Text("★ " + r).foregroundStyle(Theme.accent) }
-                        if let p = show.plot { Text(p).font(.footnote).lineLimit(6) }
-                    }
-                }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 14) {
+                let t = tmdb.title
+                let meta = [t?.year.map(String.init), t?.genres.isEmpty == false ? t!.genres.prefix(3).joined(separator: "، ") : nil,
+                            (show.rating.flatMap { Double($0) }.flatMap { $0 > 0 ? $0 : nil } ?? t?.rating.flatMap { $0 > 0 ? $0 : nil }).map { String(format: "★ %.1f", $0) },
+                            episodes.isEmpty ? nil : "\(Set(episodes.map(\.season)).count) موسم · \(episodes.count) حلقة"].compactMap { $0 }.joined(separator: " · ")
+                DetailHeader(backdrop: t?.backdrop, poster: show.poster ?? t?.poster, title: TmdbRule.split(show.name).title, meta: meta)
                 if let next = nextEpisode {
-                    Button { open(next) } label: { Label("استكمال: الموسم \(next.season) · الحلقة \(next.number)", systemImage: "play.fill").frame(maxWidth: .infinity) }
-                        .buttonStyle(.borderedProminent)
+                    Button { open(next) } label: {
+                        VStack(spacing: 2) {
+                            Label(Store.position(key(next)) != nil ? "استكمال" : "تشغيل", systemImage: "play.fill").font(.headline)
+                            Text("الموسم \(next.season) · الحلقة \(next.number)").font(.caption)
+                        }.frame(maxWidth: .infinity).padding(.vertical, 8)
+                    }
+                    .buttonStyle(.borderedProminent).padding(.horizontal)
+                } else if let first = episodes.first {
+                    Button { open(first) } label: { Label("تشغيل الحلقة الأولى", systemImage: "play.fill").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8) }
+                        .buttonStyle(.borderedProminent).padding(.horizontal)
                 }
-            }
-            if episodes.contains(where: { CopyRule.isDolbyVision5($0.probe) }) {
-                Section {
-                    Label("هذه النسخة Dolby Vision 5 بدون طبقة HDR10. ألوانها تطلع خضراء/بنفسجية على الآيفون (حسب بيانات المزوّد). اختر نسخة أخرى إن وجدت.",
-                          systemImage: "exclamationmark.triangle.fill").font(.footnote).foregroundStyle(.orange)
+                if let p = show.plot?.nilIfEmpty ?? t?.overview {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ExpandableText(text: p)
+                        if show.plot?.nilIfEmpty == nil { Text("الملخص من TMDB").font(.caption2).foregroundStyle(.secondary) }
+                    }.padding(.horizontal)
                 }
-            }
-            let copies = otherShows
-            if !copies.isEmpty {
-                Section("نسخ أخرى (\(copies.count))") {
-                    ForEach(copies) { c in
-                        NavigationLink { SeriesDetail(show: c, play: $play) } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(c.name).lineLimit(2)
-                                Text(library.seriesCats.first { $0.id == c.categoryId }?.name ?? "").font(.caption).foregroundStyle(.secondary)
-                            }
+                if episodes.contains(where: { CopyRule.isDolbyVision5($0.probe) }) {
+                    Label("بعض الحلقات Dolby Vision 5 بدون طبقة HDR10 (حسب بيانات المزوّد). إذا ظهرت الألوان غريبة جرّب نسخة أخرى.",
+                          systemImage: "exclamationmark.triangle.fill").font(.footnote).foregroundStyle(.orange).padding(.horizontal)
+                }
+                let copies = otherShows
+                if !copies.isEmpty {
+                    DisclosureGroup(isExpanded: $copiesOpen) {
+                        ForEach(copies) { c in
+                            NavigationLink { SeriesDetail(show: c, play: $play) } label: { CopyRow(name: c.name, group: library.seriesCats.first { $0.id == c.categoryId }?.name) }
                         }
+                    } label: { Text("نسخ أخرى (\(copies.count))").font(.headline) }
+                    .padding(.horizontal)
+                }
+                let seasons = Array(Set(episodes.map(\.season))).sorted()
+                if seasons.count > 1 {
+                    ScrollViewReader { proxy in
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(seasons, id: \.self) { n in
+                                    Button { season = n } label: {
+                                        Text("الموسم \(n)").font(.subheadline.weight(.semibold))
+                                            .padding(.horizontal, 14).padding(.vertical, 8)
+                                            .background(season == n ? Theme.accent : Theme.surface, in: Capsule())
+                                            .foregroundStyle(season == n ? Color.black : Color.white)
+                                    }.id(n)
+                                }
+                            }.padding(.horizontal)
+                        }
+                        .onAppear { proxy.scrollTo(season, anchor: .center) }
                     }
                 }
-            }
-            let seasons = Array(Set(episodes.map(\.season))).sorted()
-            if seasons.count > 1 {
-                Picker("الموسم", selection: $season) { ForEach(seasons, id: \.self) { Text("الموسم \($0)").tag($0) } }
-            }
-            if loading { ProgressView() }
-            ForEach(episodes.filter { $0.season == season }) { e in
-                Button { open(e) } label: {
-                    HStack {
-                        Text("\(e.number)").font(.headline.monospacedDigit()).frame(width: 34).foregroundStyle(Theme.accent)
-                        VStack(alignment: .leading) {
-                            Text(e.title.isEmpty ? "الحلقة \(e.number)" : e.title).lineLimit(2).foregroundStyle(.primary)
-                            if let p = progress(key(e)) { ProgressView(value: p).tint(Theme.accent) }
-                        }
+                if loading { ProgressView("جارٍ تحميل الحلقات…").frame(maxWidth: .infinity).padding() }
+                else if loadError {
+                    VStack(spacing: 10) {
+                        Text("تعذّر تحميل الحلقات").font(.headline)
+                        Button("إعادة المحاولة") { Task { await loadEpisodes() } }.buttonStyle(.borderedProminent)
+                    }.frame(maxWidth: .infinity).padding()
+                } else if episodes.isEmpty {
+                    Text("لا توجد حلقات لهذا المسلسل عند المزوّد.").foregroundStyle(.secondary).frame(maxWidth: .infinity).padding()
+                }
+                let current = nextEpisode?.id
+                let recent = Set(Store.recent)
+                ForEach(episodes.filter { $0.season == season }) { e in
+                    Button { open(e) } label: {
+                        EpisodeRow(episode: e, showName: show.name, progress: progress(key(e)), current: e.id == current,
+                                   watched: Store.position(key(e)) == nil && recent.contains(key(e)))
                     }
+                    .buttonStyle(.plain).padding(.horizontal)
                 }
             }
+            .padding(.bottom, 24)
         }
-        .navigationTitle(show.name).navigationBarTitleDisplayMode(.inline)
+        .background(Theme.bg)
+        .navigationTitle(TmdbRule.split(show.name).title).navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) { FavButton(key: "show:" + show.id) } }
         .task {
-            guard let x = library.xtream else { loading = false; return }
             let t0 = Perf.now()
             Perf.shared.mark("تفاصيل مسلسل")
             Perf.shared.memory("فتح تفاصيل مسلسل")
-            episodes = (try? await x.episodes(seriesId: show.id)) ?? []
-            season = nextEpisode?.season ?? episodes.first?.season ?? 1
-            loading = false
+            await loadEpisodes()
             Perf.shared.untilNextFrame("تفاصيل مسلسل: فتح ← الحلقات معروضة", since: t0, "\(episodes.count) حلقة")
             Perf.shared.mark("تفاصيل مسلسل: عرض الحلقات")
+            await tmdb.load(.tv, name: show.name)
         }
+    }
+
+    private func loadEpisodes() async {
+        guard let x = library.xtream else { loading = false; return }
+        loading = true; loadError = false
+        do {
+            episodes = try await x.episodes(seriesId: show.id)
+            season = nextEpisode?.season ?? episodes.first?.season ?? 1
+        } catch { loadError = true }
+        loading = false
     }
 
     private func key(_ e: Episode) -> String { "ep:" + e.id }

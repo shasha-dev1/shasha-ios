@@ -29,6 +29,42 @@ struct Xtream {
     private func esc(_ s: String) -> String { s.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(CharacterSet(charactersIn: "/?&=+"))) ?? s }
 
     func api(_ action: String?, _ extra: [String: String] = [:]) async throws -> Any {
+        let (data, name, measured) = try await download(action, extra)
+        return try await Task.detached(priority: .userInitiated) {
+            let t1 = Perf.now()
+            let o = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
+            if measured { Perf.shared.record("تحليل JSON \(name)", since: t1) }
+            return o
+        }.value
+    }
+
+    /// 1.0.8: the big lists (channels, movies, series) are parsed AND converted in one step on a serial queue, inside an
+    /// autorelease pool: only one JSON tree exists at a time and it is freed as soon as its list is converted.
+    /// (1.0.6: memory reached 1,002 MB right after the three lists were parsed together.)
+    private static let parseQueue = DispatchQueue(label: "shasha.parse", qos: .userInitiated)
+
+    func bigList<T>(_ action: String, _ what: String, _ convertName: String, _ map: @escaping ([String: Any]) -> T?) async throws -> [T] {
+        let (data, name, _) = try await download(action, [:])
+        return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<[T], Error>) in
+            Self.parseQueue.async {
+                autoreleasepool {
+                    do {
+                        let t1 = Perf.now()
+                        let o = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
+                        Perf.shared.record("تحليل JSON \(name)", since: t1)
+                        guard let a = o as? [[String: Any]] else { throw LoadError.network("رد غير متوقع من المزوّد (\(what))") }
+                        let t2 = Perf.now()
+                        let out = a.compactMap(map)
+                        Perf.shared.record(convertName, since: t2, "\(out.count)")
+                        cont.resume(returning: out)
+                    } catch { cont.resume(throwing: error) }
+                }
+                Perf.shared.memory("بعد تحرير JSON \(name)")
+            }
+        }
+    }
+
+    private func download(_ action: String?, _ extra: [String: String]) async throws -> (Data, String, Bool) {
         var c = URLComponents(string: server + "/player_api.php")
         var q = [URLQueryItem(name: "username", value: user), URLQueryItem(name: "password", value: pass)]
         if let action { q.append(URLQueryItem(name: "action", value: action)) }
@@ -43,12 +79,7 @@ struct Xtream {
         let t0 = Perf.now()
         do { (data, _) = try await URLSession.shared.data(for: req) } catch { throw LoadError.network(error.localizedDescription) }
         if measured { Perf.shared.record("شبكة \(name)", since: t0, ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file)) }
-        return try await Task.detached(priority: .userInitiated) {
-            let t1 = Perf.now()
-            let o = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
-            if measured { Perf.shared.record("تحليل JSON \(name)", since: t1) }
-            return o
-        }.value
+        return (data, name, measured)
     }
 
     /// Login check: user_info.auth == 1.
@@ -77,32 +108,31 @@ struct Xtream {
     func episodeURL(_ id: String, _ ext: String) -> String { "\(server)/series/\(esc(user))/\(esc(pass))/\(id).\(ext)" }
 
     func channels() async throws -> [Channel] {
-        let raw = try strictList(try await api("get_live_streams"), "القنوات")
-        return Perf.shared.measure("تحويل القنوات", "\(raw.count)") { raw.compactMap { d in
+        let me = self
+        return try await bigList("get_live_streams", "القنوات", "تحويل القنوات") { d in
             guard let id = J.s(d["stream_id"]) else { return nil }
             let days = J.i(d["tv_archive"]) == 1 ? max(1, J.i(d["tv_archive_duration"])) : 0
-            return Channel(id: id, name: J.s(d["name"]) ?? "—", logo: J.s(d["stream_icon"]), categoryId: J.s(d["category_id"]) ?? "", url: liveURL(id),
+            return Channel(id: id, name: J.s(d["name"]) ?? "—", logo: J.s(d["stream_icon"]), categoryId: J.s(d["category_id"]) ?? "", url: me.liveURL(id),
                            archiveDays: days)
-        } }
+        }
     }
 
     func movies() async throws -> [Movie] {
-        let raw = try strictList(try await api("get_vod_streams"), "الأفلام")
-        return Perf.shared.measure("تحويل الأفلام", "\(raw.count)") { raw.compactMap { d in
+        let me = self
+        return try await bigList("get_vod_streams", "الأفلام", "تحويل الأفلام") { d in
             guard let id = J.s(d["stream_id"]) else { return nil }
             let ext = J.s(d["container_extension"]) ?? "mp4"
             return Movie(id: id, name: J.s(d["name"]) ?? "—", poster: J.s(d["stream_icon"]), categoryId: J.s(d["category_id"]) ?? "",
-                         rating: J.s(d["rating"]), ext: ext, added: J.i(d["added"]), url: movieURL(id, ext))
-        } }
+                         rating: J.s(d["rating"]), ext: ext, added: J.i(d["added"]), url: me.movieURL(id, ext))
+        }
     }
 
     func shows() async throws -> [Show] {
-        let raw = try strictList(try await api("get_series"), "المسلسلات")
-        return Perf.shared.measure("تحويل المسلسلات", "\(raw.count)") { raw.compactMap { d in
+        return try await bigList("get_series", "المسلسلات", "تحويل المسلسلات") { d in
             guard let id = J.s(d["series_id"]) else { return nil }
             return Show(id: id, name: J.s(d["name"]) ?? "—", poster: J.s(d["cover"]), categoryId: J.s(d["category_id"]) ?? "",
                         rating: J.s(d["rating"]), plot: J.s(d["plot"]), updated: J.i(d["last_modified"]))
-        } }
+        }
     }
 
     func episodes(seriesId: String) async throws -> [Episode] {
@@ -148,7 +178,8 @@ struct Xtream {
         return MovieInfo(probe: DiagRule.probeLines(video: info["video"] as? [String: Any], audio: info["audio"] as? [String: Any]),
                          plot: J.s(info["plot"]) ?? J.s(info["description"]), genre: J.s(info["genre"]), year: J.s(info["releasedate"]).map { String($0.prefix(4)) },
                          duration: J.s(info["duration"]), backdrop: backdrop,
-                         trailer: J.s(info["youtube_trailer"]) ?? J.s(info["trailer"]))
+                         trailer: J.s(info["youtube_trailer"]) ?? J.s(info["trailer"]),
+                         tmdbId: J.s(info["tmdb_id"]) ?? J.s(info["tmdb"]))
     }
 
     /// Full guide of one channel (get_simple_data_table). Titles/descriptions are base64 on most servers.

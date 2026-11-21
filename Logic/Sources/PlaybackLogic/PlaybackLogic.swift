@@ -311,3 +311,60 @@ enum SearchRule {
         foldedQuery.isEmpty || foldedName.contains(foldedQuery)
     }
 }
+
+/// 1.0.9: matching provider titles to TMDB (ported from the TV app's TitleClean / TmdbParse rules).
+/// A match is accepted only when the normalised name or original name equals the search term and, when both years
+/// are known, they are within one year; more than one such result = no match (never guess).
+enum TmdbRule {
+    struct Candidate: Equatable { let id: Int; let name: String; let originalName: String; let year: Int? }
+
+    /// "AR-TR-S - Yeraltı (2026)" → (tag "AR-TR-S", title "Yeraltı (2026)").
+    static func split(_ name: String) -> (tag: String?, title: String) {
+        let pattern = #"^\s*([A-Z0-9]{2,4}(?:[-_][A-Z0-9]{1,4}){0,3})\s*[-|:•]\s*(.+)$"#
+        guard let re = try? NSRegularExpression(pattern: pattern),
+              let m = re.firstMatch(in: name, range: NSRange(name.startIndex..., in: name)), m.numberOfRanges == 3,
+              let t = Range(m.range(at: 1), in: name), let r = Range(m.range(at: 2), in: name) else {
+            return (nil, name.trimmingCharacters(in: .whitespaces))
+        }
+        let title = name[r].trimmingCharacters(in: .whitespaces)
+        return title.isEmpty ? (nil, name.trimmingCharacters(in: .whitespaces)) : (String(name[t]), title)
+    }
+
+    /// Year written in the title, "(2019)" or "[2019]".
+    static func year(_ title: String) -> Int? {
+        guard let r = title.range(of: #"[(\[]\s*(19|20)\d{2}\s*[)\]]"#, options: .regularExpression) else { return nil }
+        return Int(title[r].filter(\.isNumber))
+    }
+
+    /// "Yeraltı (2026) تحت الارض" → ["Yeraltı تحت الارض", "Yeraltı", "تحت الارض"].
+    static func searchTerms(_ title: String) -> [String] {
+        func squeeze(_ s: String) -> String { s.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
+        let noYear = squeeze(title.replacingOccurrences(of: #"[(\[]\s*(19|20)\d{2}\s*[)\]]"#, with: " ", options: .regularExpression))
+        let isArabic: (Character) -> Bool = { c in c.unicodeScalars.allSatisfy { (0x0600...0x06FF).contains($0.value) } }
+        let arabic = squeeze(String(noYear.filter { isArabic($0) || $0 == " " }))
+        let latin = squeeze(String(noYear.filter { !isArabic($0) }))
+        var out: [String] = []
+        for t in [noYear, latin, arabic] where t.count >= 2 && !out.contains(t) { out.append(t) }
+        return out
+    }
+
+    /// Letters and digits only, folded (case, accents, Arabic variants).
+    static func key(_ s: String) -> String {
+        String(SearchRule.fold(s).unicodeScalars.filter { CharacterSet.letters.contains($0) || CharacterSet.decimalDigits.contains($0) }.map(Character.init))
+    }
+
+    static func choose(_ results: [Candidate], term: String, year: Int?) -> Int? {
+        let k = key(term)
+        guard !k.isEmpty else { return nil }
+        let m = results.filter { r in
+            (key(r.name) == k || key(r.originalName) == k) && (year == nil || r.year == nil || abs(r.year! - year!) <= 1)
+        }
+        return m.count == 1 ? m[0].id : nil
+    }
+
+    /// Library title key for "available in your library": tag and year removed, folded letters/digits.
+    static func libraryKey(_ providerName: String) -> String {
+        let t = split(providerName).title.replacingOccurrences(of: #"[(\[][^)\]]*[)\]]"#, with: " ", options: .regularExpression)
+        return key(t)
+    }
+}

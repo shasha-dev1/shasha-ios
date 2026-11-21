@@ -39,6 +39,7 @@ struct SettingsView: View {
                 GroupsSettingsSection(open: $groupsOpen)
                 LanguageSettingsSection()
                 SubsSettingsSection()
+                TmdbSettingsSection()
                 Section {
                     NavigationLink { PerfView() } label: { Label("قياسات الأداء", systemImage: "speedometer") }
                 } header: { Text("الأداء") } footer: {

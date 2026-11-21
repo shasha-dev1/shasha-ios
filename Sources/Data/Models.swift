@@ -85,6 +85,8 @@ struct MovieInfo {
     var backdrop: String?
     /// YouTube video id or link of the trailer, if the provider gives one.
     var trailer: String?
+    /// TMDB id the provider sent with the film, if any (1.0.9: used before a name search).
+    var tmdbId: String?
 
     /// Link that opens the trailer in YouTube (app or web).
     var trailerURL: URL? {

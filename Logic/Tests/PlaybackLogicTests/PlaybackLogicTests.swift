@@ -294,3 +294,25 @@ final class SearchRuleTests: XCTestCase {
         XCTAssertTrue(SearchRule.matches(SearchRule.fold("anything"), ""))
     }
 }
+
+final class TmdbRuleTests: XCTestCase {
+    func testSplitTag() {
+        XCTAssertEqual(TmdbRule.split("AR-TR-S - Yeraltı (2026)").tag, "AR-TR-S")
+        XCTAssertEqual(TmdbRule.split("AR-TR-S - Yeraltı (2026)").title, "Yeraltı (2026)")
+        XCTAssertNil(TmdbRule.split("The Diplomat").tag)
+    }
+    func testYearAndTerms() {
+        XCTAssertEqual(TmdbRule.year("Yeraltı (2026) تحت الارض"), 2026)
+        XCTAssertEqual(TmdbRule.searchTerms("Yeraltı (2026) تحت الارض"), ["Yeraltı تحت الارض", "Yeraltı", "تحت الارض"])
+    }
+    func testChooseOnlyUnambiguous() {
+        let a = TmdbRule.Candidate(id: 1, name: "Dune", originalName: "Dune", year: 2021)
+        let b = TmdbRule.Candidate(id: 2, name: "Dune", originalName: "Dune", year: 1984)
+        XCTAssertEqual(TmdbRule.choose([a, b], term: "Dune", year: 2021), 1)
+        XCTAssertNil(TmdbRule.choose([a, b], term: "Dune", year: nil))
+        XCTAssertNil(TmdbRule.choose([a], term: "Dune Part Two", year: 2021))
+    }
+    func testLibraryKey() {
+        XCTAssertEqual(TmdbRule.libraryKey("EN| The Batman (2022) [4K]"), TmdbRule.key("The Batman"))
+    }
+}

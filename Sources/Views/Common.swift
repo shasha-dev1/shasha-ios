@@ -131,3 +131,131 @@ struct Chips: View {
             .foregroundStyle(selected == id ? Color.black : Color.white)
     }
 }
+
+// MARK: - 1.0.9 shared detail components
+
+/// "1:02:15" / "42:07" for resume points.
+enum Clock {
+    static func text(_ seconds: Double) -> String {
+        let s = Int(max(0, seconds)), h = s / 3600, m = (s % 3600) / 60, sec = s % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec) : String(format: "%d:%02d", m, sec)
+    }
+}
+
+/// Backdrop (when there is one) with the poster and the title over its lower edge.
+struct DetailHeader: View {
+    let backdrop: String?
+    let poster: String?
+    let title: String
+    let meta: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .bottom) {
+                Group {
+                    if let b = backdrop { Art(url: b, maxPixel: 1400) } else { LinearGradient(colors: [Theme.surface, Theme.bg], startPoint: .top, endPoint: .bottom) }
+                }
+                .frame(height: 210).frame(maxWidth: .infinity).clipped()
+                LinearGradient(colors: [.clear, Theme.bg.opacity(0.85), Theme.bg], startPoint: .top, endPoint: .bottom).frame(height: 120)
+            }
+            HStack(alignment: .bottom, spacing: 14) {
+                PosterImage(url: poster, title: title).frame(width: 96, height: 144)
+                    .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title).font(.title2.bold()).lineLimit(3).minimumScaleFactor(0.75).multilineTextAlignment(.leading)
+                    if !meta.isEmpty { Text(meta).font(.subheadline).foregroundStyle(Theme.accent).lineLimit(2) }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal).padding(.top, -64)
+        }
+    }
+}
+
+/// Poster with a tidy placeholder (first letter of the title) when there is no picture.
+struct PosterImage: View {
+    let url: String?
+    let title: String
+    var body: some View {
+        Group {
+            if let url, !url.isEmpty { Art(url: url) } else { LetterPlaceholder(title: title) }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+struct LetterPlaceholder: View {
+    let title: String
+    var body: some View {
+        ZStack {
+            Theme.surface2
+            Text(String(TmdbRule.split(title).title.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased())
+                .font(.system(size: 34, weight: .bold, design: .rounded)).foregroundStyle(Theme.accent.opacity(0.85))
+        }
+    }
+}
+
+struct CopyRow: View {
+    let name: String
+    let group: String?
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).lineLimit(2).foregroundStyle(.primary).multilineTextAlignment(.leading)
+                if let group, !group.isEmpty { Text(group).font(.caption).foregroundStyle(.secondary) }
+            }
+            Spacer()
+            Image(systemName: "chevron.left").font(.caption).foregroundStyle(.tertiary)
+        }
+        .padding(12).background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct EpisodeRow: View {
+    let episode: Episode
+    let showName: String
+    let progress: Double?
+    let current: Bool
+    let watched: Bool
+
+    private var title: String {
+        let t = episode.title.trimmingCharacters(in: .whitespaces)
+        let series = TmdbRule.split(showName).title
+        if t.isEmpty || TmdbRule.key(t) == TmdbRule.key(series) || TmdbRule.key(t).hasPrefix(TmdbRule.key(series)) && t.count < series.count + 12 {
+            return "الحلقة \(episode.number)"
+        }
+        return t
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                if let img = episode.image, !img.isEmpty { Art(url: img, maxPixel: 400) } else { Theme.surface2 }
+                Text("\(episode.number)").font(.headline.monospacedDigit()).foregroundStyle(.white)
+                    .padding(6).background(.black.opacity(0.45), in: Circle())
+            }
+            .frame(width: 112, height: 63).clipShape(RoundedRectangle(cornerRadius: 8))
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 6) {
+                    Text(title).font(.subheadline.weight(.semibold)).lineLimit(2).foregroundStyle(.primary).multilineTextAlignment(.leading)
+                    if current { Badge(text: "الحالية", color: Theme.accent) }
+                    else if watched { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.teal).font(.caption) }
+                }
+                if let p = progress { ProgressView(value: p).tint(Theme.accent) }
+                if let plot = episode.plot, !plot.isEmpty { Text(plot).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(current ? Theme.accent.opacity(0.12) : Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct Badge: View {
+    let text: String
+    let color: Color
+    var body: some View {
+        Text(text).font(.caption2.weight(.bold)).padding(.horizontal, 7).padding(.vertical, 3)
+            .background(color.opacity(0.2), in: Capsule()).foregroundStyle(color)
+    }
+}

@@ -6,6 +6,8 @@ enum Theme {
     static let surface = Color(red: 27 / 255, green: 38 / 255, blue: 52 / 255)
     static let accent = Color(red: 242 / 255, green: 179 / 255, blue: 61 / 255)
     static let teal = Color(red: 43 / 255, green: 179 / 255, blue: 163 / 255)
+    /// 1.0.9: one step above `surface` (placeholders, pressed rows).
+    static let surface2 = Color(red: 36 / 255, green: 49 / 255, blue: 63 / 255)
 }
 
 @main
