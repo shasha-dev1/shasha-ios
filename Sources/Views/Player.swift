@@ -90,7 +90,8 @@ final class PlayerModel: ObservableObject {
                 self.pipRetry = 1
                 // Out of the delegate callback before replacing the controller.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.mpvPiP.rebuild(); self.mpvPiP.resetLayer()
+                    self.mpvPiP.rebuild(); self.installPiPView()
+                    self.mpv.setPiPOutput(true, pipLayer: self.mpvPiP.view.displayLayer)
                     self.pipStartPoll()
                 }
                 return
@@ -136,12 +137,23 @@ final class PlayerModel: ObservableObject {
         guard engine == .vlc, !pipActive, playing, let c = videoView.windowController else { return }
         c.startPictureInPicture()
     }
+    /// Puts the current PiP view under mpv's Metal view (replacing the previous one in the hierarchy).
+    private func installPiPView() {
+        guard let host = hostView else { return }
+        for v in host.subviews where v is MPVPiPView && v !== mpvPiP.view { v.removeFromSuperview() }
+        if mpvPiP.view.superview !== host {
+            mpvPiP.view.frame = host.bounds
+            mpvPiP.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            host.insertSubview(mpvPiP.view, at: 0)
+        }
+    }
+
     /// mpv picture in picture: switch the output to the sample-buffer layer, wait for its first frames, then start.
     func startMPVPiP() {
         guard mpvPiP.controller != nil else { onMPVPiPUnavailable?("الجهاز لا يدعم صورة داخل صورة"); return }
         pipRetry = 0
-        mpvPiP.rebuild()          // fresh controller for every session, made while no PiP callback is running
-        mpvPiP.resetLayer()
+        mpvPiP.rebuild()          // new layer + controller for every session, made while no PiP callback is running
+        installPiPView()
         mpvPiP.sync(timeS: Double(timeMs) / 1000, playing: !viewerPaused, rate: rate)
         mpv.setPiPOutput(true, pipLayer: mpvPiP.view.displayLayer)
         pipStartPoll()

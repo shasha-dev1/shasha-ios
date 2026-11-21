@@ -344,8 +344,11 @@ extension MPVCore {
 
 /// AVPictureInPictureController for mpv's sample-buffer layer, with the playback state iOS asks for.
 final class MPVPiP: NSObject, AVPictureInPictureControllerDelegate, AVPictureInPictureSampleBufferPlaybackDelegate {
-    let view = MPVPiPView()
+    private(set) var view = MPVPiPView()
     private(set) var controller: AVPictureInPictureController?
+    /// Earlier layer+controller pairs, kept alive together (0.9.9): the device crash was AVKit reading, from the
+    /// layer, a controller that had been released (objc_retain in avkit_sampleBufferDisplayLayerPlayerController).
+    private var retired: [(MPVPiPView, AVPictureInPictureController)] = []
     private var timebase: CMTimebase?
 
     var isPaused: () -> Bool = { false }
@@ -358,26 +361,42 @@ final class MPVPiP: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
 
     override init() {
         super.init()
-        view.backgroundColor = .black
-        view.displayLayer.videoGravity = .resizeAspect
         var tb: CMTimebase?
         CMTimebaseCreateWithSourceClock(allocator: kCFAllocatorDefault, sourceClock: CMClockGetHostTimeClock(), timebaseOut: &tb)
         if let tb {
             CMTimebaseSetTime(tb, time: .zero)
             CMTimebaseSetRate(tb, rate: 1)
-            view.displayLayer.controlTimebase = tb
             timebase = tb
         }
-        rebuild()
+        configure(view)
+        makeController()
     }
 
-    /// A fresh controller for the same layer (0.9.6: after one PiP session iOS refused the next start on the old one).
-    func rebuild() {
+    private func configure(_ v: MPVPiPView) {
+        v.backgroundColor = .black
+        v.displayLayer.videoGravity = .resizeAspect
+        if let timebase { v.displayLayer.controlTimebase = timebase }
+    }
+
+    private func makeController() {
         guard AVPictureInPictureController.isPictureInPictureSupported() else { return }
-        controller?.delegate = nil
         let c = AVPictureInPictureController(contentSource: .init(sampleBufferDisplayLayer: view.displayLayer, playbackDelegate: self))
         c.delegate = self
         controller = c
+    }
+
+    /// A NEW layer with its own NEW controller for the next session (iOS refused a second start on the used ones).
+    /// The used pair is never split: both stay alive together, so the old layer can't point at a released controller.
+    /// The caller puts the new view in the hierarchy and gives its layer to mpv.
+    func rebuild() {
+        if let old = controller {
+            old.delegate = nil
+            retired.append((view, old))
+            if retired.count > 6 { retired.removeFirst() }   // long finished by then
+        }
+        view = MPVPiPView()
+        configure(view)
+        makeController()
     }
 
     /// Clears a layer iOS left failed/interrupted after the last PiP session, so new frames are shown again.
