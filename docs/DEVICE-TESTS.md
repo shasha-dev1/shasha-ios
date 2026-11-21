@@ -4,10 +4,10 @@ Only results reported by the owner from his own iPhone are recorded here. A succ
 
 | Version (CI build) | Commit | Date | Reported working on device | Not reported yet |
 |---|---|---|---|---|
-| 1.0.0 (58) | `000e2cb` | 2026-11-21 | Colours (incl. Dolby Vision), subtitles, picture in picture | Live channels, resume / next episode, audio switching, Apple player hand-off, Control Center |
+| 1.0.0 (57) | `08868a7` | 2026-11-21 | Colours (incl. Dolby Vision), subtitles, picture in picture | Live channels, resume / next episode, audio switching, Apple player hand-off, Control Center |
 | 0.9.9 (56) | `6167ba8` | 2026-11-21 | All tests of that round: repeated PiP, PiP on live, Dolby Vision PiP with correct colours and Arabic subtitles (last version with VLC, branch `vlc-engine`) | — |
 
-Build 58 has the same app code as build 57 (only README changed).
+Build 58 (`000e2cb`) has the same app code as build 57 (only README changed); the owner tested build 57.
 
 ## Playback settings proven on device (keep unless a test proves otherwise)
 - Normal output: `vo=gpu-next`, `gpu-api=vulkan`, `gpu-context=moltenvk`, `hwdec=videotoolbox`.
