@@ -77,8 +77,9 @@ final class PlayerModel: ObservableObject {
             DiagLog.shared.note("[التطبيق] صورة داخل صورة (mpv): \(on ? "بدأت" : "انتهت")")
             self.pipActive = on
             if !on {
+                // No controller rebuild here (0.9.8): this runs inside the controller's own delegate callback, and
+                // releasing it there is the likely crash on leaving PiP. The next start makes a fresh one.
                 self.mpv.setPiPOutput(false, pipLayer: self.mpvPiP.view.displayLayer)
-                self.mpvPiP.rebuild()
             }
         }
         mpvPiP.onFailed = { [weak self] msg in
@@ -87,8 +88,11 @@ final class PlayerModel: ObservableObject {
             // One retry with a fresh controller and a cleared layer before falling back to VLC.
             if self.pipRetry == 0 {
                 self.pipRetry = 1
-                self.mpvPiP.rebuild(); self.mpvPiP.resetLayer()
-                self.pipStartPoll()
+                // Out of the delegate callback before replacing the controller.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    self.mpvPiP.rebuild(); self.mpvPiP.resetLayer()
+                    self.pipStartPoll()
+                }
                 return
             }
             self.pipRetry = 0
@@ -136,6 +140,7 @@ final class PlayerModel: ObservableObject {
     func startMPVPiP() {
         guard mpvPiP.controller != nil else { onMPVPiPUnavailable?("الجهاز لا يدعم صورة داخل صورة"); return }
         pipRetry = 0
+        mpvPiP.rebuild()          // fresh controller for every session, made while no PiP callback is running
         mpvPiP.resetLayer()
         mpvPiP.sync(timeS: Double(timeMs) / 1000, playing: !viewerPaused, rate: rate)
         mpv.setPiPOutput(true, pipLayer: mpvPiP.view.displayLayer)
