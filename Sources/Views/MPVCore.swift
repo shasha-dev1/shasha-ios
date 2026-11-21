@@ -161,22 +161,55 @@ final class MPVCore {
         let r = mpv_set_option_string(h, name, value)
         if r < 0 { note("API option \(name): \(String(cString: mpv_error_string(r)))") }
     }
-    func setAsync(_ name: String, _ value: String) {
+    // 1.0.1: every async write gets its own reply id, and its result (MPV_EVENT_SET_PROPERTY_REPLY /
+    // MPV_EVENT_COMMAND_REPLY, mpv_event.error < 0 on failure — client.h) is checked in drain(). Before, the
+    // results were never read, so a failed "vo"/"wid" switch for picture in picture was only seen as a timeout.
+    private struct Pending { let what: String; let pip: Bool; let gen: Int }
+    /// Which PiP output switch a write belongs to: a late reply from an older switch can't fail a newer attempt.
+    private var pipGen = 0
+    private var pending: [UInt64: Pending] = [:]
+    private var nextReply: UInt64 = 1
+    private func track(_ what: String, pip: Bool) -> UInt64 {
+        lock.lock(); defer { lock.unlock() }
+        let id = nextReply; nextReply += 1
+        pending[id] = Pending(what: what, pip: pip, gen: pipGen)
+        if pending.count > 200, let oldest = pending.keys.min() { pending[oldest] = nil }
+        return id
+    }
+    private func untrack(_ id: UInt64) -> Pending? {
+        lock.lock(); defer { lock.unlock() }
+        return pending.removeValue(forKey: id)
+    }
+    /// A write failed (now, or in its reply). A failed write of the PiP output switch fails the current attempt.
+    private func failed(_ p: Pending, _ code: Int32) {
+        note("[خطأ أمر] \(p.what): \(String(cString: mpv_error_string(code)))")
+        lock.lock(); let current = p.gen == pipGen; lock.unlock()
+        // Only the output itself (vo, wid) decides; a failed DV filter/hwdec write is logged but not fatal.
+        if p.pip && current && pipOutput { pipOutputFailed = true }
+    }
+
+    /// `pip`: the output part (vo, wid) of the picture-in-picture switch (see setPiPOutput).
+    func setAsync(_ name: String, _ value: String, pip: Bool = false) {
         guard let h = mpv else { return }
-        name.withCString { n in
+        // Property values are short settings (no links); "wid" is a layer address.
+        let id = track("\(name)=\(value)", pip: pip)
+        let r: Int32 = name.withCString { n in
             value.withCString { v in
                 var p: UnsafePointer<CChar>? = v
-                _ = mpv_set_property_async(h, 0, n, MPV_FORMAT_STRING, &p)
+                return mpv_set_property_async(h, id, n, MPV_FORMAT_STRING, &p)
             }
         }
+        if r < 0, let p = untrack(id) { failed(p, r) }
     }
     func commandAsync(_ args: [String]) {
         guard let h = mpv else { return }
         var cargs: [UnsafePointer<CChar>?] = args.map { UnsafePointer(strdup($0)) }
         cargs.append(nil)
         defer { cargs.forEach { if let p = $0 { free(UnsafeMutablePointer(mutating: p)) } } }
-        let r = mpv_command_async(h, 0, &cargs)
-        if r < 0 { note("API \(args.first ?? "command"): \(String(cString: mpv_error_string(r)))") }
+        // Only the command name is logged: "loadfile" carries the stream link (login data).
+        let id = track(args.first ?? "command", pip: false)
+        let r = mpv_command_async(h, id, &cargs)
+        if r < 0, let p = untrack(id) { failed(p, r) }
     }
 
     /// Direct read, for panels and diagnostics only.
@@ -266,6 +299,9 @@ final class MPVCore {
                             if line.contains("[error]") && line.contains("avfoundation") { self.pipOutputFailed = true }
                         }
                     }
+                case MPV_EVENT_SET_PROPERTY_REPLY, MPV_EVENT_COMMAND_REPLY:
+                    let id = e.pointee.reply_userdata, code = e.pointee.error
+                    if let p = self.untrack(id), code < 0 { self.failed(p, code) }
                 case MPV_EVENT_START_FILE: self.note("[مرحلة] بدء الملف")
                 case MPV_EVENT_FILE_LOADED: self.note("[مرحلة] الملف محمّل"); self.update { $0.loaded = true; $0.endError = nil }
                 case MPV_EVENT_VIDEO_RECONFIG: self.note("[مرحلة] تهيئة مخرج الفيديو")
@@ -312,6 +348,7 @@ extension MPVCore {
         guard mpv != nil else { return }
         pipOutput = on
         pipOutputReady = false; pipOutputFailed = false
+        lock.lock(); pipGen += 1; lock.unlock()
         // Detailed log while the output switches, so a failure here is visible in the session file.
         if let h = mpv { mpv_request_log_messages(h, on ? "v" : "info") }
         // 0.9.5: changing "wid" makes mpv recreate the CURRENT video output with the new layer. The device crash
@@ -326,7 +363,7 @@ extension MPVCore {
         // which the avfoundation output accepts. Normal playback (gpu-next) never uses this filter.
         if on { pipDolbyVision = (string("video-params/colormatrix") ?? "") == "dolbyvision" }
         note("[مرحلة] صورة داخل صورة: \(on ? "تحويل المخرج إلى avfoundation" : "رجوع المخرج إلى \(createdLabVO)")\(pipDolbyVision ? " | Dolby Vision: فلتر libplacebo" : "")")
-        setAsync("vo", "null")
+        setAsync("vo", "null", pip: true)
         if pipDolbyVision {
             if on {
                 setAsync("hwdec", "videotoolbox-copy")
@@ -336,8 +373,8 @@ extension MPVCore {
                 setAsync("hwdec", createdLab == .noHwdec ? "no" : createdLab == .copyHwdec ? "videotoolbox-copy" : "videotoolbox")
             }
         }
-        setAsync("wid", String(ptr))
-        setAsync("vo", on ? "avfoundation" : createdLabVO)
+        setAsync("wid", String(ptr), pip: true)
+        setAsync("vo", on ? "avfoundation" : createdLabVO, pip: true)
         if !on { pipDolbyVision = false }
     }
 }

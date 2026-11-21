@@ -65,7 +65,10 @@ final class PlayerModel: ObservableObject {
             self.mpv.note("[مرحلة] صورة داخل صورة رفضها النظام: \(msg) | الطبقة: \(self.mpvPiP.view.displayLayer.status.rawValue) | محاولة \(self.pipRetry + 1)")
             if self.pipRetry == 0 {
                 self.pipRetry = 1
+                let attempt = self.pipAttempt
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    // 1.0.1: the retry belongs to this attempt only (not after a cancel, a new file or a new start).
+                    guard attempt == self.pipAttempt, !self.pipActive else { return }
                     self.mpvPiP.rebuild(); self.installPiPView()
                     self.mpv.setPiPOutput(true, pipLayer: self.mpvPiP.view.displayLayer)
                     self.pipStartPoll()
@@ -79,7 +82,15 @@ final class PlayerModel: ObservableObject {
     }
 
     func togglePiP() {
-        if pipActive { mpvPiP.controller?.stopPictureInPicture() } else { startMPVPiP() }
+        if pipActive { cancelPiPAttempts(); mpvPiP.controller?.stopPictureInPicture() } else { startMPVPiP() }
+    }
+
+    /// 1.0.1: ends any start still waiting (poll or retry), so an old attempt can't start the window, switch the output
+    /// or show a message later. If the output was switched for an attempt that never became a window, it goes back.
+    private func cancelPiPAttempts() {
+        pipAttempt += 1
+        pipRetry = 0
+        if mpv.pipOutput && !pipActive { mpv.setPiPOutput(false, pipLayer: mpvPiP.view.displayLayer) }
     }
 
     func startPiPIfPossible() {
@@ -100,7 +111,7 @@ final class PlayerModel: ObservableObject {
     /// Switch the output to the sample-buffer layer, wait for its first frames, then start the floating window.
     func startMPVPiP() {
         guard mpvPiP.controller != nil else { onMPVPiPUnavailable?("الجهاز لا يدعم صورة داخل صورة"); return }
-        pipRetry = 0
+        cancelPiPAttempts()
         mpvPiP.rebuild()          // new layer + controller for every session, made while no PiP callback is running
         installPiPView()
         mpvPiP.sync(timeS: Double(timeMs) / 1000, playing: !viewerPaused, rate: rate)
@@ -187,6 +198,7 @@ final class PlayerModel: ObservableObject {
         failed = false; endDecision = nil; viewerPaused = false; hasPlayed = false
         subDelay = 0; stall.reset(); buffering = true; timeMs = 0; lengthMs = 0
         lastPlayingMs = Int32(max(0, startSeconds) * 1000)
+        cancelPiPAttempts()
         attachDrawable()
         let lab = mpvLab; mpvLab = .normal
         DiagLog.shared.note(String(format: "[فتح] mpv | %@ | بداية من %.0f ث | وضع: %@", u.isFileURL ? "ملف محلي" : "HTTP", startSeconds, lab.rawValue))
@@ -275,6 +287,7 @@ final class PlayerModel: ObservableObject {
 
     func stop() {
         timer?.invalidate(); timer = nil; engineSessionId = nil
+        pipAttempt += 1; pipRetry = 0      // no pending PiP start outlives the player
         mpv.stopPlayback()
         clearRemote()
     }

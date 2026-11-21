@@ -8,3 +8,9 @@ Payload/
 Logic/.build/
 vendor/
 .libmpv/
+# Signing keys and keystores never go into this public repository.
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+keys.json
