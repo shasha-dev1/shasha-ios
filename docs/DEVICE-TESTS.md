@@ -20,3 +20,10 @@ Build 58 (`000e2cb`) has the same app code as build 57 (only README changed); th
 - A failed `vo`/`wid` write of the current PiP switch ends that attempt at once (before: seen only as the 4 s timeout). Failed DV filter / hwdec writes are logged, not fatal. Late replies from an older switch are ignored.
 - Old PiP start attempts are cancelled on a new start, on stop of the window, on opening another item and on leaving the player, including the delayed retry; an output switched for an attempt that never became a window is switched back.
 - No mpv playback option changed.
+
+## 1.0.2 — performance measurements (baseline, no behaviour change; built only)
+Settings → «قياسات الأداء». Records (step names and counts only, no links): launch → first screen and → library ready
+(kernel process start time), each Xtream request (network time + size, JSON parse, conversion), whole library load with
+counts, Home shelves and search, Movies/Series list filter+sort, channel list filter, series detail open → episodes shown,
+return from the player (until the next frame), and every frame longer than 50 ms attributed to the step running.
+Device model, iOS version and memory footprint are in the report. The log survives restarts (Caches/perf.log).

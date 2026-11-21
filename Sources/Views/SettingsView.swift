@@ -33,6 +33,11 @@ struct SettingsView: View {
                 GroupsSettingsSection(open: $groupsOpen)
                 LanguageSettingsSection()
                 SubsSettingsSection()
+                Section {
+                    NavigationLink { PerfView() } label: { Label("قياسات الأداء", systemImage: "speedometer") }
+                } header: { Text("الأداء") } footer: {
+                    Text("تسجّل مدة فتح التطبيق وتحميل المكتبة والبحث وفتح المسلسل والرجوع من المشغّل، بدون أي روابط أو بيانات دخول.")
+                }
                 Section("حول التطبيق") {
                     HStack { Text("الإصدار"); Spacer(); Text((Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") + " (" + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "") + ")") }
                     Text(credit).foregroundStyle(Theme.accent).bold()
@@ -43,5 +48,33 @@ struct SettingsView: View {
             .navigationDestination(isPresented: $groupsOpen) { GroupsManagerView() }
             .sheet(isPresented: $adding) { NavigationStack { SetupView() } }
         }
+    }
+}
+
+/// 1.0.2: the measurements report, to copy and send.
+struct PerfView: View {
+    @EnvironmentObject var library: Library
+    @State private var text = ""
+    @State private var copied = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Button { UIPasteboard.general.string = text; copied = true } label: { Label(copied ? "تم النسخ" : "نسخ", systemImage: "doc.on.doc") }
+                        .buttonStyle(.borderedProminent)
+                    Button { text = Perf.shared.report(library: library.sizeText) } label: { Label("تحديث", systemImage: "arrow.clockwise") }
+                        .buttonStyle(.bordered)
+                    Button(role: .destructive) { Perf.shared.clear(); text = Perf.shared.report(library: library.sizeText) } label: { Label("مسح", systemImage: "trash") }
+                        .buttonStyle(.bordered)
+                }
+                Text("للقياس: افتح التطبيق من جديد، انتظر المكتبة، ابحث في الرئيسية والأفلام، افتح مسلسلًا، شغّل حلقة وارجع، ثم اضغط «تحديث» و«نسخ».")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Text(text).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+            }
+            .padding()
+        }
+        .navigationTitle("قياسات الأداء")
+        .onAppear { text = Perf.shared.report(library: library.sizeText); copied = false }
     }
 }

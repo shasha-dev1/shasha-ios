@@ -33,8 +33,9 @@ struct MoviesView: View {
                 }
                 Chips(cats: library.cats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library)).padding(.vertical, 6)
                 let _ = tick
-                let list = sortedMovies(library.movies.filter { ok($0.categoryId) && (cat == nil || $0.categoryId == cat) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query))
-                    && (!mine || Store.isFavorite("movie:" + $0.id)) })
+                let list = Perf.shared.measure("قائمة الأفلام", "بحث \(query.count) حرف · \(cat == nil ? "الكل" : "مجموعة") · \(sort.rawValue)") {
+                    sortedMovies(library.movies.filter { ok($0.categoryId) && (cat == nil || $0.categoryId == cat) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query))
+                    && (!mine || Store.isFavorite("movie:" + $0.id)) }) }
                 if mine && list.isEmpty { Text("قائمتك فارغة — افتح فيلمًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
                 LazyVGrid(columns: grid, spacing: 16) {
                     ForEach(list) { m in
@@ -43,6 +44,7 @@ struct MoviesView: View {
                 }.padding(.horizontal)
             }
             .searchable(text: $query, prompt: "بحث في الأفلام")
+            .onChange(of: query) { _ in Perf.shared.mark("بحث الأفلام") }
             .navigationTitle(mine ? "قائمتي · الأفلام" : "الأفلام")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
@@ -223,8 +225,9 @@ struct SeriesView: View {
                 }
                 Chips(cats: library.cats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library)).padding(.vertical, 6)
                 let _ = tick
-                let list = sortedShows(library.shows.filter { ok($0.categoryId) && (cat == nil || $0.categoryId == cat) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query))
-                    && (!mine || Store.isFavorite("show:" + $0.id)) })
+                let list = Perf.shared.measure("قائمة المسلسلات", "بحث \(query.count) حرف · \(cat == nil ? "الكل" : "مجموعة") · \(sort.rawValue)") {
+                    sortedShows(library.shows.filter { ok($0.categoryId) && (cat == nil || $0.categoryId == cat) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query))
+                    && (!mine || Store.isFavorite("show:" + $0.id)) }) }
                 if mine && list.isEmpty { Text("قائمتك فارغة — افتح مسلسلًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
                 LazyVGrid(columns: grid, spacing: 16) {
                     ForEach(list) { s in
@@ -233,6 +236,7 @@ struct SeriesView: View {
                 }.padding(.horizontal)
             }
             .searchable(text: $query, prompt: "بحث في المسلسلات")
+            .onChange(of: query) { _ in Perf.shared.mark("بحث المسلسلات") }
             .navigationTitle(mine ? "قائمتي · المسلسلات" : "المسلسلات")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
@@ -322,9 +326,12 @@ struct SeriesDetail: View {
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) { FavButton(key: "show:" + show.id) } }
         .task {
             guard let x = library.xtream else { loading = false; return }
+            let t0 = Perf.now()
+            Perf.shared.mark("تفاصيل مسلسل")
             episodes = (try? await x.episodes(seriesId: show.id)) ?? []
             season = nextEpisode?.season ?? episodes.first?.season ?? 1
             loading = false
+            Perf.shared.untilNextFrame("تفاصيل مسلسل: فتح ← الحلقات معروضة", since: t0, "\(episodes.count) حلقة")
         }
     }
 

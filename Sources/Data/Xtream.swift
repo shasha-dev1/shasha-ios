@@ -38,8 +38,17 @@ struct Xtream {
         var req = URLRequest(url: url, timeoutInterval: 60)
         req.setValue("Shasha-iOS", forHTTPHeaderField: "User-Agent")
         let data: Data
+        // 1.0.2 measurements: action name and size only (the URL holds the login data).
+        let name = action ?? "تسجيل الدخول", measured = action != "get_short_epg"
+        let t0 = Perf.now()
         do { (data, _) = try await URLSession.shared.data(for: req) } catch { throw LoadError.network(error.localizedDescription) }
-        return try await Task.detached(priority: .userInitiated) { try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]) }.value
+        if measured { Perf.shared.record("شبكة \(name)", since: t0, ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file)) }
+        return try await Task.detached(priority: .userInitiated) {
+            let t1 = Perf.now()
+            let o = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
+            if measured { Perf.shared.record("تحليل JSON \(name)", since: t1) }
+            return o
+        }.value
     }
 
     /// Login check: user_info.auth == 1.
@@ -63,29 +72,31 @@ struct Xtream {
 
     func channels() async throws -> [Channel] {
         let raw = list(try await api("get_live_streams"))
-        return raw.compactMap { d in
+        return Perf.shared.measure("تحويل القنوات", "\(raw.count)") { raw.compactMap { d in
             guard let id = J.s(d["stream_id"]) else { return nil }
             let days = J.i(d["tv_archive"]) == 1 ? max(1, J.i(d["tv_archive_duration"])) : 0
             return Channel(id: id, name: J.s(d["name"]) ?? "—", logo: J.s(d["stream_icon"]), categoryId: J.s(d["category_id"]) ?? "", url: liveURL(id),
                            archiveDays: days)
-        }
+        } }
     }
 
     func movies() async throws -> [Movie] {
-        list(try await api("get_vod_streams")).compactMap { d in
+        let raw = list(try await api("get_vod_streams"))
+        return Perf.shared.measure("تحويل الأفلام", "\(raw.count)") { raw.compactMap { d in
             guard let id = J.s(d["stream_id"]) else { return nil }
             let ext = J.s(d["container_extension"]) ?? "mp4"
             return Movie(id: id, name: J.s(d["name"]) ?? "—", poster: J.s(d["stream_icon"]), categoryId: J.s(d["category_id"]) ?? "",
                          rating: J.s(d["rating"]), ext: ext, added: J.i(d["added"]), url: movieURL(id, ext))
-        }
+        } }
     }
 
     func shows() async throws -> [Show] {
-        list(try await api("get_series")).compactMap { d in
+        let raw = list(try await api("get_series"))
+        return Perf.shared.measure("تحويل المسلسلات", "\(raw.count)") { raw.compactMap { d in
             guard let id = J.s(d["series_id"]) else { return nil }
             return Show(id: id, name: J.s(d["name"]) ?? "—", poster: J.s(d["cover"]), categoryId: J.s(d["category_id"]) ?? "",
                         rating: J.s(d["rating"]), plot: J.s(d["plot"]), updated: J.i(d["last_modified"]))
-        }
+        } }
     }
 
     func episodes(seriesId: String) async throws -> [Episode] {

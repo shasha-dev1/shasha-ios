@@ -55,7 +55,9 @@ struct ChannelList: View {
     @State private var guide: Channel?
 
     var body: some View {
-        let list = library.channels.filter(filter).filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }
+        let list = Perf.shared.measure("قائمة القنوات", "\(title.count > 0 ? "مجموعة" : "") بحث \(query.count) حرف") {
+            library.channels.filter(filter).filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }
+        }
         List(Array(list.enumerated()), id: \.element.id) { i, ch in
             Button { play = .live(list: list, index: i) } label: {
                 HStack(spacing: 12) {

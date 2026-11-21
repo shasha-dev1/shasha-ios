@@ -47,7 +47,7 @@ struct RootView: View {
             // The player is an overlay (not a full-screen cover) so it can stay alive, hidden, while the video
             // plays in the picture-in-picture window and the viewer browses the app.
             if let item = play {
-                PlayerScreen(item: item, close: { minimized = false; play = nil }, minimized: $minimized)
+                PlayerScreen(item: item, close: { Perf.shared.untilNextFrame("رجوع من المشغّل"); minimized = false; play = nil }, minimized: $minimized)
                     .id(item.id)
                     .environmentObject(library).environmentObject(epg)
                     .opacity(minimized ? 0 : 1)
@@ -57,6 +57,7 @@ struct RootView: View {
             }
         }
         .onChange(of: library.activeId) { _ in epg.clear() }
+        .onAppear { Perf.shared.startMonitor() }
         .task { if !library.sources.isEmpty && library.channels.isEmpty && library.movies.isEmpty { await library.reload() } }
     }
 

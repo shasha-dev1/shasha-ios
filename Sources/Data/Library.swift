@@ -70,7 +70,13 @@ final class Library: ObservableObject {
     func reload() async {
         guard let s = active else { clear(); return }
         loading = true; error = nil
-        defer { loading = false }
+        let t0 = Perf.now()
+        defer {
+            loading = false
+            let d = sizeText
+            Perf.shared.record("تحميل المكتبة كاملة", since: t0, d + (error == nil ? "" : " | فشل"))
+            if error == nil { Perf.shared.libraryReadyAfterLaunch(d) }
+        }
         do {
             if let x = xtream {
                 async let lc = x.categories("get_live_categories")
@@ -84,9 +90,13 @@ final class Library: ObservableObject {
                 seriesCats = (try? await sc) ?? []; shows = (try? await sh) ?? []
             } else {
                 guard let url = URL(string: s.server) else { throw LoadError.badAddress }
+                let tn = Perf.now()
                 let (data, _) = try await URLSession.shared.data(from: url)
+                Perf.shared.record("شبكة M3U", since: tn, ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file))
                 let text = String(decoding: data, as: UTF8.self)
-                let r = await Task.detached { M3U.parse(text) }.value
+                let r = await Task.detached { () -> (cats: [Category], channels: [Channel], movies: [Movie]) in
+                    let tp = Perf.now(); let r = M3U.parse(text); Perf.shared.record("تحليل M3U", since: tp); return r
+                }.value
                 liveCats = r.cats; channels = r.channels; movies = r.movies
                 vodCats = r.cats.filter { c in r.movies.contains { $0.categoryId == c.id } }
                 seriesCats = []; shows = []
@@ -95,6 +105,11 @@ final class Library: ObservableObject {
         } catch {
             self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    /// Library size for the measurements (counts only).
+    var sizeText: String {
+        "قنوات \(channels.count) · أفلام \(movies.count) · مسلسلات \(shows.count) · مجموعات \(liveCats.count)/\(vodCats.count)/\(seriesCats.count)"
     }
 
     private func clear() { liveCats = []; channels = []; vodCats = []; movies = []; seriesCats = []; shows = [] }

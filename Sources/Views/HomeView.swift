@@ -18,7 +18,8 @@ struct HomeView: View {
             .searchable(text: $query, prompt: "ابحث في القنوات والأفلام والمسلسلات")
             .navigationTitle("الرئيسية")
             .refreshable { await library.reload() }
-            .onAppear { tick += 1 }
+            .onAppear { tick += 1; Perf.shared.firstScreen("الرئيسية") }
+            .onChange(of: query) { _ in Perf.shared.mark("بحث الرئيسية") }
             .onChange(of: play?.id) { _ in tick += 1 }
         }
     }
@@ -30,7 +31,7 @@ struct HomeView: View {
         let okS = library.allowedFilter(.series)
         let okL = library.allowedFilter(.live)
         VStack(alignment: .leading, spacing: 22) {
-            let cont = continueItems(okM, okS)
+            let cont = Perf.shared.measure("الرئيسية: متابعة المشاهدة") { continueItems(okM, okS) }
             if !cont.isEmpty {
                 Shelf(title: "متابعة المشاهدة") {
                     ForEach(cont) { c in
@@ -40,7 +41,7 @@ struct HomeView: View {
                 }
             }
 
-            let favCh = library.channels.filter { Store.isFavorite($0.id) && okL($0.categoryId) }
+            let favCh = Perf.shared.measure("الرئيسية: القنوات المفضلة") { library.channels.filter { Store.isFavorite($0.id) && okL($0.categoryId) } }
             if !favCh.isEmpty {
                 Shelf(title: "قنواتي المفضلة") {
                     ForEach(Array(favCh.prefix(30).enumerated()), id: \.element.id) { i, ch in
@@ -58,8 +59,8 @@ struct HomeView: View {
                 }
             }
 
-            let myMovies = library.movies.filter { okM($0.categoryId) && Store.isFavorite("movie:" + $0.id) }
-            let myShows = library.shows.filter { okS($0.categoryId) && Store.isFavorite("show:" + $0.id) }
+            let myMovies = Perf.shared.measure("الرئيسية: قائمتي (أفلام)") { library.movies.filter { okM($0.categoryId) && Store.isFavorite("movie:" + $0.id) } }
+            let myShows = Perf.shared.measure("الرئيسية: قائمتي (مسلسلات)") { library.shows.filter { okS($0.categoryId) && Store.isFavorite("show:" + $0.id) } }
             if !myMovies.isEmpty || !myShows.isEmpty {
                 Shelf(title: "قائمتي") {
                     ForEach(myShows.prefix(20)) { s in
@@ -71,7 +72,7 @@ struct HomeView: View {
                 }
             }
 
-            let newShows = library.shows.filter { okS($0.categoryId) }.sorted { $0.updated > $1.updated }.prefix(20)
+            let newShows = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { library.shows.filter { okS($0.categoryId) }.sorted { $0.updated > $1.updated }.prefix(20) }
             if !newShows.isEmpty {
                 Shelf(title: "مسلسلات حديثة التحديث") {
                     ForEach(newShows) { s in
@@ -80,7 +81,7 @@ struct HomeView: View {
                 }
             }
 
-            let newMovies = library.movies.filter { okM($0.categoryId) }.sorted { $0.added > $1.added }.prefix(20)
+            let newMovies = Perf.shared.measure("الرئيسية: أفلام حديثة") { library.movies.filter { okM($0.categoryId) }.sorted { $0.added > $1.added }.prefix(20) }
             if !newMovies.isEmpty {
                 Shelf(title: "أفلام أضيفت حديثًا") {
                     ForEach(newMovies) { m in
@@ -128,9 +129,11 @@ struct HomeView: View {
         let okM = library.allowedFilter(.movies)
         let okS = library.allowedFilter(.series)
         let okL = library.allowedFilter(.live)
-        let ch = Array(library.channels.lazy.filter { okL($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40))
-        let mv = Array(library.movies.lazy.filter { okM($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40))
-        let sh = Array(library.shows.lazy.filter { okS($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40))
+        let (ch, mv, sh) = Perf.shared.measure("بحث الرئيسية", "\(q.count) حرف") { (
+            Array(library.channels.lazy.filter { okL($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40)),
+            Array(library.movies.lazy.filter { okM($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40)),
+            Array(library.shows.lazy.filter { okS($0.categoryId) && $0.name.localizedCaseInsensitiveContains(q) }.prefix(40))
+        ) }
         VStack(alignment: .leading, spacing: 22) {
             if ch.isEmpty && mv.isEmpty && sh.isEmpty {
                 Text("لا توجد نتائج لـ «\(q)».").foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.top, 40)
