@@ -92,6 +92,23 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Scrolling (display-size images): movies 3.0 % slow frames (longest 173 ms), series 2.0 % (longest 305 ms). No A/B with images off yet.
 - Return: save/stop/rotate ≈ 0 ms; 400–617 ms stall before the rotation, rotation itself 139–327 ms.
 
-## 1.0.7 (built only, not tested on device)
+## 1.0.7 — CI build 68 = commit `beaf73b` (built only, not tested on device)
 - Leak fix: the screen's PiP-message closure stored in the player model captured the screen, which owns the model — cleared on leaving the player.
 - Replaced lists released on a background thread after a refresh; publish timed and the frames after it named «بعد نشر المكتبة المحدّثة».
+
+## Overnight builds 2026-11-22 (all built by CI, none tested on the device yet)
+| Version | CI build | Commit | What |
+|---|---|---|---|
+| 1.0.8 | 70 | `a4334e2` | Big lists parsed+converted one at a time in autorelease pools (lower refresh peak; memory logged after each JSON is freed). TmdbRule (unit-tested) + TMDB client with the viewer's own key; Settings key save+test. New movie/series detail pages: backdrop header, letter placeholder, expandable overview (provider first, TMDB fallback), clear play/resume, season chips, episode rows (progress, current, watched), retry when episodes fail. |
+| 1.0.9 | 71 | `8b8cb0f` | New Home: resume hero, «متابعة المشاهدة», «المفضلة» (channels + my list), «أضيف حديثًا»; TMDB trending/popular rows with «في مكتبتك» / «غير متوفر» (no play button for titles not in the library). |
+| 1.1.0 | 72 | `6d1d1da` | Settings sections (المصادر، التشغيل، الصوت والترجمة، TMDB، المظهر، التخزين، التشخيص)، poster size، storage sizes + clearing، live search over all channels، visible sort and counts. |
+
+### Test list for the owner (1.1.0)
+1. Install over the old app with the same certificate; resume points, favourites and groups must still be there.
+2. Open twice (second open = from the saved copy): «قياسات الأداء» → copy the report.
+3. Play / leave the player 3 times: the report should say «نماذج المشغّل الحية 0 · محركات mpv 0» after each return, and show «mpv: إغلاق المحرّك».
+4. Picture in picture twice, on a film and a live channel; Rings of Power colours and Arabic subtitles (must be unchanged).
+5. Settings → TMDB: paste your key → «حفظ واختبار» must say «المفتاح يعمل». Then a film and a series page: backdrop, overview; Home: trending rows with «في مكتبتك» / «غير متوفر»; tapping «غير متوفر» opens info only.
+6. Series page: seasons, current episode, progress, watched mark.
+7. Live: search from the groups screen; favourites.
+8. Settings → التخزين: sizes; «مسح الصور المؤقتة».
