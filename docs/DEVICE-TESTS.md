@@ -79,7 +79,19 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - **No «mpv: إغلاق المحرّك» line in 3 player closes** → mpv's destroy never ran: the player model / mpv engine were apparently not released (possible leak, and a memory suspect). Not proven yet.
 - The 1.0.4 summary counted whole operations (e.g. the 7.3 s load) as main-thread work — fixed in 1.0.6 («مدة» tag).
 
-## 1.0.6 (built only, not tested on device)
+## 1.0.6 — CI build 67 = commit `67c7d96`
 - Live counts of player models and mpv engines logged on create/release and 3 s after leaving the player.
 - Rotation back to portrait timed until it completes; stalls after it are attributed to «إعادة رسم بعد الدوران».
 - Whole-operation durations tagged «مدة» and excluded from main-thread work in the summary.
+
+## 1.0.6 (67) — owner's report, 2026-11-22
+- **Saved copy:** read 13 ms (33.9 MB file), JSON 388 ms, convert 467 ms, index 1,435 ms — all in the background; publish on the main thread 0 ms; read → on screen 2.35 s; launch → saved library shown 2.6 s (vs 19.1 s to the provider's update this time: get_series took 14.2 s). One 286 ms stall right after it appeared. Memory 19 MB before → 230 MB with the saved library shown.
+- **Proven leak:** player models / mpv engines alive after each close: 1, 2, 3, 4, 5, 6 (never released; mpv destroy never ran). Memory 3 s after each close: 464 → 579 → 619 → 673 → 827 → 965 MB.
+- **Refresh peak:** 1,002 MB after network+parse+convert (saved lists + JSON + new lists together), peak 1,147 MB; 394 MB 20 s later. Peak 1,538 MB later in the session (with the leaked players).
+- 2,101 ms stall right after the refreshed library replaced the saved one.
+- Scrolling (display-size images): movies 3.0 % slow frames (longest 173 ms), series 2.0 % (longest 305 ms). No A/B with images off yet.
+- Return: save/stop/rotate ≈ 0 ms; 400–617 ms stall before the rotation, rotation itself 139–327 ms.
+
+## 1.0.7 (built only, not tested on device)
+- Leak fix: the screen's PiP-message closure stored in the player model captured the screen, which owns the model — cleared on leaving the player.
+- Replaced lists released on a background thread after a refresh; publish timed and the frames after it named «بعد نشر المكتبة المحدّثة».

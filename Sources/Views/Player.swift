@@ -551,6 +551,9 @@ struct PlayerScreen: View {
             Perf.shared.memory("فتح المشغّل")
         }
         .onDisappear {
+            // 1.0.7: this closure captures the screen, and the screen holds the model (@StateObject): a cycle that
+            // kept every player model and its mpv engine alive (1.0.6 report: 6 alive after 6 closes, +60–150 MB each).
+            model.onMPVPiPUnavailable = nil
             // 1.0.4 measurement only: each part of leaving the player timed on its own (same order as before).
             Perf.shared.mark("رجوع: حفظ الاستكمال")
             Perf.shared.measure("رجوع: حفظ الاستكمال", minMs: 0) { saveResume() }

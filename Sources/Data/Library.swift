@@ -221,9 +221,19 @@ final class Library: ObservableObject {
             // A newer load (other playlist, or cancelled) must not overwrite what it brought.
             guard reloadGen == gen, !Task.isCancelled, active?.id == s.id else { return }
             // One update for all lists (was six separate redraws).
-            liveCats = lc; channels = ch; vodCats = vc; movies = mv; seriesCats = sc; shows = sh
-            index = ix; version += 1
-            dataSource = s.id; fromCache = false
+            // 1.0.7: the replaced lists are released on a background thread (1.0.6: a 2.1 s stall right after the
+            // refreshed library replaced the saved one — freeing ~130k titles and their index on the main thread is the suspect).
+            var old: Any? = (channels, movies, shows, index)
+            Perf.shared.measure("نشر المكتبة المحدّثة على الواجهة", minMs: 0) {
+                liveCats = lc; channels = ch; vodCats = vc; movies = mv; seriesCats = sc; shows = sh
+                index = ix; version += 1
+                dataSource = s.id; fromCache = false
+            }
+            Perf.shared.mark("بعد نشر المكتبة المحدّثة")
+            let box = OldLists(old); old = nil
+            Task.detached(priority: .background) {
+                let tf = Perf.now(); box.release(); Perf.shared.record("تحرير القوائم القديمة (خلفية)", since: tf)
+            }
             Perf.shared.memory("بعد الفهرسة ونشر القوائم")
             Perf.shared.memory("مستقرة بعد التحميل بـ 5 ث", after: 5)
             Perf.shared.memory("مستقرة بعد التحميل بـ 20 ث", after: 20)
@@ -436,4 +446,11 @@ enum Store {
         d.set(m, forKey: "epshow")
     }
     static func show(forEpisode key: String) -> String? { (d.dictionary(forKey: "epshow") as? [String: String])?[key] }
+}
+
+/// Holds the replaced lists until a background thread lets them go.
+final class OldLists: @unchecked Sendable {
+    private var value: Any?
+    init(_ v: Any?) { value = v }
+    func release() { value = nil }
 }
