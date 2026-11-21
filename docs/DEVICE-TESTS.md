@@ -35,7 +35,7 @@ Device iPhone14,3, iOS 27.2.1. Library: 52,989 channels, 0 movies, 24,103 series
 - Series detail: a 285 ms stall on opening (before the network), 817 ms after the episodes arrived; open → episodes shown 450 ms (3 episodes) and 1,605 ms (123 episodes, network 1.36 s).
 - Browsing: 15 frames > 50 ms, longest 764 ms. Home + series list recomputed 2–3 times per navigation (4–30 ms each).
 
-## 1.0.3 (built only, not tested on device)
+## 1.0.3 — CI build 63 = commit `73fc915` (built only, not tested on device)
 - Library index built once per load off the main thread: folded search names (Arabic variants, case, accents), the three sort orders, copy groups, id → position.
 - Movies/Series lists and Home search run off the main thread when their inputs change (200 ms pause while typing); a newer request cancels the older, which can't overwrite it; grids add posters 90 at a time while scrolling.
 - Series/movie "other copies" from the index (was CopyRule.key over all 24,103 series on every redraw — the likely cause of the opening stall).
@@ -43,3 +43,9 @@ Device iPhone14,3, iOS 27.2.1. Library: 52,989 channels, 0 movies, 24,103 series
 - Library load: a second request for the same playlist joins the running one; switching playlist cancels the old load and drops its results; all lists published in one update.
 - Bounded image cache (40 MB memory / 200 MB disk).
 - Measurement added: time of closing mpv (to check whether it causes the stall when leaving the player). No mpv playback setting changed.
+
+## 1.0.4 (built only, not tested on device)
+- Saved copy per playlist (Application Support/LibraryCache/<id>.json, excluded from backup, protected until first unlock; Xtream links not stored — rebuilt from the Keychain). Launch shows the saved copy, then refreshes in the background; a failed refresh keeps the shown lists and says so with retry and the time of the last good download. Saved only after a good download. Settings shows «آخر تحديث ناجح»; «تحديث القائمة الآن» is the manual refresh.
+- Movies/series: a request that fails (network, or a reply that is not a JSON array) is shown as «تعذّر جلب …» with retry and keeps the previous list; «لا توجد أفلام» only when the provider sent an empty array.
+- Leaving the player measured part by part: save resume, stop playback, rotate, first frame, screens redrawing, mpv destroy (still on the main thread — not moved).
+- Report starts with a summary of the last launch: network / background processing / main-thread work / stalls.

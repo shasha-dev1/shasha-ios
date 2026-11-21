@@ -29,6 +29,12 @@ struct SettingsView: View {
                     }
                     Button { adding = true } label: { Label("إضافة قائمة", systemImage: "plus") }
                     Button { Task { await library.reload() } } label: { Label("تحديث القائمة الآن", systemImage: "arrow.clockwise") }
+                    HStack {
+                        Text("آخر تحديث ناجح").foregroundStyle(.secondary)
+                        Spacer()
+                        if library.loading { ProgressView() }
+                        else { Text(library.lastSuccess.map(LastUpdate.text) ?? "لم يتم بعد").foregroundStyle(.secondary) }
+                    }.font(.footnote)
                 }
                 GroupsSettingsSection(open: $groupsOpen)
                 LanguageSettingsSection()

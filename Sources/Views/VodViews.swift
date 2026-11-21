@@ -44,6 +44,24 @@ struct MoviesView: View {
                 Chips(cats: library.cats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library)).padding(.vertical, 6)
                 let _ = tick
                 if mine && items.isEmpty { Text("قائمتك فارغة — افتح فيلمًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
+                // 1.0.4: "no movies" only when the provider really sent an empty list; a failed request says so.
+                if !mine && query.isEmpty && cat == nil && library.movies.isEmpty && !library.loading {
+                    switch library.moviesState {
+                    case .failed(let m):
+                        VStack(spacing: 10) {
+                            Text("تعذّر جلب الأفلام من المزوّد").font(.headline)
+                            Text(m).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.borderedProminent)
+                        }.padding(.top, 40).padding(.horizontal)
+                    case .received:
+                        VStack(spacing: 8) {
+                            Image(systemName: "film").font(.largeTitle).foregroundStyle(.secondary)
+                            Text("لا توجد أفلام في هذه القائمة").font(.headline)
+                            Text("المزوّد ردّ بقائمة أفلام فارغة.").font(.footnote).foregroundStyle(.secondary)
+                        }.padding(.top, 40)
+                    case .unknown: EmptyView()
+                    }
+                }
                 LazyVGrid(columns: grid, spacing: 16) {
                     ForEach(items.prefix(shown)) { m in
                         NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster) }.buttonStyle(.plain)
@@ -236,6 +254,23 @@ struct SeriesView: View {
                 Chips(cats: library.cats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library)).padding(.vertical, 6)
                 let _ = tick
                 if mine && items.isEmpty { Text("قائمتك فارغة — افتح مسلسلًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
+                if !mine && query.isEmpty && cat == nil && library.shows.isEmpty && !library.loading {
+                    switch library.showsState {
+                    case .failed(let m):
+                        VStack(spacing: 10) {
+                            Text("تعذّر جلب المسلسلات من المزوّد").font(.headline)
+                            Text(m).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.borderedProminent)
+                        }.padding(.top, 40).padding(.horizontal)
+                    case .received:
+                        VStack(spacing: 8) {
+                            Image(systemName: "play.rectangle.on.rectangle").font(.largeTitle).foregroundStyle(.secondary)
+                            Text("لا توجد مسلسلات في هذه القائمة").font(.headline)
+                            Text("المزوّد ردّ بقائمة مسلسلات فارغة.").font(.footnote).foregroundStyle(.secondary)
+                        }.padding(.top, 40)
+                    case .unknown: EmptyView()
+                    }
+                }
                 LazyVGrid(columns: grid, spacing: 16) {
                     ForEach(items.prefix(shown)) { s in
                         NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster) }.buttonStyle(.plain)

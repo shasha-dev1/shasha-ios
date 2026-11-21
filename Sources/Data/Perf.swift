@@ -17,7 +17,7 @@ final class Perf: NSObject {
     private var link: CADisplayLink?
     private var lastFrame: CFTimeInterval = 0
     private var nextFrame: [(name: String, t0: Double, detail: String)] = []
-    private var launchRecorded = false, libraryRecorded = false
+    private var launchRecorded = false, libraryRecorded = false, cacheRecorded = false
     private let file: URL? = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("perf.log")
 
     private override init() {
@@ -47,11 +47,11 @@ final class Perf: NSObject {
 
     /// Measures a block that runs where it is called (on the main thread for screen computations).
     @discardableResult
-    func measure<T>(_ name: String, _ detail: @autoclosure () -> String = "", _ f: () throws -> T) rethrows -> T {
+    func measure<T>(_ name: String, _ detail: @autoclosure () -> String = "", minMs: Double = 4, _ f: () throws -> T) rethrows -> T {
         let t0 = CACurrentMediaTime()
         let r = try f()
         let ms = (CACurrentMediaTime() - t0) * 1000
-        if ms >= 4 { add(name, ms: ms, detail()) }      // tiny ones would only flood the log
+        if ms >= minMs { add(name, ms: ms, detail()) }      // tiny ones would only flood the log
         return r
     }
 
@@ -91,11 +91,14 @@ final class Perf: NSObject {
         add("فتح التطبيق ← أول شاشة", ms: ms, what)
     }
 
-    /// Library ready after launch (called once, when the first load finishes).
-    func libraryReadyAfterLaunch(_ detail: String) {
-        lock.lock(); let done = libraryRecorded; libraryRecorded = true; lock.unlock()
+    /// Library ready after launch (once from the saved copy, once from the provider).
+    func libraryReadyAfterLaunch(_ detail: String, fromCache: Bool = false) {
+        lock.lock()
+        let done = fromCache ? cacheRecorded : libraryRecorded
+        if fromCache { cacheRecorded = true } else { libraryRecorded = true }
+        lock.unlock()
         guard !done, let ms = sinceLaunchMs() else { return }
-        add("فتح التطبيق ← المكتبة جاهزة", ms: ms, detail)
+        add(fromCache ? "فتح التطبيق ← المكتبة المحفوظة معروضة" : "فتح التطبيق ← المكتبة محدّثة من المزوّد", ms: ms, detail)
     }
 
     // MARK: Stalled frames
@@ -157,6 +160,8 @@ final class Perf: NSObject {
         let ls = lines
         lock.unlock()
         out.append("")
+        out.append(contentsOf: summary(ls))
+        out.append("")
         out.append("— إطارات متأخرة (> 50 ms) منذ فتح التطبيق، حسب الخطوة")
         if st.isEmpty { out.append("لا يوجد") }
         for (k, v) in st { out.append(String(format: "%@: %d مرة | أطول %.0f ms | المجموع %.0f ms", k, v.count, v.maxMs, v.totalMs)) }
@@ -164,6 +169,28 @@ final class Perf: NSObject {
         out.append("— الخطوات المقاسة (الأحدث في الأسفل، تبقى بعد إعادة فتح التطبيق)")
         out.append(contentsOf: ls.suffix(150))
         return out.joined(separator: "\n")
+    }
+
+    /// 1.0.4: the last launch split into network, background processing, main-thread work and stalls.
+    /// Network requests run in parallel, so their sum is more than the waiting time: the longest is shown too.
+    private func summary(_ all: [String]) -> [String] {
+        let start = all.lastIndex { $0.contains("فتح التطبيق ← أول شاشة") } ?? 0
+        var net = (n: 0, sum: 0.0, max: 0.0), bg = (n: 0, sum: 0.0), ui = (n: 0, sum: 0.0), stall = (n: 0, sum: 0.0, max: 0.0)
+        for l in all[start...] {
+            guard let r = l.range(of: #": (\d+) ms"#, options: .regularExpression),
+                  let ms = Double(l[r].dropFirst(2).dropLast(3)) else { continue }
+            let name = l.dropFirst(9)
+            if name.hasPrefix("فتح التطبيق") { continue }
+            if name.hasPrefix("شبكة") { net.n += 1; net.sum += ms; net.max = max(net.max, ms) }
+            else if name.hasPrefix("توقف الواجهة") { stall.n += 1; stall.sum += ms; stall.max = max(stall.max, ms) }
+            else if l.contains("[واجهة]") { ui.n += 1; ui.sum += ms }
+            else { bg.n += 1; bg.sum += ms }
+        }
+        return ["— ملخص آخر فتح للتطبيق",
+                String(format: "الشبكة: %d طلب | أطول طلب %.0f ms | المجموع %.0f ms (الطلبات متوازية)", net.n, net.max, net.sum),
+                String(format: "معالجة في الخلفية (تحليل، تحويل، فهرسة، حفظ): %d | المجموع %.0f ms", bg.n, bg.sum),
+                String(format: "عمل على خيط الواجهة (مقاس): %d | المجموع %.0f ms", ui.n, ui.sum),
+                String(format: "تعليق الواجهة (> 250 ms): %d مرة | أطول %.0f ms | المجموع %.0f ms", stall.n, stall.max, stall.sum)]
     }
 
     func clear() {

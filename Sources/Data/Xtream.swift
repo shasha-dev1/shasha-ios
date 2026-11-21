@@ -58,6 +58,12 @@ struct Xtream {
     }
 
     private func list(_ o: Any) -> [[String: Any]] { o as? [[String: Any]] ?? [] }
+    /// 1.0.4: a stream list must be a JSON array (an empty one is a real "none"). Anything else — an error object,
+    /// null, text — is a failed request, so the screen doesn't claim "no movies" when the request failed.
+    private func strictList(_ o: Any, _ what: String) throws -> [[String: Any]] {
+        guard let a = o as? [[String: Any]] else { throw LoadError.network("رد غير متوقع من المزوّد (\(what))") }
+        return a
+    }
 
     func categories(_ action: String) async throws -> [Category] {
         list(try await api(action)).compactMap { d in
@@ -71,7 +77,7 @@ struct Xtream {
     func episodeURL(_ id: String, _ ext: String) -> String { "\(server)/series/\(esc(user))/\(esc(pass))/\(id).\(ext)" }
 
     func channels() async throws -> [Channel] {
-        let raw = list(try await api("get_live_streams"))
+        let raw = try strictList(try await api("get_live_streams"), "القنوات")
         return Perf.shared.measure("تحويل القنوات", "\(raw.count)") { raw.compactMap { d in
             guard let id = J.s(d["stream_id"]) else { return nil }
             let days = J.i(d["tv_archive"]) == 1 ? max(1, J.i(d["tv_archive_duration"])) : 0
@@ -81,7 +87,7 @@ struct Xtream {
     }
 
     func movies() async throws -> [Movie] {
-        let raw = list(try await api("get_vod_streams"))
+        let raw = try strictList(try await api("get_vod_streams"), "الأفلام")
         return Perf.shared.measure("تحويل الأفلام", "\(raw.count)") { raw.compactMap { d in
             guard let id = J.s(d["stream_id"]) else { return nil }
             let ext = J.s(d["container_extension"]) ?? "mp4"
@@ -91,7 +97,7 @@ struct Xtream {
     }
 
     func shows() async throws -> [Show] {
-        let raw = list(try await api("get_series"))
+        let raw = try strictList(try await api("get_series"), "المسلسلات")
         return Perf.shared.measure("تحويل المسلسلات", "\(raw.count)") { raw.compactMap { d in
             guard let id = J.s(d["series_id"]) else { return nil }
             return Show(id: id, name: J.s(d["name"]) ?? "—", poster: J.s(d["cover"]), categoryId: J.s(d["category_id"]) ?? "",

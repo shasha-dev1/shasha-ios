@@ -541,10 +541,19 @@ struct PlayerScreen: View {
             start(); Orientation.landscape(); UIApplication.shared.isIdleTimerDisabled = true
         }
         .onDisappear {
-            saveResume()
+            // 1.0.4 measurement only: each part of leaving the player timed on its own (same order as before).
+            Perf.shared.mark("رجوع: حفظ الاستكمال")
+            Perf.shared.measure("رجوع: حفظ الاستكمال", minMs: 0) { saveResume() }
             hideTask?.cancel(); resumeTask?.cancel()
             gate.end(); session = nil
-            model.stop(); Orientation.portrait(); UIApplication.shared.isIdleTimerDisabled = false
+            Perf.shared.mark("رجوع: إيقاف التشغيل")
+            Perf.shared.measure("رجوع: إيقاف التشغيل", minMs: 0) { model.stop() }
+            Perf.shared.mark("رجوع: تدوير الشاشة")
+            Perf.shared.measure("رجوع: تدوير الشاشة", minMs: 0) { Orientation.portrait() }
+            UIApplication.shared.isIdleTimerDisabled = false
+            // Frames after this point: the app's screens redrawing (until mpv's own close marks itself).
+            Perf.shared.untilNextFrame("رجوع: أول إطار بعد المشغّل")
+            Perf.shared.mark("رجوع: تحديث الشاشات")
         }
     }
 

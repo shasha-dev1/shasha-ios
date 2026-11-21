@@ -61,7 +61,7 @@ struct RootView: View {
         }
         .onChange(of: library.activeId) { _ in epg.clear() }
         .onAppear { Perf.shared.startMonitor() }
-        .task { if !library.sources.isEmpty && library.channels.isEmpty && library.movies.isEmpty { await library.reload() } }
+        .task { if !library.sources.isEmpty && !library.hasData { await library.start() } }
     }
 
     @ViewBuilder private var content: some View {

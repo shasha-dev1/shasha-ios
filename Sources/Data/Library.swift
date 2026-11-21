@@ -44,7 +44,7 @@ final class Library: ObservableObject {
         try await Xtream(server: base, user: user, pass: pass).verify()
         let s = Source(name: name.isEmpty ? (URL(string: base)?.host ?? "Xtream") : name, kind: .xtream, server: base, username: user)
         Keychain.set(pass, for: s.id.uuidString)
-        sources.append(s); activeId = s.id; save()
+        sources.append(s); activeId = s.id; save(); clear()
         await reload()
     }
 
@@ -52,19 +52,24 @@ final class Library: ObservableObject {
         let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
         guard URL(string: u)?.scheme?.hasPrefix("http") == true else { throw LoadError.badAddress }
         let s = Source(name: name.isEmpty ? "M3U" : name, kind: .m3u, server: u)
-        sources.append(s); activeId = s.id; save()
+        sources.append(s); activeId = s.id; save(); clear()
         await reload()
     }
 
     func remove(_ s: Source) {
         Keychain.set(nil, for: s.id.uuidString)
+        LibraryCache.remove(s.id)
         sources.removeAll { $0.id == s.id }
-        if activeId == s.id { activeId = sources.first?.id }
+        if activeId == s.id { activeId = sources.first?.id; clear() }
         save()
-        Task { await reload() }
+        Task { await start() }
     }
 
-    func select(_ s: Source) { activeId = s.id; save(); Task { await reload() } }
+    func select(_ s: Source) {
+        guard s.id != dataSource || activeId != s.id else { return }
+        activeId = s.id; save(); clear()
+        Task { await start() }
+    }
 
     /// 1.0.3: lists, search and copies are read from this index (built off the main thread after each load).
     @Published private(set) var index = LibraryIndex()
@@ -74,7 +79,52 @@ final class Library: ObservableObject {
     private var reloadSource: UUID?
     private var reloadGen = 0
 
-    /// Reads the whole playlist (lists only; details are read when a title is opened).
+    // MARK: 1.0.4 — saved copy first, refresh in the background
+
+    /// Playlist whose lists are on screen.
+    @Published private(set) var dataSource: UUID?
+    /// The lists on screen come from the saved copy (the refresh hasn't finished or has failed).
+    @Published private(set) var fromCache = false
+    /// Time of the last successful download of the active playlist.
+    @Published private(set) var lastSuccess: Date?
+    /// The background refresh failed while lists are shown (they stay; the full-screen error is only for "nothing at all").
+    @Published private(set) var refreshError: String?
+    /// Per section: was the list really received? A failed request is never shown as "none".
+    enum SectionState: Equatable { case unknown, received, failed(String) }
+    @Published private(set) var moviesState: SectionState = .unknown
+    @Published private(set) var showsState: SectionState = .unknown
+
+    private func successKey(_ id: UUID) -> String { "lib.success." + id.uuidString }
+
+    var hasData: Bool { !(channels.isEmpty && movies.isEmpty && shows.isEmpty) }
+
+    /// Launch / playlist change: show the saved copy of this playlist at once, then refresh it in the background.
+    func start() async {
+        guard let s = active else { clear(); return }
+        lastSuccess = UserDefaults.standard.object(forKey: successKey(s.id)) as? Date
+        if dataSource != s.id || !hasData {
+            let x = xtream, sid = s.id
+            let t0 = Perf.now()
+            let loaded = await Task.detached(priority: .userInitiated) { () -> (LibraryCache, [Category], [Category], [Category], [Channel], [Movie], [Show], LibraryIndex)? in
+                guard let c = LibraryCache.load(for: sid) else { return nil }
+                let r = c.restore(x)
+                let ix = LibraryIndex.build(channels: r.ch, movies: r.mv, shows: r.sh)
+                return (c, r.lc, r.vc, r.sc, r.ch, r.mv, r.sh, ix)
+            }.value
+            if let l = loaded, active?.id == sid, !hasData || dataSource != sid {
+                liveCats = l.1; vodCats = l.2; seriesCats = l.3; channels = l.4; movies = l.5; shows = l.6
+                index = l.7; version += 1
+                dataSource = sid; fromCache = true
+                moviesState = l.0.moviesReceived ? .received : .unknown
+                showsState = l.0.showsReceived ? .received : .unknown
+                Perf.shared.record("المكتبة المحفوظة: قراءة وفهرسة", since: t0, sizeText)
+                Perf.shared.libraryReadyAfterLaunch(sizeText, fromCache: true)
+            }
+        }
+        await reload()
+    }
+
+    /// Downloads the whole playlist (lists only; details are read when a title is opened). Manual refresh too.
     /// 1.0.3: a second call for the same playlist while it loads joins the running load (no duplicate download);
     /// a call for another playlist cancels the old load, whose results are then dropped.
     func reload() async {
@@ -92,18 +142,21 @@ final class Library: ObservableObject {
 
     private func performReload(_ gen: Int) async {
         guard let s = active else { clear(); return }
-        loading = true; error = nil
+        loading = true; error = nil; refreshError = nil
         let t0 = Perf.now()
+        var failedText: String?
         defer {
             if reloadGen == gen {
                 loading = false
                 let d = sizeText
-                Perf.shared.record("تحميل المكتبة كاملة", since: t0, d + (error == nil ? "" : " | فشل"))
-                if error == nil { Perf.shared.libraryReadyAfterLaunch(d) }
+                Perf.shared.record("تحميل المكتبة من المزوّد", since: t0, d + (failedText.map { " | فشل: " + $0 } ?? ""))
+                if failedText == nil { Perf.shared.libraryReadyAfterLaunch(d) }
             }
         }
         do {
             var lc: [Category] = [], ch: [Channel] = [], vc: [Category] = [], mv: [Movie] = [], sc: [Category] = [], sh: [Show] = []
+            var mState: SectionState = .received, sState: SectionState = .received
+            func reason(_ e: Error) -> String { (e as? LocalizedError)?.errorDescription ?? e.localizedDescription }
             if let x = xtream {
                 async let alc = x.categories("get_live_categories")
                 async let ach = x.channels()
@@ -112,8 +165,10 @@ final class Library: ObservableObject {
                 async let asc = x.categories("get_series_categories")
                 async let ash = x.shows()
                 lc = try await alc; ch = try await ach
-                vc = (try? await avc) ?? []; mv = (try? await amv) ?? []
-                sc = (try? await asc) ?? []; sh = (try? await ash) ?? []
+                vc = (try? await avc) ?? []
+                do { mv = try await amv } catch { mState = .failed(reason(error)) }
+                sc = (try? await asc) ?? []
+                do { sh = try await ash } catch { sState = .failed(reason(error)) }
             } else {
                 guard let url = URL(string: s.server) else { throw LoadError.badAddress }
                 let tn = Perf.now()
@@ -125,19 +180,45 @@ final class Library: ObservableObject {
                 }.value
                 lc = r.cats; ch = r.channels; mv = r.movies
                 vc = r.cats.filter { c in r.movies.contains { $0.categoryId == c.id } }
+                sState = .received
             }
+            // A failed section keeps what the screen already has for it (saved copy), never an empty "none".
+            let sameSource = dataSource == s.id
+            if case .failed = mState, sameSource { mv = movies; vc = vodCats }
+            if case .failed = sState, sameSource { sh = shows; sc = seriesCats }
             if ch.isEmpty && mv.isEmpty && sh.isEmpty { throw LoadError.empty }
             let ti = Perf.now()
             let ix = await Task.detached(priority: .userInitiated) { LibraryIndex.build(channels: ch, movies: mv, shows: sh) }.value
             Perf.shared.record("فهرسة المكتبة (بحث وترتيب ونسخ)", since: ti)
             // A newer load (other playlist, or cancelled) must not overwrite what it brought.
-            guard reloadGen == gen, !Task.isCancelled else { return }
+            guard reloadGen == gen, !Task.isCancelled, active?.id == s.id else { return }
             // One update for all lists (was six separate redraws).
             liveCats = lc; channels = ch; vodCats = vc; movies = mv; seriesCats = sc; shows = sh
             index = ix; version += 1
+            dataSource = s.id; fromCache = false
+            moviesState = mState; showsState = sState
+            let now = Date()
+            lastSuccess = now
+            UserDefaults.standard.set(now, forKey: successKey(s.id))
+            if case .failed(let m) = mState { refreshError = "تعذّر جلب الأفلام: " + m }
+            if case .failed(let m) = sState { refreshError = "تعذّر جلب المسلسلات: " + m }
+            // Saved only after a good download: the last good copy stays if a later refresh fails.
+            let xt = xtream != nil, sid = s.id
+            let mOK: Bool = { if case .failed = mState { return false }; return true }()
+            let sOK: Bool = { if case .failed = sState { return false }; return true }()
+            Task.detached(priority: .utility) {
+                let tw = Perf.now()
+                let c = LibraryCache(savedAt: now, xtream: xt, liveCats: lc, vodCats: vc, seriesCats: sc,
+                                     channels: ch, movies: mv, shows: sh, moviesReceived: mOK, showsReceived: sOK)
+                do { try LibraryCache.save(c, for: sid); Perf.shared.record("حفظ المكتبة على الجهاز", since: tw) }
+                catch { Perf.shared.add("حفظ المكتبة على الجهاز: فشل", ms: 0, (error as NSError).domain) }
+            }
         } catch {
-            guard reloadGen == gen, !Task.isCancelled else { return }
-            self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            guard reloadGen == gen, !Task.isCancelled, active?.id == s.id else { return }
+            let m = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            failedText = m
+            // Lists on screen (saved copy or the previous download) stay; only "nothing at all" is a full-screen error.
+            if hasData && dataSource == s.id { refreshError = m } else { self.error = m }
         }
     }
 
@@ -167,7 +248,10 @@ final class Library: ObservableObject {
         "قنوات \(channels.count) · أفلام \(movies.count) · مسلسلات \(shows.count) · مجموعات \(liveCats.count)/\(vodCats.count)/\(seriesCats.count)"
     }
 
-    private func clear() { liveCats = []; channels = []; vodCats = []; movies = []; seriesCats = []; shows = []; index = LibraryIndex(); version += 1 }
+    private func clear() {
+        liveCats = []; channels = []; vodCats = []; movies = []; seriesCats = []; shows = []; index = LibraryIndex(); version += 1
+        dataSource = nil; fromCache = false; refreshError = nil; error = nil; moviesState = .unknown; showsState = .unknown
+    }
 
     // MARK: Groups: order, hide, lock (per playlist, on this phone)
 

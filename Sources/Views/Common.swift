@@ -49,13 +49,31 @@ struct Shelf<Content: View>: View {
 struct LoadingOrError: View {
     @EnvironmentObject var library: Library
     var body: some View {
-        if library.loading { ProgressView("جارٍ التحميل…").padding() }
-        else if let e = library.error {
+        if library.loading && !library.hasData { ProgressView("جارٍ التحميل…").padding() }
+        else if let e = library.error, !library.hasData {
             VStack(spacing: 12) {
                 Text(e).multilineTextAlignment(.center)
                 Button("إعادة المحاولة") { Task { await library.reload() } }.buttonStyle(.borderedProminent)
             }.padding()
+        } else if library.loading {
+            // 1.0.4: the saved lists stay usable while the refresh runs.
+            Label("يتم تحديث القائمة…", systemImage: "arrow.triangle.2.circlepath").font(.footnote).foregroundStyle(.secondary).padding(.vertical, 4)
+        } else if let e = library.refreshError {
+            VStack(spacing: 6) {
+                Text("تعذّر التحديث: \(e)").font(.footnote).multilineTextAlignment(.center)
+                if let t = library.lastSuccess { Text("المعروض محفوظ من \(LastUpdate.text(t))").font(.caption).foregroundStyle(.secondary) }
+                Button("إعادة المحاولة") { Task { await library.reload() } }.font(.footnote).buttonStyle(.bordered)
+            }
+            .padding(10).frame(maxWidth: .infinity).background(Theme.surface, in: RoundedRectangle(cornerRadius: 10)).padding(.horizontal)
         }
+    }
+}
+
+enum LastUpdate {
+    static func text(_ d: Date) -> String {
+        let f = DateFormatter(); f.locale = Locale(identifier: "ar"); f.doesRelativeDateFormatting = true
+        f.dateStyle = .short; f.timeStyle = .short
+        return f.string(from: d)
     }
 }
 
