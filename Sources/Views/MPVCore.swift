@@ -54,6 +54,8 @@ final class MPVCore {
     var pipOutput = false
     var pipOutputReady = false
     var pipOutputFailed = false
+    /// The floating window shows a Dolby Vision file through the libplacebo filter (see setPiPOutput).
+    var pipDolbyVision = false
     var createdLabVO: String { createdLab == .voGPU ? "gpu" : "gpu-next" }
 
     private var log: [String] = []
@@ -318,10 +320,25 @@ extension MPVCore {
         // changes: no output is ever created with the other output's layer.
         let layer: AnyObject = on ? pipLayer : view.metal
         let ptr = Int(bitPattern: Unmanaged.passUnretained(layer).toOpaque())
-        note("[مرحلة] صورة داخل صورة: \(on ? "تحويل المخرج إلى avfoundation" : "رجوع المخرج إلى \(createdLabVO)")")
+        // 0.9.7: Apple's sample-buffer layer can't reshape Dolby Vision profile 5 (IPTPQc2), so those frames came out
+        // green/purple in the floating window. For Dolby Vision only, FFmpeg's libplacebo filter does the reshaping
+        // (apply_dolbyvision, on by default) on its own Vulkan device and hands back a small SDR BT.709 NV12 picture,
+        // which the avfoundation output accepts. Normal playback (gpu-next) never uses this filter.
+        if on { pipDolbyVision = (string("video-params/colormatrix") ?? "") == "dolbyvision" }
+        note("[مرحلة] صورة داخل صورة: \(on ? "تحويل المخرج إلى avfoundation" : "رجوع المخرج إلى \(createdLabVO)")\(pipDolbyVision ? " | Dolby Vision: فلتر libplacebo" : "")")
         setAsync("vo", "null")
+        if pipDolbyVision {
+            if on {
+                setAsync("hwdec", "videotoolbox-copy")
+                setAsync("vf", "libplacebo=w=1280:h=720:force_original_aspect_ratio=decrease:format=nv12:colorspace=bt709:color_primaries=bt709:color_trc=bt709:range=tv")
+            } else {
+                setAsync("vf", "")
+                setAsync("hwdec", createdLab == .noHwdec ? "no" : createdLab == .copyHwdec ? "videotoolbox-copy" : "videotoolbox")
+            }
+        }
         setAsync("wid", String(ptr))
         setAsync("vo", on ? "avfoundation" : createdLabVO)
+        if !on { pipDolbyVision = false }
     }
 }
 
