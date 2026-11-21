@@ -79,7 +79,7 @@ struct LanguageSettingsSection: View {
     var body: some View {
         Section {
             Toggle("صورة داخل صورة عند الخروج من التطبيق", isOn: $autoPiP)
-        } header: { Text("المشغّل") } footer: {
+        } header: { Text("التشغيل") } footer: {
             Text("المشغّل مبني على mpv: يعرض ألوان Dolby Vision وترجمات ASS بشكل صحيح ويدعم صورة داخل صورة.")
         }
         Section {
@@ -93,7 +93,7 @@ struct LanguageSettingsSection: View {
                 Text("العربية").tag(PlayerPrefs.arabic)
                 Text("الإنجليزية").tag(PlayerPrefs.english)
             }
-        } header: { Text("اللغة المفضّلة") } footer: {
+        } header: { Text("الصوت والترجمة") } footer: {
             Text("تُطبّق عند فتح فيلم أو حلقة أو قناة. إذا لم يوجد مسار بهذه اللغة يبقى اختيار الملف.")
         }
     }

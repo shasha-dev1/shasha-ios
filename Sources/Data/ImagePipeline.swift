@@ -22,6 +22,8 @@ final class ImagePipeline {
 
     private func key(_ url: URL, _ px: Int) -> NSString { "\(px)|\(url.absoluteString)" as NSString }
 
+    func clearMemory() { cache.removeAllObjects() }
+
     func cached(_ url: URL, maxPixel: Int) -> UIImage? { cache.object(forKey: key(url, maxPixel)) }
 
     func load(_ url: URL, maxPixel: Int) async -> UIImage? {

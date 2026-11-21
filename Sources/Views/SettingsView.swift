@@ -13,7 +13,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("قوائم التشغيل") {
+                Section("المصادر") {
                     ForEach(library.sources) { s in
                         Button { library.select(s) } label: {
                             HStack {
@@ -40,9 +40,11 @@ struct SettingsView: View {
                 LanguageSettingsSection()
                 SubsSettingsSection()
                 TmdbSettingsSection()
+                AppearanceSection()
+                StorageSection()
                 Section {
                     NavigationLink { PerfView() } label: { Label("قياسات الأداء", systemImage: "speedometer") }
-                } header: { Text("الأداء") } footer: {
+                } header: { Text("التشخيص") } footer: {
                     Text("تسجّل مدة فتح التطبيق وتحميل المكتبة والبحث وفتح المسلسل والرجوع من المشغّل، بدون أي روابط أو بيانات دخول.")
                 }
                 Section("حول التطبيق") {
@@ -87,5 +89,64 @@ struct PerfView: View {
         }
         .navigationTitle("قياسات الأداء")
         .onAppear { text = Perf.shared.report(library: library.sizeText); copied = false }
+    }
+}
+
+/// 1.1.0: poster size in the Movies / Series grids.
+enum GridSize: String, CaseIterable {
+    case normal, large
+    static let key = "grid.size"
+    var minWidth: CGFloat { self == .large ? 150 : 108 }
+    var label: String { self == .large ? "كبيرة" : "عادية" }
+}
+
+struct AppearanceSection: View {
+    @AppStorage(GridSize.key) private var grid: GridSize = .normal
+    var body: some View {
+        Section("المظهر") {
+            Picker("حجم البوسترات", selection: $grid) { ForEach(GridSize.allCases, id: \.self) { Text($0.label).tag($0) } }
+        }
+    }
+}
+
+/// 1.1.0: what the app keeps on this phone, with sizes, and how to clear each part.
+struct StorageSection: View {
+    @EnvironmentObject var library: Library
+    @State private var imageMB = 0.0
+    @State private var libraryMB = 0.0
+    @State private var tmdbMB = 0.0
+    @State private var confirmLibrary = false
+    @State private var done: String?
+
+    var body: some View {
+        Section {
+            row("المكتبة المحفوظة (القائمة الحالية)", libraryMB)
+            row("الصور المؤقتة", imageMB)
+            row("مطابقات TMDB", tmdbMB)
+            Button { URLCache.shared.removeAllCachedResponses(); ImagePipeline.shared.clearMemory(); measure(); done = "تم مسح الصور المؤقتة" } label: { Label("مسح الصور المؤقتة", systemImage: "photo.on.rectangle") }
+            Button(role: .destructive) { confirmLibrary = true } label: { Label("حذف المكتبة المحفوظة للقائمة الحالية", systemImage: "trash") }
+            if let done { Text(done).font(.footnote).foregroundStyle(Theme.teal) }
+        } header: { Text("التخزين") } footer: {
+            Text("الاستكمال والمفضلة وترتيب المجموعات لا تتأثر بهذا المسح.")
+        }
+        .onAppear { measure() }
+        .confirmationDialog("حذف المكتبة المحفوظة؟", isPresented: $confirmLibrary, titleVisibility: .visible) {
+            Button("حذف", role: .destructive) {
+                if let s = library.active { LibraryCache.remove(s.id) }
+                measure(); done = "تم الحذف — ستُنزَّل المكتبة من المزوّد عند الفتح القادم"
+            }
+        } message: { Text("المعروض الآن يبقى حتى إغلاق التطبيق.") }
+    }
+
+    private func row(_ t: String, _ mb: Double) -> some View {
+        HStack { Text(t); Spacer(); Text(String(format: "%.1f MB", mb)).foregroundStyle(.secondary).monospacedDigit() }
+    }
+
+    private func measure() {
+        imageMB = Double(URLCache.shared.currentDiskUsage) / 1_048_576
+        let fm = FileManager.default
+        func size(_ u: URL?) -> Double { (u.flatMap { try? fm.attributesOfItem(atPath: $0.path)[.size] as? NSNumber })?.doubleValue ?? 0 }
+        libraryMB = library.active.map { size(LibraryCache.file(LibraryCache.key(for: $0))) / 1_048_576 } ?? 0
+        tmdbMB = size(fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("tmdb-matches.json")) / 1_048_576
     }
 }

@@ -5,11 +5,27 @@ struct LiveView: View {
     @EnvironmentObject var library: Library
     @Binding var play: PlayItem?
     @State private var open: Category?
+    /// 1.1.0: search over all channels from the groups screen.
+    @State private var query = ""
+    @State private var results: [Channel] = []
 
     var body: some View {
         NavigationStack {
             List {
                 LoadingOrError()
+                if !query.trimmingCharacters(in: .whitespaces).isEmpty {
+                    if results.isEmpty { Text("لا توجد قناة بهذا الاسم.").foregroundStyle(.secondary) }
+                    ForEach(Array(results.prefix(200).enumerated()), id: \.element.id) { i, ch in
+                        Button { play = .live(list: Array(results.prefix(200)), index: i) } label: {
+                            HStack(spacing: 12) {
+                                Art(url: ch.logo, fit: true).frame(width: 56, height: 36).background(Theme.surface, in: RoundedRectangle(cornerRadius: 6))
+                                Text(ch.name).lineLimit(1).foregroundStyle(.primary)
+                                Spacer()
+                                if Store.isFavorite(ch.id) { Image(systemName: "star.fill").foregroundStyle(Theme.accent) }
+                            }
+                        }
+                    }
+                } else {
                 let _ = library.groupsTick
                 let ok = library.allowedFilter(.live)
                 NavigationLink { ChannelList(title: "المفضلة", filter: { ok($0.categoryId) }, favoritesOnly: true, play: $play) } label: {
@@ -28,6 +44,18 @@ struct LiveView: View {
                         }
                     }
                 }
+                }
+            }
+            .searchable(text: $query, prompt: "ابحث في كل القنوات")
+            .task(id: "\(query)|\(library.version)|\(library.groupsTick)") {
+                let q = query.trimmingCharacters(in: .whitespaces)
+                guard !q.isEmpty else { results = []; return }
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                guard !Task.isCancelled else { return }
+                let all = library.channels, ix = library.index, bl = library.blocked(.live)
+                let r = await Task.detached(priority: .userInitiated) { ListQuery.channels(all, ix, query: q) { !bl.contains($0.categoryId) } }.value
+                guard !Task.isCancelled else { return }
+                results = r
             }
             .navigationTitle("القنوات")
             .navigationDestination(isPresented: Binding(get: { open != nil }, set: { if !$0 { open = nil } })) {

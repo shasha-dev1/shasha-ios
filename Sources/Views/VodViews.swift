@@ -1,6 +1,6 @@
 import SwiftUI
 
-private let grid = [GridItem(.adaptive(minimum: 108), spacing: 12)]
+private func grid(_ g: GridSize) -> [GridItem] { [GridItem(.adaptive(minimum: g.minWidth), spacing: 12)] }
 /// 1.0.3: posters are added to the grid page by page while scrolling (a 24,000-item grid made every redraw slow).
 private let pageSize = 90
 
@@ -20,6 +20,7 @@ struct MoviesView: View {
     @State private var tick = 0
     /// 1.0.3: the list is computed off the main thread when its inputs change, and shown in pages.
     @State private var items: [Movie] = []
+    @AppStorage(GridSize.key) private var gridSize: GridSize = .normal
     @State private var shown = pageSize
 
     var body: some View {
@@ -43,6 +44,7 @@ struct MoviesView: View {
                 }
                 SectionNotice(section: .movies)
                 Chips(cats: library.cats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library)).padding(.vertical, 6)
+                if !items.isEmpty { Text("\(items.count.formatted()) فيلم").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal) }
                 let _ = tick
                 if mine && items.isEmpty { Text("قائمتك فارغة — افتح فيلمًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
                 // 1.0.4: "no movies" only when the provider really sent an empty list; a failed request says so.
@@ -64,7 +66,7 @@ struct MoviesView: View {
                     case .unknown, .emptyReply: EmptyView()
                     }
                 }
-                LazyVGrid(columns: grid, spacing: 16) {
+                LazyVGrid(columns: grid(gridSize), spacing: 16) {
                     ForEach(items.prefix(shown)) { m in
                         NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster) }.buttonStyle(.plain)
                             .onAppear {
@@ -110,7 +112,8 @@ struct SortMenu: View {
             }
             Toggle(isOn: $mine) { Label("قائمتي فقط", systemImage: "star") }
         } label: {
-            Image(systemName: mine ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+            Label(mine ? "قائمتي · \(sort.rawValue)" : sort.rawValue, systemImage: mine ? "line.3.horizontal.decrease.circle.fill" : "arrow.up.arrow.down")
+                .labelStyle(.titleAndIcon).font(.subheadline)
         }
     }
 }
@@ -250,6 +253,7 @@ struct SeriesView: View {
     @State private var mine = false
     @State private var tick = 0
     @State private var items: [Show] = []
+    @AppStorage(GridSize.key) private var gridSize: GridSize = .normal
     @State private var shown = pageSize
 
     var body: some View {
@@ -275,6 +279,7 @@ struct SeriesView: View {
                 }
                 SectionNotice(section: .shows)
                 Chips(cats: library.cats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library)).padding(.vertical, 6)
+                if !items.isEmpty { Text("\(items.count.formatted()) مسلسل").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal) }
                 let _ = tick
                 if mine && items.isEmpty { Text("قائمتك فارغة — افتح مسلسلًا واضغط ☆ لإضافته.").foregroundStyle(.secondary).padding() }
                 if !mine && query.isEmpty && cat == nil && library.shows.isEmpty && !library.loading {
@@ -295,7 +300,7 @@ struct SeriesView: View {
                     case .unknown, .emptyReply: EmptyView()
                     }
                 }
-                LazyVGrid(columns: grid, spacing: 16) {
+                LazyVGrid(columns: grid(gridSize), spacing: 16) {
                     ForEach(items.prefix(shown)) { s in
                         NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster) }.buttonStyle(.plain)
                             .onAppear {
