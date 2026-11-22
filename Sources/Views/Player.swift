@@ -420,6 +420,7 @@ struct PlayerScreen: View {
     @StateObject private var model = PlayerModel()
 
     @State private var index = 0
+    @State private var previousIndex: Int?
     @State private var controls = true
     @State private var locked = false
     @State private var hideTask: Task<Void, Never>?
@@ -527,7 +528,7 @@ struct PlayerScreen: View {
             case .subs:
                 if let v = current { SubSearchSheet(query: v.query) { file in model.addSubtitle(file); show("تمت إضافة الترجمة") } }
             case .channels:
-                ChannelPickerSheet(channels: channels, current: index) { i in sheet = nil; switchChannel(to: i) }
+                ChannelPickerSheet(channels: channels, current: index, previous: previousIndex) { i in sheet = nil; switchChannel(to: i) }
                     .environmentObject(library).environmentObject(epg)
             case .episodes:
                 EpisodePickerSheet(queue: queue, current: index) { i in sheet = nil; playEpisode(i) }
@@ -1182,6 +1183,7 @@ struct PlayerScreen: View {
 
     private func openLive() {
         let ch = channels[index]
+        LiveRecent.note(ch.id)
         DiagLog.shared.beginSession(ch.name)
         let s = gate.begin(key: "live:" + ch.id)
         session = s
@@ -1226,7 +1228,9 @@ struct PlayerScreen: View {
 
     private func switchChannel(to i: Int) {
         guard !channels.isEmpty else { return }
-        index = (i + channels.count) % channels.count
+        let target = (i + channels.count) % channels.count
+        if target != index { previousIndex = index }      // 1.7.0: for «القناة السابقة»
+        index = target
         openLive()
         show(channels[index].name)
         scheduleHide()
@@ -1396,6 +1400,8 @@ struct PlayerScreen: View {
 struct ChannelPickerSheet: View {
     let channels: [Channel]
     let current: Int
+    /// 1.7.0: the channel watched before this one (in this list), for «القناة السابقة».
+    var previous: Int? = nil
     let onPick: (Int) -> Void
     @EnvironmentObject var library: Library
     @EnvironmentObject var epg: EPG
@@ -1406,6 +1412,22 @@ struct ChannelPickerSheet: View {
         NavigationStack {
             ScrollViewReader { proxy in
                 List {
+                    // 1.7.0: recently watched channels of this list first (the playing one stays marked below).
+                    let recent = query.isEmpty ? recentIndexes : []
+                    if !recent.isEmpty {
+                        Section("آخر القنوات") {
+                            ForEach(recent, id: \.self) { i in
+                                Button { onPick(i) } label: {
+                                    HStack(spacing: 12) {
+                                        Art(url: channels[i].logo, fit: true).frame(width: 50, height: 32)
+                                        Text(channels[i].name).lineLimit(1).foregroundStyle(.primary)
+                                        Spacer()
+                                        if i == previous { Text("السابقة").font(.caption).foregroundStyle(Theme.teal) }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     ForEach(Array(channels.enumerated()), id: \.element.id) { i, ch in
                         if query.isEmpty || ch.name.localizedCaseInsensitiveContains(query) {
                             Button { onPick(i) } label: {
@@ -1429,9 +1451,31 @@ struct ChannelPickerSheet: View {
                 .onAppear { proxy.scrollTo(current, anchor: .center) }
             }
             .navigationTitle("القنوات").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } }
+                ToolbarItem(placement: .primaryAction) {
+                    if let p = previous, channels.indices.contains(p) {
+                        Button { onPick(p) } label: { Label("القناة السابقة", systemImage: "arrow.uturn.backward") }
+                    }
+                }
+            }
         }
         .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    /// Positions in this list of the recently watched channels (newest first, without the playing one).
+    private var recentIndexes: [Int] {
+        let pos = Dictionary(channels.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
+        return LiveRecent.ids.compactMap { pos[$0] }.filter { $0 != current }.prefix(6).map { $0 }
+    }
+}
+
+/// 1.7.0: recently watched live channels (ids, newest first, on this phone).
+enum LiveRecent {
+    static var ids: [String] { UserDefaults.standard.stringArray(forKey: "live.recent") ?? [] }
+    static func note(_ id: String) {
+        var r = ids; r.removeAll { $0 == id }; r.insert(id, at: 0)
+        UserDefaults.standard.set(Array(r.prefix(20)), forKey: "live.recent")
     }
 }
 

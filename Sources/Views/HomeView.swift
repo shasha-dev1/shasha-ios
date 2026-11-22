@@ -75,7 +75,35 @@ struct HomeView: View {
 
     // MARK: 1.6.0 Home rows (split out so each part type-checks on its own)
 
+    /// 1.7.0: recently watched channels (newest first), without hidden / locked groups.
+    @ViewBuilder private var recentChannelsRow: some View {
+        let ok = library.allowedFilter(.live)
+        let recent = LiveRecent.ids.compactMap { id in library.index.channelPos[id].flatMap { $0 < library.channels.count ? library.channels[$0] : nil } }
+            .filter { ok($0.categoryId) }.prefix(15).map { $0 }
+        if !recent.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionTitle(text: "آخر القنوات")
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(alignment: .top, spacing: 12) {
+                        ForEach(Array(recent.enumerated()), id: \.element.id) { i, ch in
+                            Button { play = .live(list: recent, index: i) } label: {
+                                VStack(spacing: 6) {
+                                    Art(url: ch.logo, fit: true).frame(width: 84, height: 52).padding(8)
+                                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                    Text(ch.name).font(.caption).lineLimit(1).frame(width: 100)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("تشغيل \(ch.name)")
+                        }
+                    }.padding(.horizontal)
+                }
+            }
+        }
+    }
+
     @ViewBuilder private func favoritesSection(_ favCh: [Channel], _ myMovies: [Movie], _ myShows: [Show]) -> some View {
+        recentChannelsRow
         if !favCh.isEmpty || !myMovies.isEmpty || !myShows.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 SectionTitle(text: "المفضلة")
