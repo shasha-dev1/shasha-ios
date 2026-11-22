@@ -178,3 +178,24 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 ## Verified on device 2026-11-22 18:35 — Drive linking (iPhone)
 - Owner's screenshots: link sheet «تم الربط ✓», Settings → accounts shows «مربوط بحساب Google», first sync «تمت المزامنة: لا جديد من الجهاز الآخر», last success 6:35 PM. Scope drive.file, project In production.
 - TV app 0.9.11 linking and a cross-device resume test are still owed.
+
+## 1.6.0 — branch `work/1.6` (built and logic-tested in CI; NOT tried on the device)
+Reference builds: player/colours/subtitles/PiP verified on **1.0.0 build 57** (`08868a7`); Drive linking verified on the
+iPhone with 1.5.x on 2026-11-22. Nothing in 1.6.0 is "stable" until tried.
+
+| Batch | Commit | CI run | State |
+|---|---|---|---|
+| One work identity + one Continue watching, long-press actions | `f688ffa` | #91 | built + tests passed |
+| Drive sync safety (refuse bad files, future clock, re-read on concurrent change, backup, `x`) | `bc38508` | #92 | built + tests passed |
+| Groups (named button, pins, recent, last group) + Home rows order/hide + TMDB rows | `79cff62` | #93 | built + tests passed |
+| Settings states + confirm source removal | `e1d83f2` | see Actions | — |
+| Search ranking + counts | `43f4b97` | see Actions | — |
+
+New tests: WorkRuleTests (6), CloudSyncSafetyTests (8). TV 0.9.12: CloudSyncCoreTest +2 (191 total, lint 0 errors).
+
+### Device test (short)
+1. Continue watching: a title played from two provider copies shows ONE card; long-press → remove / mark watched / start over.
+2. Cards show «م2 ح5 · بقي 23 د»; the same list on Home, Movies and Series.
+3. Groups: «المجموعات» button → search, swipe to pin; pinned/recent first in the row; leave and come back → same group.
+4. Settings → Appearance → Home rows: hide/reorder; Discovery rows don't repeat titles.
+5. Sync both ways (TV 0.9.12 + iPhone 1.6.0): pause on TV → resume on iPhone; pause on iPhone → resume on TV; finish an episode on one → watched on the other; airplane mode → play → back online → "Sync now" sends it; Settings shows pending / last success / reason.

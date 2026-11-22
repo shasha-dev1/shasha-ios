@@ -41,7 +41,7 @@ jobs:
           {
             echo "== xcode"; xcodebuild -version
             echo "== unit tests (PlaybackLogic)"
-            swift test --package-path Logic
+            swift test --package-path Logic || exit 1
             echo "== vendor MPVKit with the patched libmpv"
             scripts/vendor-mpvkit.sh "$MPVKIT_TAG" .libmpv
             brew install xcodegen
