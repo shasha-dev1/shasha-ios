@@ -95,12 +95,17 @@ final class TmdbRows: ObservableObject {
             func ordered(_ x: [Item]) -> [Item] { x.filter { $0.hit != nil } + x.filter { $0.hit == nil } }
             // New and highly rated: only what is in the library (the owner's request).
             func available(_ x: [TmdbTitle]) -> [Item] { items(x).filter { $0.hit != nil } }
-            rows = [Row(id: "nm", name: "أفلام جديدة تقييمها عالي", items: available(e)),
-                    Row(id: "nt", name: "مسلسلات جديدة تقييمها عالي", items: available(f)),
-                    Row(id: "tm", name: "أفلام رائجة هذا الأسبوع", items: ordered(items(a))),
-                    Row(id: "tt", name: "مسلسلات رائجة هذا الأسبوع", items: ordered(items(b))),
-                    Row(id: "pm", name: "الأفلام الأشهر", items: ordered(items(c))),
-                    Row(id: "pt", name: "المسلسلات الأشهر", items: ordered(items(d)))].filter { !$0.items.isEmpty }
+            let only = UserDefaults.standard.bool(forKey: "tmdb.onlyLibrary")
+            func pick(_ x: [TmdbTitle]) -> [Item] { only ? available(x) : ordered(items(x)) }
+            let raw = [Row(id: "nm", name: "أفلام جديدة تقييمها عالي", items: available(e)),
+                       Row(id: "nt", name: "مسلسلات جديدة تقييمها عالي", items: available(f)),
+                       Row(id: "tm", name: "أفلام رائجة هذا الأسبوع", items: pick(a)),
+                       Row(id: "tt", name: "مسلسلات رائجة هذا الأسبوع", items: pick(b)),
+                       Row(id: "pm", name: "الأفلام الأشهر", items: pick(c)),
+                       Row(id: "pt", name: "المسلسلات الأشهر", items: pick(d))]
+            // 1.6.0: a title shown in an earlier row isn't repeated in a later one.
+            var shown = Set<String>()
+            rows = raw.map { r in Row(id: r.id, name: r.name, items: r.items.filter { shown.insert($0.id).inserted }) }.filter { !$0.items.isEmpty }
             error = nil
             loadedFor = library.version
         } catch {

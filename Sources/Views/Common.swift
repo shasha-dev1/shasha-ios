@@ -128,35 +128,44 @@ struct Chips: View {
     let cats: [Category]
     @Binding var selected: String?
     var locked: Set<String> = []
+    /// 1.6.0: section for pinning in the list (nil = no pinning).
+    var section: GroupSection? = nil
     /// Titles per group id, counted off the main thread when the list opens.
     var counts: (() async -> [String: Int])? = nil
+    @EnvironmentObject private var library: Library
     @State private var listOpen = false
+    private var pinnedIds: Set<String> { section.map { Set(library.pinned($0)) } ?? [] }
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
                     if cats.count > 6 {
+                        // 1.6.0: a named button (the icon alone wasn't recognisable).
                         Button { listOpen = true } label: {
-                            Label("كل المجموعات", systemImage: "square.grid.2x2").labelStyle(.iconOnly)
+                            Label("المجموعات", systemImage: "square.grid.2x2")
                                 .font(.subheadline.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 8)
                                 .background(Theme.surface, in: Capsule()).foregroundStyle(Theme.accent)
                         }
-                        .accessibilityLabel("كل المجموعات")
                     }
                     chip("الكل", nil).id("all")
-                    ForEach(cats) { c in chip(locked.contains(c.id) ? "🔒 " + Self.name(c) : Self.name(c), c.id).id(c.id) }
+                    ForEach(cats) { c in
+                        let pin = pinnedIds.contains(c.id) ? "📌 " : ""
+                        chip(pin + (locked.contains(c.id) ? "🔒 " : "") + Self.short(Self.name(c)), c.id).id(c.id)
+                    }
                 }.padding(.horizontal)
             }
             .onAppear { scroll(proxy, animated: false) }
             .onChange(of: selected) { _ in scroll(proxy, animated: true) }
         }
         .sheet(isPresented: $listOpen) {
-            CategoryListSheet(cats: cats, selected: $selected, locked: locked, counts: counts)
+            CategoryListSheet(cats: cats, selected: $selected, locked: locked, counts: counts, section: section)
         }
     }
 
     static func name(_ c: Category) -> String { CategoryNameRule.display(c.name) }
+    /// Long names are shortened in the row only; the list shows them in full.
+    static func short(_ n: String) -> String { n.count > 26 ? String(n.prefix(24)) + "…" : n }
 
     private func scroll(_ proxy: ScrollViewProxy, animated: Bool) {
         let target: String = selected ?? "all"
@@ -179,6 +188,8 @@ struct CategoryListSheet: View {
     @Binding var selected: String?
     let locked: Set<String>
     let counts: (() async -> [String: Int])?
+    var section: GroupSection? = nil
+    @EnvironmentObject private var library: Library
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
     @State private var n: [String: Int] = [:]
@@ -193,7 +204,15 @@ struct CategoryListSheet: View {
         NavigationStack {
             List {
                 if query.isEmpty { row("الكل", nil, n.values.reduce(0, +)) }
-                ForEach(shown) { c in row(Chips.name(c), c.id, n[c.id]) }
+                if query.isEmpty, let section {
+                    let pins = library.pinned(section).compactMap { id in cats.first { $0.id == id } }
+                    if !pins.isEmpty {
+                        Section("المثبتة") { ForEach(pins) { c in row("📌 " + Chips.name(c), c.id, n[c.id]) } }
+                    }
+                }
+                Section(query.isEmpty ? "كل المجموعات — اسحب أي مجموعة لتثبيتها" : "النتائج") {
+                    ForEach(shown) { c in row(Chips.name(c), c.id, n[c.id]) }
+                }
                 if shown.isEmpty { Text("لا توجد مجموعة بهذا الاسم").foregroundStyle(.secondary) }
             }
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "ابحث عن مجموعة")
@@ -212,6 +231,13 @@ struct CategoryListSheet: View {
                 Spacer()
                 if let count, count > 0 { Text(count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary) }
                 if selected == id { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
+            }
+        }
+        .swipeActions(edge: .leading) {
+            if let id, let section {
+                let on = library.pinned(section).contains(id)
+                Button { library.togglePin(id, section) } label: { Label(on ? "إلغاء التثبيت" : "تثبيت", systemImage: on ? "pin.slash" : "pin") }
+                    .tint(Theme.accent)
             }
         }
     }

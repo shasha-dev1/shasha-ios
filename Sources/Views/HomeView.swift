@@ -63,6 +63,101 @@ struct HomeView: View {
 
     // MARK: Shelves
 
+    // MARK: 1.6.0 Home rows (split out so each part type-checks on its own)
+
+    @ViewBuilder private func favoritesSection(_ favCh: [Channel], _ myMovies: [Movie], _ myShows: [Show]) -> some View {
+        if !favCh.isEmpty || !myMovies.isEmpty || !myShows.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionTitle(text: "المفضلة")
+                if !favCh.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(alignment: .top, spacing: 12) {
+                            ForEach(Array(favCh.prefix(30).enumerated()), id: \.element.id) { i, ch in
+                                Button { play = .live(list: favCh, index: i) } label: {
+                                    VStack(spacing: 6) {
+                                        Art(url: ch.logo, fit: true).frame(width: 84, height: 52).padding(8)
+                                            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                        Text(ch.name).font(.caption).lineLimit(1).frame(width: 100)
+                                        if let n = epg.now[ch.id] { Text(n.title).font(.caption2).foregroundStyle(.secondary).lineLimit(1).frame(width: 100) }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .task { epg.load(ch, from: library.xtream) }
+                            }
+                        }.padding(.horizontal)
+                    }
+                }
+                if !myMovies.isEmpty || !myShows.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(alignment: .top, spacing: 12) {
+                            ForEach(myShows.prefix(20)) { s in
+                                NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
+                            }
+                            ForEach(myMovies.prefix(20)) { m in
+                                NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
+                            }
+                        }.padding(.horizontal)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func recentSection(_ newMovies: [Movie], _ newShows: [Show]) -> some View {
+        if !newMovies.isEmpty || !newShows.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionTitle(text: "أضيف حديثًا")
+                if !newMovies.isEmpty {
+                    SubTitle(text: "أفلام")
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(alignment: .top, spacing: 12) {
+                            ForEach(newMovies) { m in
+                                NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
+                            }
+                        }.padding(.horizontal)
+                    }
+                }
+                if !newShows.isEmpty {
+                    SubTitle(text: "مسلسلات حُدّثت")
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(alignment: .top, spacing: 12) {
+                            ForEach(newShows) { s in
+                                NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
+                            }
+                        }.padding(.horizontal)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func discoverSection() -> some View {
+        // 1.0.9: TMDB rows, each card marked available / not available.
+        if TmdbKey.value != nil {
+            ForEach(tmdbRows.rows) { row in
+                Shelf(title: row.name) {
+                    ForEach(row.items) { it in
+                        switch it.hit {
+                        case .movie(let m):
+                            NavigationLink { MovieDetail(movie: m, play: $play) } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
+                        case .show(let s):
+                            NavigationLink { SeriesDetail(show: s, play: $play) } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
+                        case nil:
+                            Button { tmdbSheet = it.title } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            if tmdbRows.loading && tmdbRows.rows.isEmpty { ProgressView("جارٍ تحميل الرائج من TMDB…").frame(maxWidth: .infinity) }
+            if let e = tmdbRows.error {
+                VStack(spacing: 8) {
+                    Text("تعذّر تحميل الرائج: \(e)").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    Button("إعادة المحاولة") { Task { await tmdbRows.load(library) } }.font(.footnote).buttonStyle(.bordered)
+                }.frame(maxWidth: .infinity).padding(.horizontal)
+            }
+        }
+    }
+
     @ViewBuilder private var shelves: some View {
         let okM = library.allowedFilter(.movies)
         let okS = library.allowedFilter(.series)
@@ -99,92 +194,14 @@ struct HomeView: View {
             let myShows = Perf.shared.measure("الرئيسية: قائمتي (مسلسلات)") {
                 favs.compactMap { k in k.hasPrefix("show:") ? library.index.showPos[String(k.dropFirst(5))].map { library.shows[$0] } : nil }.filter { okS($0.categoryId) }
             }
-            if !favCh.isEmpty || !myMovies.isEmpty || !myShows.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    SectionTitle(text: "المفضلة")
-                    if !favCh.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(alignment: .top, spacing: 12) {
-                                ForEach(Array(favCh.prefix(30).enumerated()), id: \.element.id) { i, ch in
-                                    Button { play = .live(list: favCh, index: i) } label: {
-                                        VStack(spacing: 6) {
-                                            Art(url: ch.logo, fit: true).frame(width: 84, height: 52).padding(8)
-                                                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
-                                            Text(ch.name).font(.caption).lineLimit(1).frame(width: 100)
-                                            if let n = epg.now[ch.id] { Text(n.title).font(.caption2).foregroundStyle(.secondary).lineLimit(1).frame(width: 100) }
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                    .task { epg.load(ch, from: library.xtream) }
-                                }
-                            }.padding(.horizontal)
-                        }
-                    }
-                    if !myMovies.isEmpty || !myShows.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(alignment: .top, spacing: 12) {
-                                ForEach(myShows.prefix(20)) { s in
-                                    NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
-                                }
-                                ForEach(myMovies.prefix(20)) { m in
-                                    NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
-                                }
-                            }.padding(.horizontal)
-                        }
-                    }
-                }
-            }
-
             let newMovies: [Movie] = Perf.shared.measure("الرئيسية: أفلام حديثة") { Array(library.index.moviesNewest.lazy.compactMap { $0 < library.movies.count ? library.movies[$0] : nil }.filter { okM($0.categoryId) }.prefix(20)) }
             let newShows: [Show] = Perf.shared.measure("الرئيسية: مسلسلات حديثة") { Array(library.index.showsNewest.lazy.compactMap { $0 < library.shows.count ? library.shows[$0] : nil }.filter { okS($0.categoryId) }.prefix(20)) }
-            if !newMovies.isEmpty || !newShows.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    SectionTitle(text: "أضيف حديثًا")
-                    if !newMovies.isEmpty {
-                        SubTitle(text: "أفلام")
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(alignment: .top, spacing: 12) {
-                                ForEach(newMovies) { m in
-                                    NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
-                                }
-                            }.padding(.horizontal)
-                        }
-                    }
-                    if !newShows.isEmpty {
-                        SubTitle(text: "مسلسلات حُدّثت")
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(alignment: .top, spacing: 12) {
-                                ForEach(newShows) { s in
-                                    NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
-                                }
-                            }.padding(.horizontal)
-                        }
-                    }
-                }
-            }
-
-            // 1.0.9: TMDB rows, each card marked available / not available.
-            if TmdbKey.value != nil {
-                ForEach(tmdbRows.rows) { row in
-                    Shelf(title: row.name) {
-                        ForEach(row.items) { it in
-                            switch it.hit {
-                            case .movie(let m):
-                                NavigationLink { MovieDetail(movie: m, play: $play) } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
-                            case .show(let s):
-                                NavigationLink { SeriesDetail(show: s, play: $play) } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
-                            case nil:
-                                Button { tmdbSheet = it.title } label: { TmdbCard(item: it).frame(width: 112) }.buttonStyle(.plain)
-                            }
-                        }
-                    }
-                }
-                if tmdbRows.loading && tmdbRows.rows.isEmpty { ProgressView("جارٍ تحميل الرائج من TMDB…").frame(maxWidth: .infinity) }
-                if let e = tmdbRows.error {
-                    VStack(spacing: 8) {
-                        Text("تعذّر تحميل الرائج: \(e)").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                        Button("إعادة المحاولة") { Task { await tmdbRows.load(library) } }.font(.footnote).buttonStyle(.bordered)
-                    }.frame(maxWidth: .infinity).padding(.horizontal)
+            // 1.6.0: rows in the order chosen in Settings → Appearance, hidden ones left out (continue stays first).
+            ForEach(HomeRowsPrefs.visible(), id: \.self) { row in
+                switch row {
+                case .favorites: favoritesSection(favCh, myMovies, myShows)
+                case .recent: recentSection(newMovies, newShows)
+                case .discover: discoverSection()
                 }
             }
 
@@ -332,5 +349,32 @@ struct HeroCard: View {
         }
         .padding(12)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+/// 1.6.0: order and visibility of Home rows (after the continue card and row, which always come first).
+enum HomeRow: String, CaseIterable, Identifiable {
+    case favorites, recent, discover
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .favorites: return "المفضلة والقنوات"
+        case .recent: return "أضيف حديثًا"
+        case .discover: return "اكتشاف من TMDB"
+        }
+    }
+}
+
+enum HomeRowsPrefs {
+    static let orderKey = "home.rows.order", hiddenKey = "home.rows.hidden"
+    static func order() -> [HomeRow] {
+        let saved = (UserDefaults.standard.stringArray(forKey: orderKey) ?? []).compactMap(HomeRow.init(rawValue:))
+        return saved + HomeRow.allCases.filter { !saved.contains($0) }
+    }
+    static func hidden() -> Set<HomeRow> { Set((UserDefaults.standard.stringArray(forKey: hiddenKey) ?? []).compactMap(HomeRow.init(rawValue:))) }
+    static func visible() -> [HomeRow] { let h = hidden(); return order().filter { !h.contains($0) } }
+    static func save(order: [HomeRow], hidden: Set<HomeRow>) {
+        UserDefaults.standard.set(order.map(\.rawValue), forKey: orderKey)
+        UserDefaults.standard.set(hidden.map(\.rawValue), forKey: hiddenKey)
     }
 }

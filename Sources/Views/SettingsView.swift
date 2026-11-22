@@ -163,7 +163,7 @@ struct SettingsView: View {
                 row("link", .teal, "الحسابات والربط", "TMDB · Drive · Trakt")
             }
             divider
-            NavigationLink { SettingsPage(title: "المظهر") { AppearanceSection() } } label: { row("paintpalette.fill", .pink, "المظهر") }
+            NavigationLink { SettingsPage(title: "المظهر") { AppearanceSection(); HomeRowsSection() } } label: { row("paintpalette.fill", .pink, "المظهر") }
             divider
             NavigationLink { SettingsPage(title: "التخزين") { StorageSection() } } label: { row("internaldrive.fill", .gray, "التخزين") }
             divider
@@ -350,5 +350,26 @@ struct StorageSection: View {
         func size(_ u: URL?) -> Double { (u.flatMap { try? fm.attributesOfItem(atPath: $0.path)[.size] as? NSNumber })?.doubleValue ?? 0 }
         libraryMB = library.active.map { size(LibraryCache.file(LibraryCache.key(for: $0))) / 1_048_576 } ?? 0
         tmdbMB = size(fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("tmdb-matches.json")) / 1_048_576
+    }
+}
+
+/// 1.6.0: order and visibility of Home rows; discovery rows limited to the library if wanted.
+struct HomeRowsSection: View {
+    @State private var order = HomeRowsPrefs.order()
+    @State private var hidden = HomeRowsPrefs.hidden()
+    @AppStorage("tmdb.onlyLibrary") private var onlyLibrary = false
+    var body: some View {
+        Section {
+            ForEach(order) { r in
+                Toggle(r.title, isOn: Binding(get: { !hidden.contains(r) }, set: { on in
+                    if on { hidden.remove(r) } else { hidden.insert(r) }
+                    HomeRowsPrefs.save(order: order, hidden: hidden)
+                }))
+            }
+            .onMove { from, to in order.move(fromOffsets: from, toOffset: to); HomeRowsPrefs.save(order: order, hidden: hidden) }
+            Toggle("الاكتشاف: أعمال مكتبتي فقط", isOn: $onlyLibrary)
+        } header: { Text("صفوف الرئيسية") } footer: {
+            Text("«متابعة المشاهدة» تبقى أولًا دائمًا. اضغط مطولًا على صف واسحبه لتغيير الترتيب.")
+        }
     }
 }

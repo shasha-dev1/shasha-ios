@@ -214,9 +214,11 @@ actor Tmdb {
             // most popular first, two pages — GET /discover/{movie|tv}. Same rule as the TV app.
             let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
             let since = f.string(from: Date().addingTimeInterval(-365 * 86400))
+            let today = f.string(from: Date())     // 1.6.0: released already (not "coming soon")
             for page in 1...2 {
                 guard let json = try await get("/discover/\(kind.rawValue)", [
                     kind == .movie ? "primary_release_date.gte" : "first_air_date.gte": since,
+                    kind == .movie ? "primary_release_date.lte" : "first_air_date.lte": today,
                     "vote_average.gte": "7", "vote_count.gte": kind == .movie ? "200" : "100",
                     "sort_by": "popularity.desc", "include_adult": "false", "language": lang, "page": String(page)]) else { break }
                 items += (json["results"] as? [[String: Any]] ?? []).compactMap { Self.title($0, kind) }

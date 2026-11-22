@@ -432,6 +432,34 @@ final class Library: ObservableObject {
         return orderedCats(s).filter { !h.contains($0.id) }
     }
 
+    // MARK: 1.6.0 — pinned, recently used and last group (per playlist and section, on this phone)
+
+    func pinned(_ s: GroupSection) -> [String] { UserDefaults.standard.stringArray(forKey: gkey(s, "pinned")) ?? [] }
+    func togglePin(_ id: String, _ s: GroupSection) {
+        var p = pinned(s)
+        if let i = p.firstIndex(of: id) { p.remove(at: i) } else { p.append(id) }
+        UserDefaults.standard.set(p, forKey: gkey(s, "pinned"))
+        groupsTick += 1
+    }
+    func recentCats(_ s: GroupSection) -> [String] { UserDefaults.standard.stringArray(forKey: gkey(s, "recent")) ?? [] }
+    func lastCat(_ s: GroupSection) -> String? { UserDefaults.standard.string(forKey: gkey(s, "last")) }
+    /// Remembers the chosen group (nil = "All") and keeps the 6 most recently used.
+    func noteCat(_ id: String?, _ s: GroupSection) {
+        UserDefaults.standard.set(id, forKey: gkey(s, "last"))
+        guard let id else { return }
+        var r = recentCats(s); r.removeAll { $0 == id }; r.insert(id, at: 0)
+        UserDefaults.standard.set(Array(r.prefix(6)), forKey: gkey(s, "recent"))
+    }
+    /// Chip row order: pinned, then recently used, then the rest in the viewer's order (hidden ones never).
+    func chipCats(_ s: GroupSection) -> [Category] {
+        let all = cats(s)
+        let byId = Dictionary(all.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        var seen = Set<String>(), out: [Category] = []
+        for id in pinned(s) + recentCats(s) { if let c = byId[id], seen.insert(id).inserted { out.append(c) } }
+        out += all.filter { !seen.contains($0.id) }
+        return out
+    }
+
     /// Items of this group may be listed (not hidden; locked only while unlocked).
     func allowed(_ categoryId: String, _ s: GroupSection) -> Bool {
         if set(s, "hidden").contains(categoryId) { return false }

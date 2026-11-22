@@ -14,6 +14,7 @@ struct MoviesView: View {
     @EnvironmentObject var library: Library
     @Binding var play: PlayItem?
     @State private var cat: String?
+    @State private var restored = false
     @State private var query = ""
     @AppStorage("sort.movies") private var sort: VodSort = .newest
     @State private var mine = false
@@ -44,7 +45,7 @@ struct MoviesView: View {
                     }
                 }
                 SectionNotice(section: .movies)
-                Chips(cats: library.cats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library),
+                Chips(cats: library.chipCats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library), section: .movies,
                       counts: { [all = library.movies] in await Task.detached(priority: .userInitiated) { all.reduce(into: [String: Int]()) { $0[$1.categoryId, default: 0] += 1 } }.value })
                     .padding(.vertical, 6)
                 if !items.isEmpty { Text("\(items.count.formatted()) فيلم").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal) }
@@ -98,9 +99,21 @@ struct MoviesView: View {
             .navigationTitle(mine ? "قائمتي · الأفلام" : "الأفلام")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
-            .onAppear { tick += 1 }
+            .onAppear { tick += 1; restoreCat() }
             .onChange(of: play?.id) { _ in tick += 1 }   // back from the player: refresh "Continue watching"
+            .onChange(of: cat) { c in if restored { library.noteCat(c, .movies) } }
+            .onChange(of: library.active?.id) { _ in restored = false; cat = nil; restoreCat() }
+            .onChange(of: library.version) { _ in restoreCat() }
         }
+    }
+    /// 1.6.0: back to the group used last time (never a hidden, vanished, or locked-while-locked one).
+    private func restoreCat() {
+        guard !restored else { return }
+        let all = library.cats(.movies)
+        guard !all.isEmpty else { return }          // library not loaded yet: try again on the next appear
+        restored = true
+        guard cat == nil, let last = library.lastCat(.movies), all.contains(where: { $0.id == last }), library.allowed(last, .movies) else { return }
+        cat = last
     }
 }
 
@@ -261,6 +274,7 @@ struct SeriesView: View {
     @EnvironmentObject var library: Library
     @Binding var play: PlayItem?
     @State private var cat: String?
+    @State private var restored = false
     @State private var query = ""
     @AppStorage("sort.series") private var sort: VodSort = .newest
     @State private var mine = false
@@ -292,7 +306,7 @@ struct SeriesView: View {
                     }
                 }
                 SectionNotice(section: .shows)
-                Chips(cats: library.cats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library),
+                Chips(cats: library.chipCats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library), section: .series,
                       counts: { [all = library.shows] in await Task.detached(priority: .userInitiated) { all.reduce(into: [String: Int]()) { $0[$1.categoryId, default: 0] += 1 } }.value })
                     .padding(.vertical, 6)
                 if !items.isEmpty { Text("\(items.count.formatted()) مسلسل").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal) }
@@ -345,9 +359,21 @@ struct SeriesView: View {
             .navigationTitle(mine ? "قائمتي · المسلسلات" : "المسلسلات")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
-            .onAppear { tick += 1 }
+            .onAppear { tick += 1; restoreCat() }
             .onChange(of: play?.id) { _ in tick += 1 }   // back from the player: refresh "Continue watching"
+            .onChange(of: cat) { c in if restored { library.noteCat(c, .series) } }
+            .onChange(of: library.active?.id) { _ in restored = false; cat = nil; restoreCat() }
+            .onChange(of: library.version) { _ in restoreCat() }
         }
+    }
+    /// 1.6.0: back to the group used last time (never a hidden, vanished, or locked-while-locked one).
+    private func restoreCat() {
+        guard !restored else { return }
+        let all = library.cats(.series)
+        guard !all.isEmpty else { return }          // library not loaded yet: try again on the next appear
+        restored = true
+        guard cat == nil, let last = library.lastCat(.series), all.contains(where: { $0.id == last }), library.allowed(last, .series) else { return }
+        cat = last
     }
 }
 
