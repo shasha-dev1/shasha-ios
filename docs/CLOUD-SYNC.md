@@ -27,7 +27,7 @@ Sign-in: Google device flow (`/device/code`, poll `/token` with `grant_type=urn:
   again (once), so simultaneous saves don't overwrite each other.
 - Before the first change of a day the previous contents are saved as `shasha-sync-v1.backup.json`.
 
-## 1.7.0 / TV 0.9.13 — how simultaneous writes are kept
+## 1.7.0 / TV 0.9.13 — simultaneous writes (what is and isn't guaranteed)
 Drive v3 has no conditional upload, so a write can't be refused when the file changed. Instead:
 1. Before uploading, the phone compares Drive's `version` with the one it read; if it changed, it reads and merges again.
 2. After uploading, both apps read the file again and check `covers(file, mine)` (every own entry present, or a newer
@@ -46,3 +46,21 @@ Tests: CloudSyncConcurrencyTests.testRemovalSurvivesRepeatedMergesWithTheTvsRow,
 ## Clock
 Entries more than 24 h ahead are not applied and don't win merges, but stay in the file; both apps report how many.
 The phone compares its clock with Google's `Date` header and warns when it differs by more than 5 minutes.
+
+## 1.7.1 / TV 0.9.14 — the honest limit, and clocks
+**Known limit (not "no data loss").** Drive v3 can't refuse an upload when the file changed. Case tested in both apps
+(`…StaleUpload…KnownLimit…`, `staleUploadAfterTheOtherFinishedLosesItWithoutVersionCheck`): A uploads and verifies; then B,
+which read the file before A's upload, uploads its stale merge and verifies too. Without a version check A's entry is gone
+from the cloud. Since 0.9.14 the TV checks the version before uploading as the iPhone already did, which catches this
+case (`…CaughtByTheVersionCheck`). A write that lands between one device's version check and its upload can still replace
+the other's entries in the cloud; they are never removed from the device that made them (its local data is the source) and
+go back up on that device's next sync — if it stays offline, the other device doesn't see them until then.
+To evaluate later, with a planned migration and no format break: one file per device (each device writes only its own
+file, readers merge all), or an append-only event log. Not changed now.
+
+**Clocks.** Each app measures its clock against Google's `Date` header and sends its save times in Google's clock
+(`stamp`), storing the other device's times back in its own clock (`toLocal`). Device 2 days ahead: its saves arrive
+with the right time. Device 2 days behind: its newer action still wins (without the correction it lost). Saves made while
+a clock was ahead and before it was measured sit in the file as "future" (not applied, counted, kept); once the clock is
+right (or measured) the device re-sends them capped at "now", the other device applies them, nothing stays stuck.
+Tests: CloudSyncRaceAndClockTests (iPhone), CloudSyncCoreTest clock* (TV).

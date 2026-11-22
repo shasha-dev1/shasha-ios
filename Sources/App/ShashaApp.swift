@@ -47,9 +47,15 @@ struct RootView: View {
     @State private var play: PlayItem?
     @State private var minimized = false
 
+    @AppStorage(FreezeBehindPlayer.key) private var freezeBehind = false
+
     var body: some View {
         ZStack {
             content
+                // 1.7.1 A/B (off by default, Settings → diagnostics): while the full-screen player is up, the
+                // screens behind it keep their portrait size, so the rotations on opening and closing the player
+                // don't re-lay out Home / the posters grid. Measure "رجوع: …" and "فتح المشغّل" with it off and on.
+                .modifier(FreezeBehindPlayer(on: freezeBehind && play != nil && !minimized))
             // The player is an overlay (not a full-screen cover) so it can stay alive, hidden, while the video
             // plays in the picture-in-picture window and the viewer browses the app.
             if let item = play {
@@ -128,5 +134,23 @@ final class NetworkWatch: @unchecked Sendable {
             self.wasOffline = !online
         }
         monitor.start(queue: DispatchQueue(label: "shasha.network"))
+    }
+}
+
+/// 1.7.1: see RootView — keeps the content's portrait size while the full-screen player covers it.
+struct FreezeBehindPlayer: ViewModifier {
+    static let key = "perf.freezeBehind"
+    let on: Bool
+    private var portrait: CGSize {
+        let b = UIScreen.main.bounds.size
+        return CGSize(width: min(b.width, b.height), height: max(b.width, b.height))
+    }
+    func body(content: Content) -> some View {
+        if on {
+            content.frame(width: portrait.width, height: portrait.height, alignment: .topLeading).clipped()
+                .allowsHitTesting(false).accessibilityHidden(true)
+        } else {
+            content
+        }
     }
 }

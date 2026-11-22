@@ -567,9 +567,17 @@ struct PlayerScreen: View {
             }
             start(); Orientation.landscape(); UIApplication.shared.isIdleTimerDisabled = true
             Perf.shared.memory("فتح المشغّل")
+            Perf.shared.add("A/B: تجميد الشاشات خلف المشغّل", ms: 0, UserDefaults.standard.bool(forKey: FreezeBehindPlayer.key) ? "مفعّل" : "متوقف")
             for sec in [30.0, 90.0] {
                 DispatchQueue.main.asyncAfter(deadline: .now() + sec) {
-                    if PlayerModel.alive > 0 { Perf.shared.memory("أثناء التشغيل بـ \(Int(sec)) ث") }
+                    guard PlayerModel.alive > 0 else { return }
+                    Perf.shared.memory("أثناء التشغيل بـ \(Int(sec)) ث")
+                    // 1.7.1: what part of it is mpv's network cache (set to 150 MiB ahead), to tell it apart from the
+                    // library and pictures. Read once at 30 s and 90 s only.
+                    let fw = model.mpv.string("demuxer-cache-state/fw-bytes").flatMap(Double.init).map { $0 / 1_048_576 }
+                    let total = model.mpv.string("demuxer-cache-state/total-bytes").flatMap(Double.init).map { $0 / 1_048_576 }
+                    Perf.shared.add("ذاكرة: كاش mpv بـ \(Int(sec)) ث", ms: 0,
+                                    String(format: "أمامي %.0f MB · إجمالي %.0f MB", fw ?? -1, total ?? -1))
                 }
             }
         }

@@ -532,3 +532,69 @@ final class WorkRuleEdgeTests: XCTestCase {
         XCTAssertEqual(WorkRule.key("رجال تحت الطربوش", kind: "show"), WorkRule.key("FHD - رجال تحت الطربوش", kind: "show"))
     }
 }
+
+/// 1.7.1: the race and clock cases the owner asked for, with the same model as the TV app's tests.
+final class CloudSyncRaceAndClockTests: XCTestCase {
+    let now: Int64 = 1_800_000_000_000
+    func e(_ pos: Double, _ at: Int64) -> CloudSyncRule.Entry { .init(pos: pos, dur: 100, w: false, at: at, show: nil) }
+    func file(_ d: [String: CloudSyncRule.Entry]) -> CloudSyncRule.File { CloudSyncRule.File(v: 1, progress: d) }
+
+    struct Drive { var file: CloudSyncRule.File; var version = 1 }
+    /// Upload as the apps do: merge own data into what was read; with `checkVersion`, merge into the current file if it
+    /// changed since the read. Returns the read-back check.
+    func upload(_ d: inout Drive, read: CloudSyncRule.File, readVersion: Int, mine: CloudSyncRule.File, checkVersion: Bool) -> Bool {
+        let base = (checkVersion && d.version != readVersion) ? d.file : read
+        d.file = CloudSyncRule.merge(base, mine, nowMs: now); d.version += 1
+        return CloudSyncRule.covers(d.file, mine, nowMs: now)
+    }
+
+    func testStaleUploadAfterTheOtherFinishedIsAKnownLimitWithoutVersionCheck() {
+        var d = Drive(file: file(["s": e(1, now - 9000)]))
+        let readByB = d.file, vB = d.version
+        let a = file(["a": e(30, now - 2000)]), b = file(["b": e(60, now - 1000)])
+        XCTAssertTrue(upload(&d, read: d.file, readVersion: d.version, mine: a, checkVersion: true))   // A done
+        XCTAssertTrue(upload(&d, read: readByB, readVersion: vB, mine: b, checkVersion: false))         // B "verifies" too
+        // Both checks passed, yet A's entry is gone from the cloud; A still has it locally and restores it on its next
+        // sync only. This is why the docs don't call it "no data loss".
+        XCTAssertNil(d.file.progress["a"])
+        XCTAssertFalse(CloudSyncRule.covers(d.file, a, nowMs: now))
+        _ = upload(&d, read: d.file, readVersion: d.version, mine: a, checkVersion: true)
+        XCTAssertEqual(Set(d.file.progress.keys), ["s", "a", "b"])
+    }
+    func testStaleUploadIsCaughtByTheVersionCheck() {
+        var d = Drive(file: file(["s": e(1, now - 9000)]))
+        let readByB = d.file, vB = d.version
+        _ = upload(&d, read: d.file, readVersion: d.version, mine: file(["a": e(30, now - 2000)]), checkVersion: true)
+        _ = upload(&d, read: readByB, readVersion: vB, mine: file(["b": e(60, now - 1000)]), checkVersion: true)
+        XCTAssertEqual(Set(d.file.progress.keys), ["s", "a", "b"])
+    }
+    func testClockAheadIsSentInGoogleTime() {
+        let skew: Int64 = 2 * 24 * 3600 * 1000
+        let sent = CloudSyncRule.stamp(now - 60_000 + skew, skewMs: skew, nowLocalMs: now + skew)
+        XCTAssertEqual(sent, now - 60_000)
+        XCTAssertEqual(CloudSyncRule.newer(file(["k": e(9, sent)]), than: file([:]), nowMs: now).count, 1)
+    }
+    func testClockBehindStillWinsWithItsNewerAction() {
+        let skew: Int64 = -2 * 24 * 3600 * 1000
+        let cloud = file(["k": e(10, now - 3_600_000)])
+        let mine = file(["k": e(70, CloudSyncRule.stamp(now + skew - 1000, skewMs: skew, nowLocalMs: now + skew))])
+        XCTAssertEqual(CloudSyncRule.merge(cloud, mine, nowMs: now).progress["k"]?.pos, 70)
+        let raw = file(["k": e(70, now + skew - 1000)])
+        XCTAssertEqual(CloudSyncRule.merge(cloud, raw, nowMs: now).progress["k"]?.pos, 10)   // why the correction matters
+    }
+    func testFixingTheClockUnsticksFutureEntries() {
+        let future = now + 3 * 24 * 3600 * 1000
+        var cloud = file(["k": e(40, future)])
+        XCTAssertTrue(CloudSyncRule.newer(cloud, than: file([:]), nowMs: now).isEmpty)          // stuck while wrong
+        let mine = file(["k": e(40, CloudSyncRule.stamp(future, skewMs: nil, nowLocalMs: now))])
+        cloud = CloudSyncRule.merge(cloud, mine, nowMs: now)
+        XCTAssertEqual(cloud.progress["k"]?.at, now)
+        XCTAssertEqual(CloudSyncRule.newer(cloud, than: file([:]), nowMs: now).count, 1)        // delivered now
+    }
+    func testRoundTripThroughLocalClockIsStable() {
+        let skew: Int64 = 7 * 60_000
+        let fileAt = now - 5000
+        let storedLocally = CloudSyncRule.toLocal(fileAt, skewMs: skew)
+        XCTAssertEqual(CloudSyncRule.stamp(storedLocally, skewMs: skew, nowLocalMs: now + skew), fileAt)
+    }
+}

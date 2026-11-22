@@ -508,6 +508,16 @@ enum CloudSyncRule {
         mine.progress.allSatisfy { k, e in !sane(e, nowMs: nowMs) || (file.progress[k]?.at ?? -1) >= e.at }
     }
 
+    /// 1.7.1: a local save time in Google's clock. `skewMs` = this phone's clock minus Google's (Date header; nil =
+    /// unknown). Never later than "now" in Google's clock, so saves made while the clock was ahead come unstuck once
+    /// it is right. Same rule as the TV app's CloudSyncCore.stamp.
+    static func stamp(_ localMs: Int64, skewMs: Int64?, nowLocalMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> Int64 {
+        let s = skewMs ?? 0
+        return min(localMs - s, nowLocalMs - s)
+    }
+    /// A time from the file (Google's clock) in this phone's clock, for storing locally.
+    static func toLocal(_ fileMs: Int64, skewMs: Int64?) -> Int64 { fileMs + (skewMs ?? 0) }
+
     /// Entries ignored because their time is more than a day ahead (reported, never deleted from the file).
     static func futureCount(_ file: File, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> Int {
         file.progress.values.filter { $0.at > nowMs + futureSlackMs }.count

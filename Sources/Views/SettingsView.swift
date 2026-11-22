@@ -274,6 +274,7 @@ struct DiagnosticsPage: View {
 struct PerfView: View {
     @EnvironmentObject var library: Library
     @AppStorage(ImagePipeline.key) private var downsample = true
+    @AppStorage(FreezeBehindPlayer.key) private var freezeBehind = false
     @State private var text = ""
     @State private var copied = false
 
@@ -291,6 +292,8 @@ struct PerfView: View {
                 Toggle("صور بحجم العرض (للمقارنة أطفئه)", isOn: $downsample)
                     .font(.footnote)
                     .onChange(of: downsample) { v in Perf.shared.add("تبديل الصور", ms: 0, v ? "بحجم العرض" : "أصلية") }
+                Toggle("تجميد الشاشات خلف المشغّل (تجربة A/B للتقطّع)", isOn: $freezeBehind).font(.footnote)
+                    .onChange(of: freezeBehind) { v in Perf.shared.add("تبديل التجميد", ms: 0, v ? "مفعّل" : "متوقف") }
                 Text("للقياس: افتح التطبيق من جديد، انتظر المكتبة، ابحث في الرئيسية والأفلام، افتح مسلسلًا، شغّل حلقة وارجع، ثم اضغط «تحديث» و«نسخ».")
                     .font(.footnote).foregroundStyle(.secondary)
                 Text(text).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
