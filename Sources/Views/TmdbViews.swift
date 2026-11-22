@@ -329,7 +329,16 @@ struct DriveLinkSheet: View {
 
     private func run() async {
         do {
-            let c = try await GoogleDrive.shared.deviceCode()
+            // 1.4.6: the sheet can be rebuilt when the app goes to the background (owner: "the code changes every
+            // time I leave the app"). Keep the pending code outside the view and reuse it until it expires, so the
+            // code typed in the browser is still the one this sheet waits for.
+            let c: GoogleDrive.DeviceCode
+            if let p = PendingDriveCode.code, Date() < PendingDriveCode.until { c = p }
+            else {
+                c = try await GoogleDrive.shared.deviceCode()
+                PendingDriveCode.code = c
+                PendingDriveCode.until = Date().addingTimeInterval(TimeInterval(c.expiresIn - 30))
+            }
             code = c; message = "بانتظار موافقتك في Google…"
             var interval = c.interval
             let end = Date().addingTimeInterval(TimeInterval(c.expiresIn))
@@ -351,19 +360,43 @@ struct DriveLinkSheet: View {
         do {
             let r = try await GoogleDrive.shared.poll(c.deviceCode)
             switch r {
-            case .success: message = "تم الربط ✓"; done = true
+            case .success: message = "تم الربط ✓"; done = true; PendingDriveCode.code = nil
                 NotificationCenter.default.post(name: .cloudSyncApplied, object: nil)
             case .pending: message = "بانتظار موافقتك في Google…"
             case .slowDown: break
-            case .denied: message = "رفضت الربط في Google."; done = true
-            case .expired: message = "انتهت صلاحية الرمز. اضغط ربط من جديد."; done = true
-            case .failed(let e): message = "Google ردّ: \(e)"; done = true
+            case .denied: message = "رفضت الربط في Google."; done = true; PendingDriveCode.code = nil
+            case .expired: message = "انتهت صلاحية الرمز. اضغط ربط من جديد."; done = true; PendingDriveCode.code = nil
+            case .failed(let e): message = "Google ردّ: \(e)"; done = true; PendingDriveCode.code = nil
             }
             return r
         } catch {
             message = "تعذّر الاتصال بـGoogle، سأحاول مرة أخرى…"
             return nil
         }
+    }
+}
+
+/// The device code being waited for, kept across rebuilds of the link sheet — and across the app being closed by
+/// iOS while the viewer is in the browser (big library = big memory). Kept in the Keychain until it expires.
+@MainActor enum PendingDriveCode {
+    private static let k = "gdrive.pendingCode"
+    static var code: GoogleDrive.DeviceCode? {
+        get {
+            guard let s = Keychain.get(k), let d = s.data(using: .utf8),
+                  let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+                  let dc = o["dc"] as? String, let uc = o["uc"] as? String else { return nil }
+            return GoogleDrive.DeviceCode(deviceCode: dc, userCode: uc, url: o["url"] as? String ?? "https://www.google.com/device",
+                                          expiresIn: o["exp"] as? Int ?? 1800, interval: o["int"] as? Int ?? 5)
+        }
+        set {
+            guard let c = newValue else { Keychain.set(nil, for: k); return }
+            let o: [String: Any] = ["dc": c.deviceCode, "uc": c.userCode, "url": c.url, "exp": c.expiresIn, "int": c.interval]
+            if let d = try? JSONSerialization.data(withJSONObject: o), let s = String(data: d, encoding: .utf8) { Keychain.set(s, for: k) }
+        }
+    }
+    static var until: Date {
+        get { Date(timeIntervalSince1970: UserDefaults.standard.double(forKey: "gdrive.pendingUntil")) }
+        set { UserDefaults.standard.set(newValue.timeIntervalSince1970, forKey: "gdrive.pendingUntil") }
     }
 }
 

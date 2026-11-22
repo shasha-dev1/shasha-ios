@@ -159,3 +159,7 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 ## 1.4.5 — Drive link sheet stuck on «بانتظار موافقتك» (built only)
 - Owner approved in Google («Success! Device connected») but the sheet kept waiting. The polling loop runs only while the app is in front; after returning from Safari it may stay paused or its request may fail with a network error, which ended the loop.
 - Now: asks Google at once when the app comes back to the front, a «وافقت؟ تحقق الآن» button, and a network error no longer ends the wait.
+
+## 1.4.6 — link code changed on every return (built only)
+- Owner: "the code changes every time I leave the app". The sheet (or the whole app, closed by iOS for memory while in the browser) was rebuilt and asked Google for a new code, so the approved code was never the one being waited for.
+- Now the pending code is kept in the Keychain until it expires and reused when the sheet opens again; cleared on success, refusal, expiry or error.
