@@ -168,3 +168,6 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Owner approved the drawn preview (2026-11-22). Settings is now a hub: active-source card (name, state, film/series/channel counts, refresh, sources page, last success), four status tiles (Drive sync, TMDB, Trakt, machine translation) and a short list of sections, each on its own page: playback/audio/subtitles, groups, accounts, appearance, storage, diagnostics.
 - Nothing removed: the same section views are reused inside the new pages; sources (switch / add / swipe-delete / refresh) moved to «المصادر». The server address is no longer shown on screen.
 - Player, colours, subtitles and PiP settings unchanged.
+
+## 1.5.1 — link sheet showed «invalid_grant» (built only)
+- Google documents invalid_grant on the token step as a code that "has already been claimed". With the code kept across sheet rebuilds, an earlier check could already have received the tokens; the later check then got invalid_grant. Now: invalid_grant + tokens present = linked; without tokens the sheet asks for a new code.
