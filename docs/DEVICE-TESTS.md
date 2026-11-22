@@ -251,3 +251,15 @@ Previous main: 1.6.0 `ad3fef6`, CI #98 success (runs/45042865983).
   mpv cache is only part of the engine's memory (decoder/GPU surfaces are not in it).
 - Device test with «التجميد»: same episode and steps with it off, then on — check scroll position, search text and
   chosen group on Movies/Series after closing the player, PiP still works, Continue watching updates, progress saved.
+
+## 1.7.3 — from the 1.7.2 device report (iPhone14,3)
+
+- Sync iPhone ↔ TV confirmed working by the owner (both directions).
+- Fixed: repeated "applied 46" each sync (skew jitter; see CLOUD-SYNC.md 1.7.3).
+- Fixed: mpv cache reading showed -1 (sub-property path). Now reads the whole `demuxer-cache-state` (JSON), with
+  `demuxer-cache-duration` as a fallback, and keeps the raw start of the reply if it is not JSON.
+- Added memory samples after Google sync and after machine translation, to locate the 809 MB peak seen 3 s after
+  the saved library appeared (before the player opened).
+- Not changed: playback settings, cache size, colours, subtitles, PiP.
+- To check on the device: two syncs in a row → the second says "لا جديد"; the cache line shows MB values; memory
+  lines «بعد مزامنة Google» / «بعد ترجمة آلية».

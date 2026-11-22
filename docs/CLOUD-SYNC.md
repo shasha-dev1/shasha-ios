@@ -77,3 +77,15 @@ The send time is not stored separately in the file (format v1 unchanged); identi
 Tests: testOldEventFromAWrongClockNeverBeatsANewerCorrectWatch (iPhone), oldEventFromAWrongClockNeverBeatsANewerCorrectWatch (TV).
 **Status: release candidate for device testing; the write-race limit above still applies — the version check narrows,
 but doesn't close, the gap between check and upload.**
+
+## 1.7.3 — steady clock skew
+
+Device report (1.7.2, both devices synced successfully): every sync said "applied 46" with nothing new. Cause: the
+skew is measured from Google's `Date` header (1-second resolution, plus network delay), so it differed by up to
+about a second on each sync; entries stored with one measurement and re-stamped with the next looked newer on one
+side, so each sync re-applied or re-uploaded the same entries with shifted times. Also, seconds→ms truncated, so a
+stored time could come back 1 ms earlier.
+
+Fix (both apps, same rule): the stored skew changes only when a new measurement differs by more than 2 s
+(`steadySkew`); conversions round instead of truncate. A real clock change (minutes) is still picked up. Order of
+real events is unchanged; the sync format is unchanged.

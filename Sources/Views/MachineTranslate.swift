@@ -121,6 +121,7 @@ private struct Translate18: ViewModifier {
                         MachineTranslate.store(text, out)
                         result = out
                         Perf.shared.add("ترجمة آلية", ms: Date().timeIntervalSince(t0) * 1000, "\(text.count) حرف", span: true)
+                        Perf.shared.memory("بعد ترجمة آلية")   // 1.7.3: locate the 809 MB peak of the 1.7.2 report
                     }
                 } catch {
                     await MainActor.run {

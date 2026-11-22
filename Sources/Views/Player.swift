@@ -574,10 +574,20 @@ struct PlayerScreen: View {
                     Perf.shared.memory("أثناء التشغيل بـ \(Int(sec)) ث")
                     // 1.7.1: what part of it is mpv's network cache (set to 150 MiB ahead), to tell it apart from the
                     // library and pictures. Read once at 30 s and 90 s only.
-                    let fw = model.mpv.string("demuxer-cache-state/fw-bytes").flatMap(Double.init).map { $0 / 1_048_576 }
-                    let total = model.mpv.string("demuxer-cache-state/total-bytes").flatMap(Double.init).map { $0 / 1_048_576 }
+                    // 1.7.3: the sub-property path gave nothing on the device (-1 in the 1.7.2 report). Read the whole
+                    // node instead: as a string mpv returns it as JSON.
+                    let raw = model.mpv.string("demuxer-cache-state")
+                    let state = raw.flatMap { $0.data(using: .utf8) }
+                        .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+                    let dur = model.mpv.string("demuxer-cache-duration").flatMap(Double.init)
+                    func mb(_ k: String) -> String {
+                        (state?[k] as? NSNumber).map { String(format: "%.0f MB", $0.doubleValue / 1_048_576) } ?? "؟"
+                    }
+                    let ahead = ((state?["cache-duration"] as? NSNumber)?.doubleValue ?? dur).map { String(format: "%.0f ث", $0) } ?? "؟"
+                    // Not JSON: keep the start of what mpv returned (numbers only, no address) to fix the reading.
+                    let shape = state != nil ? "" : " · قراءة الحالة: " + (raw.map { String($0.prefix(80)) } ?? "لا شيء")
                     Perf.shared.add("ذاكرة: كاش mpv بـ \(Int(sec)) ث", ms: 0,
-                                    String(format: "أمامي %.0f MB · إجمالي %.0f MB", fw ?? -1, total ?? -1))
+                                    "أمامي \(mb("fw-bytes")) · إجمالي \(mb("total-bytes")) · مدة أمامية \(ahead)" + shape)
                 }
             }
         }

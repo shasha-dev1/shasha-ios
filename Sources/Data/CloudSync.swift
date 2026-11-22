@@ -250,9 +250,9 @@ enum CloudSync {
             let p = Store.position(key)
             let hidden = Store.hiddenAt(key).flatMap { $0 >= saved ? $0 : nil }
             // 1.7.1: in Google's clock, and never in the future (see CloudSyncRule.stamp).
-            let at = Date(timeIntervalSince1970: Double(CloudSyncRule.stamp(Int64((hidden ?? saved).timeIntervalSince1970 * 1000), skewMs: skewMs)) / 1000)
+            let at = Date(timeIntervalSince1970: Double(CloudSyncRule.stamp(CloudSyncRule.ms((hidden ?? saved).timeIntervalSince1970), skewMs: skewMs)) / 1000)
             f.progress[CloudSyncRule.key(account: acct, kind: kind, id: id)] =
-                .init(pos: p?.pos ?? 0, dur: p?.dur ?? 0, w: p == nil && !Store.isUnwatched(key), at: Int64(at.timeIntervalSince1970 * 1000),
+                .init(pos: p?.pos ?? 0, dur: p?.dur ?? 0, w: p == nil && !Store.isUnwatched(key), at: CloudSyncRule.ms(at.timeIntervalSince1970),
                       show: kind == "ep" ? Store.show(forEpisode: key) : nil, x: hidden == nil ? nil : true)
         }
         return f
@@ -270,7 +270,7 @@ enum CloudSync {
     /// fails, the phone's own data is the queue).
     static func pendingCount(_ library: Library) -> Int {
         guard let s = library.active, let acct = account(s) else { return 0 }
-        let since = lastSuccess.map { CloudSyncRule.stamp(Int64($0.timeIntervalSince1970 * 1000), skewMs: skewMs) } ?? Int64.min
+        let since = lastSuccess.map { CloudSyncRule.stamp(CloudSyncRule.ms($0.timeIntervalSince1970), skewMs: skewMs) } ?? Int64.min
         return localFile(acct).progress.values.filter { $0.at > since }.count
     }
     private static var fails: Int {
@@ -295,7 +295,8 @@ enum CloudSync {
             var applied = 0, repaired = 0, future = 0, withheld = 0
             for attempt in 0..<2 {
                 let remote = try await GoogleDrive.shared.read()
-                if let sk = await GoogleDrive.shared.clockSkew { skewMs = Int64(sk * 1000) }
+                // 1.7.3: kept steady across the ±1 s jitter of the measurement (see CloudSyncRule.steadySkew).
+                if let sk = await GoogleDrive.shared.clockSkew { skewMs = CloudSyncRule.steadySkew(old: skewMs, measured: CloudSyncRule.ms(sk)) }
                 // A reply that arrives after the playlist changed must not touch the new account.
                 guard library.active?.id == s.id else { return "تغيّر المصدر أثناء المزامنة — لم يُطبّق شيء" }
                 let theirs = remote?.file ?? CloudSyncRule.File()
@@ -342,6 +343,7 @@ enum CloudSync {
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "cloud.lastSuccess")
             fails = 0; UserDefaults.standard.removeObject(forKey: "cloud.nextTry")
             Perf.shared.record("مزامنة Google", since: t0, "طُبّق \(applied) · إعادة رفع \(repaired) · مستقبلي \(future)")
+            Perf.shared.memory("بعد مزامنة Google")   // 1.7.3: same
             var r = applied > 0 ? "تمت المزامنة: \(applied) من الجهاز الآخر" : "تمت المزامنة: لا جديد من الجهاز الآخر"
             if repaired > 0 { r += "\nالجهاز الآخر كتب في نفس اللحظة — أُعيد الدمج والرفع" }
             if future > 0 { r += "\nلم يُطبَّق \(future) تحديث من جهاز ساعته متقدمة أكثر من يوم (بقيت في الملف)" }

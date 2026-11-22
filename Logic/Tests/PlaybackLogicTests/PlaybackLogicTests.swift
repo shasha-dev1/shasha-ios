@@ -617,4 +617,37 @@ final class CloudSyncRaceAndClockTests: XCTestCase {
         let storedLocally = CloudSyncRule.toLocal(fileAt, skewMs: skew)
         XCTAssertEqual(CloudSyncRule.stamp(storedLocally, skewMs: skew, nowLocalMs: now + skew), fileAt)
     }
+
+    // 1.7.3: device report — every sync "applied 46" with nothing new. Each measurement of the skew differs by up
+    // to about a second; entries must still come back to exactly the file's time.
+    func testSkewJitterDoesNotReapplyOrReuploadTheSameEntries() {
+        var cloud = file([:])
+        for i in 0..<46 { cloud.progress["acct|movie|\(i)"] = e(Double(i), now - Int64(i) * 61_234 - 123) }
+        var skew: Int64? = nil
+        var local = file([:])          // what the phone keeps, re-stamped with the current skew on each sync
+        var stored: [String: Double] = [:]   // phone's stored times, seconds (as Date keeps them)
+        for measured: Int64 in [3_412, 4_080, 2_950, 3_999, 2_431, 3_700] {
+            skew = CloudSyncRule.steadySkew(old: skew, measured: measured)
+            local = file([:])
+            for (k, t) in stored { local.progress[k] = e(cloud.progress[k]!.pos, CloudSyncRule.stamp(CloudSyncRule.ms(t), skewMs: skew)) }
+            let toApply = CloudSyncRule.newer(cloud, than: local, nowMs: now)
+            if !stored.isEmpty {
+                XCTAssertTrue(toApply.isEmpty, "re-applied with measured skew \(measured)")
+                XCTAssertEqual(CloudSyncRule.merge(cloud, local, nowMs: now), cloud, "re-upload with measured skew \(measured)")
+            }
+            for (k, x) in toApply { stored[k] = Double(CloudSyncRule.toLocal(x.at, skewMs: skew)) / 1000 }
+        }
+        XCTAssertEqual(skew, 3_412)
+    }
+    func testARealClockChangeIsStillPickedUp() {
+        XCTAssertEqual(CloudSyncRule.steadySkew(old: 3_000, measured: 4_900), 3_000)
+        XCTAssertEqual(CloudSyncRule.steadySkew(old: 3_000, measured: 5_001), 5_001)
+        XCTAssertEqual(CloudSyncRule.steadySkew(old: 3_000, measured: -7 * 60_000), -7 * 60_000)
+        XCTAssertEqual(CloudSyncRule.steadySkew(old: nil, measured: 1_234), 1_234)
+    }
+    func testMillisecondsAreRoundedNotTruncated() {
+        for at: Int64 in [1_732_300_000_123, 1_763_830_000_001, 1_763_830_000_999, 1_763_830_000_577] {
+            XCTAssertEqual(CloudSyncRule.ms(Date(timeIntervalSince1970: Double(at) / 1000).timeIntervalSince1970), at)
+        }
+    }
 }

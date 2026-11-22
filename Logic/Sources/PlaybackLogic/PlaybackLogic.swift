@@ -536,6 +536,20 @@ enum CloudSyncRule {
     /// A time from the file (Google's clock) in this phone's clock, for storing locally.
     static func toLocal(_ fileMs: Int64, skewMs: Int64?) -> Int64 { fileMs + (skewMs ?? 0) }
 
+    /// 1.7.3: Google's Date header has 1-second resolution and arrives after a network delay, so each sync measured
+    /// the skew a little differently (device report: "applied 46" on every sync with nothing new). Entries stored with
+    /// one measurement and re-stamped with the next moved by that jitter and looked newer on one side or the other,
+    /// so every sync re-applied or re-uploaded the same entries. The stored skew changes only when a new measurement
+    /// differs by more than this (a real clock change is minutes; jitter stays under 2 s). Same rule as the TV app.
+    static let skewHysteresisMs: Int64 = 2_000
+    static func steadySkew(old: Int64?, measured: Int64) -> Int64 {
+        guard let old else { return measured }
+        return abs(measured - old) > skewHysteresisMs ? measured : old
+    }
+    /// 1.7.3: seconds since 1970 (as stored in Date) to ms, rounded. Truncating turned some stored times 1 ms earlier
+    /// than the file's on the way back, so the file's entry looked newer again.
+    static func ms(_ seconds: Double) -> Int64 { Int64((seconds * 1000).rounded()) }
+
     /// Entries ignored because their time is more than a day ahead (reported, never deleted from the file).
     static func futureCount(_ file: File, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> Int {
         file.progress.values.filter { $0.at > nowMs + futureSlackMs }.count
