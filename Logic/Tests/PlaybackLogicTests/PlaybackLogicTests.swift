@@ -683,3 +683,38 @@ final class SubSyncRuleTests: XCTestCase {
     }
 }
 
+/// 1.7.6: imported / downloaded subtitle files are checked by content before use.
+final class SubFileCheckTests: XCTestCase {
+    let srt = "1\n00:00:01,000 --> 00:00:02,500\nمرحبا بك\n\n2\n00:00:03,000 --> 00:00:04,000\nكيف حالك\n"
+    let ass = "[Script Info]\nTitle: t\n\n[V4+ Styles]\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,{\\b1}Hello{\\b0}\n"
+
+    func testSrtUtf8() {
+        guard case .success(let c) = SubFileCheck.check(Data(srt.utf8)) else { return XCTFail() }
+        XCTAssertEqual(c.format, .srt); XCTAssertEqual(c.lang, "ar"); XCTAssertEqual(c.text, srt)
+    }
+    func testSrtWithBomAndCrLf() {
+        let d = Data([0xEF, 0xBB, 0xBF]) + Data(srt.replacingOccurrences(of: "\n", with: "\r\n").utf8)
+        guard case .success(let c) = SubFileCheck.check(d) else { return XCTFail() }
+        XCTAssertEqual(c.format, .srt); XCTAssertFalse(c.text.hasPrefix("\u{FEFF}"))
+    }
+    func testOldArabicEncodingIsDecoded() {
+        let enc = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.windowsArabic.rawValue)))
+        guard let d = srt.data(using: enc) else { return XCTFail("no cp1256") }
+        XCTAssertNil(String(data: d, encoding: .utf8))
+        guard case .success(let c) = SubFileCheck.check(d) else { return XCTFail() }
+        XCTAssertTrue(c.text.contains("مرحبا بك")); XCTAssertEqual(c.lang, "ar")
+    }
+    func testAssKeepsStylesAndTags() {
+        guard case .success(let c) = SubFileCheck.check(Data(ass.utf8)) else { return XCTFail() }
+        XCTAssertEqual(c.format, .ass); XCTAssertEqual(c.text, ass); XCTAssertTrue(c.text.contains("{\\b1}"))
+    }
+    func testRefusals() {
+        XCTAssertEqual(SubFileCheck.check(Data()), .failure(.empty))
+        XCTAssertEqual(SubFileCheck.check(Data("just some notes".utf8)), .failure(.notSubtitle))
+        XCTAssertEqual(SubFileCheck.check(Data([0x50, 0x4B, 0x03, 0x04, 0, 0, 0x14, 0])), .failure(.binary))
+        XCTAssertEqual(SubFileCheck.check(Data(("WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nhi\n").utf8)), .failure(.unsupported("WebVTT")))
+        let big = Data(repeating: 0x41, count: SubFileCheck.maxSRTBytes + 10) + Data("\n00:00:01,000 --> 00:00:02,000\nx\n".utf8)
+        XCTAssertEqual(SubFileCheck.check(big), .failure(.tooBig(bytes: big.count, limit: SubFileCheck.maxSRTBytes)))
+    }
+}
+

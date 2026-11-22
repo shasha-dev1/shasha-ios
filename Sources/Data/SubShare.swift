@@ -24,18 +24,34 @@ enum SubShare {
         return d
     }
     private static func local(_ name: String) -> URL? { dir?.appendingPathComponent(name) }
+    /// 1.7.6: the Drive name stays `….srt` (the identity both apps look up); the copy kept here has the extension of
+    /// its real format, so mpv reads ASS as ASS.
+    private static func local(_ name: String, _ f: SubFileCheck.Format) -> URL? {
+        local(f == .ass ? String(name.dropLast(4)) + ".ass" : name)
+    }
 
-    /// After a download from the internet: keep it for this film/episode and send it to Drive (in the background).
-    static func keep(_ file: URL, storeKey: String, source: Source?, lang: String, label: String) {
-        guard let k = key(storeKey: storeKey, source: source), let data = try? Data(contentsOf: file) else { return }
+    /// 1.7.6: a checked subtitle written as UTF-8 to a temporary file with the right extension, to add to mpv.
+    static func tempFile(_ c: SubFileCheck.Checked, name: String) -> URL? {
+        let base = (name as NSString).deletingPathExtension.replacingOccurrences(of: "/", with: "_")
+        let u = FileManager.default.temporaryDirectory.appendingPathComponent((base.isEmpty ? "subtitle" : base) + "." + c.format.rawValue)
+        do { try Data(c.text.utf8).write(to: u, options: .atomic); return u } catch { return nil }
+    }
+
+    /// After a subtitle was downloaded or imported, checked, and confirmed added in the player: keep it for this
+    /// film/episode and send it to Drive (in the background). Replaces the one kept before for the same item.
+    static func keep(_ c: SubFileCheck.Checked, storeKey: String, source: Source?, label: String) {
+        guard let k = key(storeKey: storeKey, source: source) else { return }
         let name = SubSyncRule.fileName(key: k, sha256: sha)
-        if let dest = local(name) { try? data.write(to: dest, options: .atomic) }
+        let data = Data(c.text.utf8)
+        for f in [SubFileCheck.Format.srt, .ass] { if let u = local(name, f) { try? FileManager.default.removeItem(at: u) } }
+        if let dest = local(name, c.format) { try? data.write(to: dest, options: .atomic) }
+        let lang = c.lang
         pruneLocal()
         guard DriveKeys.isLinked else { return }
         let t0 = Perf.now()
         Task {
             do {
-                try await GoogleDrive.shared.putSub(data, name: name, lang: lang, label: label)
+                try await GoogleDrive.shared.putSub(data, name: name, lang: lang, label: label, format: c.format.rawValue)
                 Perf.shared.record("ترجمة: رفع إلى Drive", since: t0, "\(data.count / 1024) KB")
                 await pruneDriveIfDue()
             } catch {
@@ -48,19 +64,28 @@ enum SubShare {
     static func saved(storeKey: String, source: Source?) async -> URL? {
         guard let k = key(storeKey: storeKey, source: source) else { return nil }
         let name = SubSyncRule.fileName(key: k, sha256: sha)
-        guard let dest = local(name) else { return nil }
-        if FileManager.default.fileExists(atPath: dest.path) {
-            try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: dest.path)
-            return dest
+        for f in [SubFileCheck.Format.srt, .ass] {
+            if let u = local(name, f), FileManager.default.fileExists(atPath: u.path) {
+                try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: u.path)
+                return u
+            }
         }
         guard DriveKeys.isLinked else { return nil }
         let t0 = Perf.now()
         do {
             guard let f = try await GoogleDrive.shared.findSub(name) else { return nil }
             let data = try await GoogleDrive.shared.downloadSub(f.id)
-            guard !data.isEmpty else { return nil }
-            try data.write(to: dest, options: .atomic)
-            Perf.shared.record("ترجمة: من الجهاز الآخر", since: t0, "\(data.count / 1024) KB · \(f.lang)")
+            // 1.7.6: checked like an imported file before it is kept or used.
+            let c: SubFileCheck.Checked
+            switch SubFileCheck.check(data) {
+            case .success(let ok): c = ok
+            case .failure(let p):
+                Perf.shared.add("ترجمة: ملف Drive مرفوض", ms: 0, SubFileCheck.text(p))
+                return nil
+            }
+            guard let dest = local(name, c.format) else { return nil }
+            try Data(c.text.utf8).write(to: dest, options: .atomic)
+            Perf.shared.record("ترجمة: من الجهاز الآخر", since: t0, "\(data.count / 1024) KB · \(c.format.rawValue) · \(f.lang)")
             pruneLocal()
             return dest
         } catch {

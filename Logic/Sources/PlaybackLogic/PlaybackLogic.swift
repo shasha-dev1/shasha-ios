@@ -670,3 +670,72 @@ enum SubSyncRule {
         return out
     }
 }
+
+/// 1.7.6: checks a subtitle file before it is used, kept or shared — imported by the viewer or downloaded.
+/// Content first (not the file name): SRT (timestamps with -->) or ASS/SSA ([Script Info] + [Events] + Dialogue).
+/// Text is decoded (UTF-8 / UTF-16 with BOM, else Windows-1256 for older Arabic files) and kept as UTF-8, so ASS
+/// styles and tags are untouched. Limits per format: SRT is plain text (a feature film is well under 1 MB); ASS may
+/// carry embedded fonts, so it gets more room.
+enum SubFileCheck {
+    enum Format: String { case srt, ass }
+    struct Checked: Equatable { let format: Format; let text: String; let lang: String }
+    enum Problem: Error, Equatable {
+        case empty, tooBig(bytes: Int, limit: Int), binary, unknownEncoding, notSubtitle, unsupported(String)
+    }
+    static let maxSRTBytes = 8 * 1024 * 1024
+    static let maxASSBytes = 40 * 1024 * 1024
+    /// Before decoding: nothing above the larger limit is even read as text.
+    static var maxBytes: Int { maxASSBytes }
+
+    static func check(_ data: Data) -> Result<Checked, Problem> {
+        if data.isEmpty { return .failure(.empty) }
+        if data.count > maxBytes { return .failure(.tooBig(bytes: data.count, limit: maxBytes)) }
+        guard let text = decode(data) else { return .failure(.unknownEncoding) }
+        if text.contains("\u{0}") { return .failure(.binary) }
+        let head = String(text.prefix(4096)).lowercased()
+        let format: Format
+        if head.contains("[script info]") && text.range(of: "[Events]", options: .caseInsensitive) != nil
+            && text.range(of: "Dialogue:", options: .caseInsensitive) != nil {
+            format = .ass
+        } else if text.range(of: #"\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}\s*-->\s*\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}"#, options: .regularExpression) != nil {
+            if head.hasPrefix("webvtt") { return .failure(.unsupported("WebVTT")) }
+            format = .srt
+        } else {
+            return .failure(.notSubtitle)
+        }
+        let limit = format == .ass ? maxASSBytes : maxSRTBytes
+        if data.count > limit { return .failure(.tooBig(bytes: data.count, limit: limit)) }
+        return .success(Checked(format: format, text: text, lang: guessLang(text)))
+    }
+
+    static func decode(_ data: Data) -> String? {
+        let b = [UInt8](data.prefix(3))
+        if b.count >= 3, b[0] == 0xEF, b[1] == 0xBB, b[2] == 0xBF { return String(data: data.dropFirst(3), encoding: .utf8) }
+        if b.count >= 2, (b[0] == 0xFF && b[1] == 0xFE) || (b[0] == 0xFE && b[1] == 0xFF) { return String(data: data, encoding: .utf16) }
+        if let s = String(data: data, encoding: .utf8) { return s }
+        let arabic = CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.windowsArabic.rawValue))
+        return String(data: data, encoding: String.Encoding(rawValue: arabic))
+    }
+
+    /// "ar" when most letters are Arabic, else "und" (unknown). Only a hint for the label.
+    static func guessLang(_ text: String) -> String {
+        var arabic = 0, letters = 0
+        for u in text.unicodeScalars.prefix(20_000) where CharacterSet.letters.contains(u) {
+            letters += 1
+            if (0x0600...0x06FF).contains(u.value) || (0x0750...0x077F).contains(u.value) || (0xFB50...0xFEFF).contains(u.value) { arabic += 1 }
+        }
+        return letters > 0 && arabic * 2 > letters ? "ar" : "und"
+    }
+
+    /// Why a file was refused, for the viewer.
+    static func text(_ p: Problem) -> String {
+        switch p {
+        case .empty: return "الملف فارغ"
+        case .tooBig(let b, let l): return "الملف أكبر من المسموح (\(b / 1024) KB، الحد \(l / 1024 / 1024) MB)"
+        case .binary: return "الملف ليس نصًا (قد يكون أرشيفًا مضغوطًا — فكّه أولًا من تطبيق الملفات)"
+        case .unknownEncoding: return "ترميز الملف غير معروف"
+        case .notSubtitle: return "الملف ليس ترجمة SRT أو ASS"
+        case .unsupported(let f): return "صيغة \(f) غير مدعومة بعد — استخدم SRT أو ASS"
+        }
+    }
+}

@@ -236,11 +236,11 @@ actor GoogleDrive {
     }
 
     /// Creates the file, or replaces the content and details of the one with this name.
-    func putSub(_ data: Data, name: String, lang: String, label: String) async throws {
+    func putSub(_ data: Data, name: String, lang: String, label: String, format: String = "srt") async throws {
         let existing = try await findSub(name)?.id
         let meta: [String: Any] = ["name": name, "description": "Shasha: subtitle shared between your devices",
                                    "appProperties": ["shashaSub": "1", "lang": SubSyncRule.clip(lang, maxBytes: 20),
-                                                     "label": SubSyncRule.clip(label)]]
+                                                     "label": SubSyncRule.clip(label), "fmt": format]]
         let boundary = "shasha-\(UUID().uuidString)"
         var body = Data()
         body.append("--\(boundary)\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".data(using: .utf8)!)

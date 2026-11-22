@@ -200,6 +200,9 @@ final class PlayerModel: ObservableObject {
     var pendingSubtitleId: String?
     /// 1.7.5: a kept/shared subtitle for this film/episode, added once mpv has loaded the file.
     var pendingSubFile: URL?
+    /// 1.7.6: the film/episode playing ("movie:ID" / "ep:ID"), for "no subtitles" kept per item (films have no
+    /// series preference); nil for live channels.
+    var itemKey: String?
     /// 1.7.0: "show:<seriesId>" while an episode plays (per-series audio/subtitle language), nil otherwise.
     var workPrefKey: String?
     private var stall = StallDetector()
@@ -254,8 +257,10 @@ final class PlayerModel: ObservableObject {
         buffering = !failed && endDecision == nil && (stalled || st == .opening)
         if let f = pendingSubFile, s.loaded {
             pendingSubFile = nil
-            addSubtitle(f)
-            DiagLog.shared.note("[التطبيق] أُضيفت الترجمة المحفوظة لهذه الحلقة/الفيلم")
+            addSubtitle(f) { ok in
+                DiagLog.shared.note(ok ? "[التطبيق] أُضيفت الترجمة المحفوظة لهذه الحلقة/الفيلم وحُددت"
+                                       : "[التطبيق] الترجمة المحفوظة لم تظهر في قائمة المسارات خلال 5 ث")
+            }
         }
         if let want = pendingSubtitleId, mpv.tracks.contains(where: { $0.type == "sub" && $0.id == want }) {
             pendingSubtitleId = nil
@@ -325,7 +330,23 @@ final class PlayerModel: ObservableObject {
     }
 
     /// Adds a downloaded subtitle file and switches to it.
-    func addSubtitle(_ file: URL) { mpv.commandAsync(["sub-add", file.path, "select"]) }
+    func addSubtitle(_ file: URL, done: ((Bool) -> Void)? = nil) {
+        let before = Set(mpv.tracks.filter { $0.type == "sub" }.map(\.id))
+        mpv.commandAsync(["sub-add", file.path, "select"])
+        guard let done else { return }
+        // 1.7.6: success only once mpv lists a new subtitle track and it is the selected one (up to 5 s). Whether
+        // its text shows still needs a scene with dialogue.
+        var tries = 0
+        func poll() {
+            tries += 1
+            if mpv.tracks.contains(where: { $0.type == "sub" && !before.contains($0.id) && $0.selected }) { done(true); return }
+            if tries >= 20 { done(false); return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { poll() }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { poll() }
+    }
+    /// 1.7.6: the viewer chose a subtitle for this item: an earlier "no subtitles" for it no longer applies.
+    func clearItemOff() { if let k = itemKey { ItemSubOff.set(k, false) } }
 
     /// A track as shown in the panel. `id` is mpv's track id.
     struct Track: Identifiable { let id: String; let name: String; let selected: Bool }
@@ -347,6 +368,7 @@ final class PlayerModel: ObservableObject {
         mpv.setAsync(property, id)
         // 1.7.0: remember the language (not the track number, which differs between episodes) for this series.
         if let k = workPrefKey, !t.lang.isEmpty { WorkLangPrefs.set(k, type, t.lang) }
+        if type == "sub" { clearItemOff() }
         lastPick = "\(kind): طُلب اختيار \(property)=\(id) «\(t.name)»"
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
             guard let self else { return }
@@ -358,6 +380,7 @@ final class PlayerModel: ObservableObject {
 
     func subtitlesOff() {
         if let k = workPrefKey { WorkLangPrefs.set(k, "sub", "off") }
+        else if let k = itemKey { ItemSubOff.set(k, true) }   // 1.7.6: films kept too
         DiagLog.shared.note("[التطبيق] إيقاف كل الترجمات")
         mpv.setAsync("sid", "no")
         lastPick = "ترجمة: إيقاف كل المسارات"
@@ -520,12 +543,16 @@ struct PlayerScreen: View {
             guard case .success(let urls) = r, let u = urls.first else { return }
             let ok = u.startAccessingSecurityScopedResource()
             defer { if ok { u.stopAccessingSecurityScopedResource() } }
-            let dest = FileManager.default.temporaryDirectory.appendingPathComponent(u.lastPathComponent)
-            try? FileManager.default.removeItem(at: dest)
+            // 1.7.6: size first (nothing huge is read), then content, encoding and format; kept and shared only
+            // after the player confirms the track.
+            let size = (try? u.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            guard size <= SubFileCheck.maxBytes else {
+                show("لم تُضف الترجمة: " + SubFileCheck.text(.tooBig(bytes: size, limit: SubFileCheck.maxBytes))); return
+            }
             do {
-                try FileManager.default.copyItem(at: u, to: dest)
-                DiagLog.shared.note("[التطبيق] إضافة ترجمة من الملفات: \(u.lastPathComponent)")
-                model.addSubtitle(dest); show("أُضيفت: \(u.lastPathComponent)")
+                let data = try Data(contentsOf: u)
+                DiagLog.shared.note("[التطبيق] استيراد ترجمة من الملفات (\(data.count / 1024) KB)")
+                useSubtitle(data, name: u.lastPathComponent, label: "ملف مستورد · " + u.lastPathComponent)
             } catch { show(error.localizedDescription) }
         }
         .fullScreenCover(item: $applePlayer) { a in
@@ -534,9 +561,9 @@ struct PlayerScreen: View {
         .sheet(item: $sheet) { s in
             switch s {
             case .subs:
-                if let v = current { SubSearchSheet(query: v.query) { file, r in
-                    model.addSubtitle(file); show("تمت إضافة الترجمة")
-                    SubShare.keep(file, storeKey: v.key, source: library.active, lang: r.language, label: "OpenSubtitles · " + r.release)
+                if current != nil { SubSearchSheet(query: current!.query) { file, r in
+                    if let data = try? Data(contentsOf: file) { useSubtitle(data, name: file.lastPathComponent, label: "OpenSubtitles · " + r.release) }
+                    else { show("تعذّر قراءة الترجمة المنزّلة") }
                 } }
             case .channels:
                 ChannelPickerSheet(channels: channels, current: index, previous: previousIndex) { i in sheet = nil; switchChannel(to: i) }
@@ -1227,6 +1254,7 @@ struct PlayerScreen: View {
         let s = gate.begin(key: "live:" + ch.id)
         session = s
         model.workPrefKey = nil
+        model.itemKey = nil
         model.open(ch.url, live: true, session: s.id)
         if fit != .fit { model.apply(fit) }
         epg.load(ch, from: library.xtream)
@@ -1252,10 +1280,14 @@ struct PlayerScreen: View {
             traktPct = p
         }
         model.workPrefKey = v.key.hasPrefix("ep:") ? Store.show(forEpisode: v.key).map { "show:" + $0 } : nil
+        model.itemKey = v.key
         model.open(v.url, startSeconds: traktPct == nil ? pos : 0, session: s.id, startPercent: traktPct)
+        // 1.7.6: "no subtitles" chosen for this film/episode itself is kept and respected too.
+        let itemOff = ItemSubOff.get(v.key)
+        if itemOff { model.mpv.setAsync("sid", "no") }
         // 1.7.5: the subtitle downloaded earlier for this film/episode (here or on the TV) comes back on, unless
-        // subtitles are off for this series.
-        if model.workPrefKey.flatMap({ WorkLangPrefs.get($0, "sub") }) != "off" {
+        // subtitles are off for this series or this item.
+        if !itemOff && model.workPrefKey.flatMap({ WorkLangPrefs.get($0, "sub") }) != "off" {
             let id = s.id, storeKey = v.key, src = library.active
             Task {
                 guard let f = await SubShare.saved(storeKey: storeKey, source: src) else { return }
@@ -1343,6 +1375,31 @@ struct PlayerScreen: View {
         scheduleHide()
     }
 
+    /// 1.7.6: one path for imported and downloaded subtitles: check the content → add to mpv → confirm the new track
+    /// is listed and selected → only then say so, keep it for this film/episode and share it (Drive).
+    private func useSubtitle(_ data: Data, name: String, label: String) {
+        guard let v = current else { return }
+        let c: SubFileCheck.Checked
+        switch SubFileCheck.check(data) {
+        case .success(let ok): c = ok
+        case .failure(let p):
+            DiagLog.shared.note("[التطبيق] ترجمة مرفوضة: \(SubFileCheck.text(p))")
+            show("لم تُضف الترجمة: " + SubFileCheck.text(p)); return
+        }
+        guard let file = SubShare.tempFile(c, name: name) else { show("تعذّر تجهيز ملف الترجمة"); return }
+        let id = session?.id
+        model.addSubtitle(file) { ok in
+            guard gate.isCurrent(id) else { return }
+            if ok {
+                model.clearItemOff()
+                show("أُضيفت الترجمة (\(c.format.rawValue.uppercased())) وحُددت")
+                SubShare.keep(c, storeKey: v.key, source: library.active, label: label)
+            } else {
+                show("لم تظهر الترجمة في قائمة المشغّل — لم تُحفظ")
+            }
+        }
+    }
+
     /// One tap: the most downloaded Arabic subtitle for this film/episode from OpenSubtitles, loaded into the player.
     private func autoArabicSubtitle() {
         guard let v = current else { return }
@@ -1358,8 +1415,8 @@ struct PlayerScreen: View {
                 let file = try await OnlineSubs.download(best)
                 await MainActor.run {
                     guard gate.isCurrent(id) else { return }
-                    model.addSubtitle(file); show("تمت إضافة الترجمة العربية")
-                    SubShare.keep(file, storeKey: v.key, source: library.active, lang: best.language, label: "OpenSubtitles · " + best.release)
+                    if let data = try? Data(contentsOf: file) { useSubtitle(data, name: file.lastPathComponent, label: "OpenSubtitles · " + best.release) }
+                    else { show("تعذّر قراءة الترجمة المنزّلة") }
                 }
             } catch {
                 await MainActor.run { show(error.localizedDescription) }
@@ -1585,6 +1642,17 @@ enum Orientation {
 }
 
 /// 1.7.0: audio / subtitle language chosen for one series (mpv language code from the track, or "off").
+/// 1.7.6: "no subtitles" chosen for one film/episode (series also have WorkLangPrefs "off").
+enum ItemSubOff {
+    private static let key = "subs.itemOff"
+    static func get(_ item: String) -> Bool { (UserDefaults.standard.dictionary(forKey: key)?[item] as? Bool) ?? false }
+    static func set(_ item: String, _ off: Bool) {
+        var d = UserDefaults.standard.dictionary(forKey: key) ?? [:]
+        if off { d[item] = true } else { d.removeValue(forKey: item) }
+        UserDefaults.standard.set(d, forKey: key)
+    }
+}
+
 enum WorkLangPrefs {
     private static func key(_ work: String, _ type: String) -> String { "wlang.\(type).\(work)" }
     static func get(_ work: String, _ type: String) -> String? { UserDefaults.standard.string(forKey: key(work, type)) }

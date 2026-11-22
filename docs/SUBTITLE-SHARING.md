@@ -87,3 +87,18 @@ for that series); old files must not pile up.
 - تنويع مصادر بشكل مسموح: التلفزيون فيه OpenSubtitles وSubDL (واجهات رسمية بمفتاح المستخدم)؛ الآيفون فيه OpenSubtitles
   فقط → إضافة SubDL للآيفون بمفتاح المستخدم هو التنويع المقترح. يحتاج فحص شروط SubDL الحالية قبل التنفيذ.
 - الإثبات المطلوب من المالك لأي من ذلك: بحث فعلي، تنزيل فيلم وحلقة، ظهورها في المشغّل، ثم انتقالها للجهاز الثاني.
+
+## 1.7.6 (iPhone) / 0.9.19 (TV) — import, checks, confirmation, "off" for films (not device-tested)
+- Import from Files: size checked before reading, then content (`SubFileCheck`): SRT or ASS/SSA by content, UTF-8 /
+  UTF-16 (BOM) / Windows-1256 → kept as UTF-8 (ASS styles and tags unchanged). Limits: SRT 8 MB, ASS 40 MB (embedded
+  fonts). WebVTT and archives are refused with the reason (unzip in the Files app first).
+- Imported and downloaded subtitles take one path: check → add to mpv → success only when mpv lists a new subtitle
+  track and it is selected (5 s) → then kept for the film/episode and shared through Drive. Whether the text shows
+  still needs a scene with dialogue.
+- Kept copy uses the real extension (.srt / .ass); the Drive name keeps `.srt` (identity) with appProperties `fmt`.
+  Files from Drive are checked the same way before use.
+- "No subtitles" is now kept per film/episode too (series keep their preference); a kept/shared subtitle is not
+  brought back for that item; choosing or adding a subtitle lifts it.
+- TV: ASS from the iPhone → a clear "not supported on the TV" message (once per item), nothing turned on.
+- Still open: identity has no language / file hash (one subtitle per item); "off" not shared between devices; Drive
+  "last used" not recorded; zip/archives inside the app; SubDL on the iPhone; ASS on the TV.
