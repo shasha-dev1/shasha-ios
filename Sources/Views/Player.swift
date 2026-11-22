@@ -203,6 +203,8 @@ final class PlayerModel: ObservableObject {
     /// 1.7.6: the film/episode playing ("movie:ID" / "ep:ID"), for "no subtitles" kept per item (films have no
     /// series preference); nil for live channels.
     var itemKey: String?
+    /// 1.7.7: set by the player screen (needs the playlist) to record "off" on the shared Drive file.
+    var onSubtitlesOff: (() -> Void)?
     /// 1.7.0: "show:<seriesId>" while an episode plays (per-series audio/subtitle language), nil otherwise.
     var workPrefKey: String?
     private var stall = StallDetector()
@@ -381,6 +383,7 @@ final class PlayerModel: ObservableObject {
     func subtitlesOff() {
         if let k = workPrefKey { WorkLangPrefs.set(k, "sub", "off") }
         else if let k = itemKey { ItemSubOff.set(k, true) }   // 1.7.6: films kept too
+        onSubtitlesOff?()                                      // 1.7.7: also recorded on the shared file
         DiagLog.shared.note("[التطبيق] إيقاف كل الترجمات")
         mpv.setAsync("sid", "no")
         lastPick = "ترجمة: إيقاف كل المسارات"
@@ -1255,6 +1258,7 @@ struct PlayerScreen: View {
         session = s
         model.workPrefKey = nil
         model.itemKey = nil
+        model.onSubtitlesOff = nil
         model.open(ch.url, live: true, session: s.id)
         if fit != .fit { model.apply(fit) }
         epg.load(ch, from: library.xtream)
@@ -1281,6 +1285,8 @@ struct PlayerScreen: View {
         }
         model.workPrefKey = v.key.hasPrefix("ep:") ? Store.show(forEpisode: v.key).map { "show:" + $0 } : nil
         model.itemKey = v.key
+        let src = library.active
+        model.onSubtitlesOff = { SubShare.markOff(storeKey: v.key, source: src) }
         model.open(v.url, startSeconds: traktPct == nil ? pos : 0, session: s.id, startPercent: traktPct)
         // 1.7.6: "no subtitles" chosen for this film/episode itself is kept and respected too.
         let itemOff = ItemSubOff.get(v.key)
@@ -1288,7 +1294,7 @@ struct PlayerScreen: View {
         // 1.7.5: the subtitle downloaded earlier for this film/episode (here or on the TV) comes back on, unless
         // subtitles are off for this series or this item.
         if !itemOff && model.workPrefKey.flatMap({ WorkLangPrefs.get($0, "sub") }) != "off" {
-            let id = s.id, storeKey = v.key, src = library.active
+            let id = s.id, storeKey = v.key
             Task {
                 guard let f = await SubShare.saved(storeKey: storeKey, source: src) else { return }
                 await MainActor.run { if gate.isCurrent(id) { model.pendingSubFile = f } }

@@ -64,16 +64,33 @@ enum SubShare {
     static func saved(storeKey: String, source: Source?) async -> URL? {
         guard let k = key(storeKey: storeKey, source: source) else { return nil }
         let name = SubSyncRule.fileName(key: k, sha256: sha)
-        for f in [SubFileCheck.Format.srt, .ass] {
-            if let u = local(name, f), FileManager.default.fileExists(atPath: u.path) {
-                try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: u.path)
-                return u
-            }
+        let kept = [SubFileCheck.Format.srt, .ass].compactMap { local(name, $0) }.first { FileManager.default.fileExists(atPath: $0.path) }
+        guard DriveKeys.isLinked else {
+            if let kept { try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: kept.path) }
+            return kept
         }
-        guard DriveKeys.isLinked else { return nil }
         let t0 = Perf.now()
+        // 1.7.7: Drive first (one small request): "off" chosen on the other device is respected, and use here is
+        // recorded so the daily clean-up doesn't delete a subtitle still in use. If Drive can't be reached, the
+        // copy kept here is used as before.
+        let remote: GoogleDrive.SubFile?
+        do { remote = try await GoogleDrive.shared.findSub(name) } catch {
+            Perf.shared.add("ترجمة: تعذّر الوصول إلى Drive — استُخدمت النسخة المحفوظة", ms: 0, error.localizedDescription)
+            return kept
+        }
+        if let r = remote, r.off {
+            Perf.shared.add("ترجمة: موقوفة من جهاز آخر لهذا العمل — لم تُفعَّل", ms: 0, "")
+            return nil
+        }
+        if let r = remote, SubSyncRule.needsTouch(usedMs: r.usedMs, modifiedMs: r.modifiedMs, nowMs: CloudSyncRule.ms(Date().timeIntervalSince1970)) {
+            Task { try? await GoogleDrive.shared.touchSub(r.id, off: nil) }
+        }
+        if let kept {
+            try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: kept.path)
+            return kept
+        }
         do {
-            guard let f = try await GoogleDrive.shared.findSub(name) else { return nil }
+            guard let f = remote else { return nil }
             let data = try await GoogleDrive.shared.downloadSub(f.id)
             // 1.7.6: checked like an imported file before it is kept or used.
             let c: SubFileCheck.Checked
@@ -91,6 +108,18 @@ enum SubShare {
         } catch {
             Perf.shared.add("ترجمة: تعذّر الجلب من Drive", ms: 0, error.localizedDescription)
             return nil
+        }
+    }
+
+    /// 1.7.7: "no subtitles" for this film/episode: recorded on the shared file too, so the other device doesn't turn
+    /// it on. A new download or import (putSub) clears it.
+    static func markOff(storeKey: String, source: Source?) {
+        guard DriveKeys.isLinked, let k = key(storeKey: storeKey, source: source) else { return }
+        let name = SubSyncRule.fileName(key: k, sha256: sha)
+        Task {
+            do {
+                if let f = try await GoogleDrive.shared.findSub(name) { try await GoogleDrive.shared.touchSub(f.id, off: true) }
+            } catch { Perf.shared.add("ترجمة: تعذّر تسجيل الإيقاف في Drive", ms: 0, error.localizedDescription) }
         }
     }
 
@@ -112,8 +141,15 @@ enum SubShare {
         let now = CloudSyncRule.ms(Date().timeIntervalSince1970)
         guard now - Int64(UserDefaults.standard.double(forKey: k)) > SubSyncRule.pruneEveryMs else { return }
         do {
-            let gone = SubSyncRule.prune(try await GoogleDrive.shared.listSubs(), nowMs: now)
-            for id in gone { try await GoogleDrive.shared.delete(id) }
+            var gone: [String] = []
+            let listed = try await GoogleDrive.shared.listSubs()
+            let seen = Dictionary(listed.map { ($0.id, $0.modifiedMs) }, uniquingKeysWith: { a, _ in a })
+            for id in SubSyncRule.prune(listed, nowMs: now) {
+                // 1.7.7: read again right before deleting; skip it if it was used or replaced since the list.
+                guard let st = try await GoogleDrive.shared.subStamp(id) else { continue }
+                if st > (seen[id] ?? 0) { continue }
+                try await GoogleDrive.shared.delete(id); gone.append(id)
+            }
             UserDefaults.standard.set(Double(now), forKey: k)
             if !gone.isEmpty { Perf.shared.add("ترجمة: حُذف القديم من Drive", ms: 0, "\(gone.count)") }
         } catch {

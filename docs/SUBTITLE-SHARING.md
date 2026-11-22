@@ -102,3 +102,11 @@ for that series); old files must not pile up.
 - TV: ASS from the iPhone → a clear "not supported on the TV" message (once per item), nothing turned on.
 - Still open: identity has no language / file hash (one subtitle per item); "off" not shared between devices; Drive
   "last used" not recorded; zip/archives inside the app; SubDL on the iPhone; ASS on the TV.
+
+## 1.7.7 (iPhone) / 0.9.20 (TV) — last use and "off" shared through Drive (not device-tested)
+- appProperties gain `used` (ms of last use, written at most once a day by the device that uses the subtitle) and
+  `off` ("1" after "no subtitles" for that film/episode on any device; a new download/import sets "0").
+- Opening a film/episode (when linked): one Drive lookup first. `off=1` → not turned on (even if a copy is kept
+  locally). Drive unreachable → the local copy is used as before.
+- Clean-up goes by the later of last upload and last use, and reads each file again right before deleting it; a
+  file used or replaced since the list is skipped.

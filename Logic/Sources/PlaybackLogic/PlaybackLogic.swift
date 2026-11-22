@@ -655,6 +655,15 @@ enum SubSyncRule {
     static func fileName(key: String, sha256: (String) -> String) -> String { prefix + String(sha256(key).prefix(24)) + ".srt" }
 
     struct Stored: Equatable { let id: String; let modifiedMs: Int64 }
+
+    /// 1.7.7: a device that uses a shared subtitle writes "last used" to the Drive file (at most once a day), so the
+    /// clean-up counts use on the other device too, not only the last upload.
+    static let touchEveryMs: Int64 = 24 * 3600 * 1000
+    /// The time the clean-up goes by: the later of the last upload and the last recorded use.
+    static func stamp(modifiedMs: Int64, usedMs: Int64?) -> Int64 { max(modifiedMs, usedMs ?? 0) }
+    static func needsTouch(usedMs: Int64?, modifiedMs: Int64, nowMs: Int64) -> Bool {
+        nowMs - stamp(modifiedMs: modifiedMs, usedMs: usedMs) > touchEveryMs
+    }
     /// Files to delete: every file older than 30 days, then the oldest beyond 150. A file with an unknown time
     /// (modifiedMs <= 0) counts as old.
     static func prune(_ files: [Stored], nowMs: Int64) -> [String] {

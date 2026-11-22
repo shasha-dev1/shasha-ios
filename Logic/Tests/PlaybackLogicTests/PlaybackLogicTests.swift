@@ -675,6 +675,15 @@ final class SubSyncRuleTests: XCTestCase {
         XCTAssertEqual(gone.count, 10)
         XCTAssertEqual(Set(gone), Set((150..<160).map { "f\($0)" }))
     }
+    // 1.7.7: a subtitle uploaded long ago but used yesterday on the other device must not be deleted.
+    func testRecentUseOnTheOtherDeviceKeepsTheFile() {
+        let st = SubSyncRule.stamp(modifiedMs: now - 40 * day, usedMs: now - day)
+        XCTAssertEqual(SubSyncRule.prune([SubSyncRule.Stored(id: "a", modifiedMs: st)], nowMs: now), [])
+        XCTAssertEqual(SubSyncRule.stamp(modifiedMs: now - 40 * day, usedMs: nil), now - 40 * day)
+        XCTAssertFalse(SubSyncRule.needsTouch(usedMs: now - 3_600_000, modifiedMs: now - 40 * day, nowMs: now))
+        XCTAssertTrue(SubSyncRule.needsTouch(usedMs: now - 2 * day, modifiedMs: now - 40 * day, nowMs: now))
+        XCTAssertFalse(SubSyncRule.needsTouch(usedMs: nil, modifiedMs: now - 3_600_000, nowMs: now))
+    }
     func testClipKeepsWholeCharacters() {
         let s = String(repeating: "ترجمة ", count: 30)
         let c = SubSyncRule.clip(s)
