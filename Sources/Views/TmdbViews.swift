@@ -194,12 +194,16 @@ struct TmdbCard: View {
             PosterImage(url: item.title.poster, title: item.title.name)
                 .aspectRatio(2 / 3, contentMode: .fit)
                 .overlay(alignment: .topLeading) {
-                    Badge(text: item.hit != nil ? "في مكتبتك" : "غير متوفر", color: item.hit != nil ? Theme.teal : .gray)
-                        .background(Theme.bg.opacity(0.6), in: Capsule()).padding(5)
+                    // 1.7.0: smaller badge on a near-opaque dark backing, readable over any poster.
+                    Badge(text: item.hit != nil ? "في مكتبتك" : "غير متوفر", color: item.hit != nil ? Theme.teal : .white)
+                        .font(.caption2)
+                        .background(Color.black.opacity(0.85), in: Capsule()).padding(4)
                 }
                 .opacity(item.hit != nil ? 1 : 0.7)
             Text(item.title.name).font(.caption).lineLimit(2).multilineTextAlignment(.leading)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.title.name)، \(item.hit != nil ? "في مكتبتك" : "غير متوفر")")
     }
 }
 

@@ -714,6 +714,7 @@ struct PlayerScreen: View {
                 Image(systemName: model.playing ? "pause.fill" : "play.fill").font(.system(size: 40))
                     .frame(width: 84, height: 84).background(.white.opacity(0.18), in: Circle())
             }
+            .accessibilityLabel(model.playing ? "إيقاف مؤقت" : "تشغيل")
             if isLive {
                 bigButton("forward.end.fill", 34) { switchChannel(to: index + 1) }
             } else {
@@ -1137,13 +1138,22 @@ struct PlayerScreen: View {
 
     private func iconButton(_ name: String, _ action: @escaping () -> Void) -> some View {
         Button { action(); scheduleHide() } label: { menuIcon(name) }
+            .accessibilityLabel(Self.spoken[name] ?? "")
     }
     private func menuIcon(_ name: String) -> some View {
-        Image(systemName: name).font(.title3).frame(width: 42, height: 42).contentShape(Rectangle())
+        // 1.7.0: 44 pt touch area (Apple's minimum); was 42.
+        Image(systemName: name).font(.title3).frame(width: 44, height: 44).contentShape(Rectangle())
     }
     private func bigButton(_ name: String, _ size: CGFloat, _ action: @escaping () -> Void) -> some View {
         Button(action: action) { Image(systemName: name).font(.system(size: size)).frame(width: 64, height: 64).contentShape(Rectangle()) }
+            .accessibilityLabel(Self.spoken[name] ?? "")
     }
+    /// 1.7.0: what VoiceOver says for the icon-only player buttons.
+    private static let spoken: [String: String] = [
+        "aspectratio": "شكل الصورة", "captions.bubble": "الترجمة", "chevron.down": "تصغير المشغّل", "lock.open": "قفل الشاشة",
+        "waveform": "الصوت", "backward.end.fill": "القناة السابقة في القائمة", "forward.end.fill": "القناة التالية في القائمة",
+        "gobackward.10": "رجوع 10 ثوانٍ", "goforward.10": "تقديم 10 ثوانٍ",
+    ]
     private func pill(_ text: String, _ icon: String, _ action: @escaping () -> Void) -> some View {
         Button { action(); scheduleHide() } label: {
             Label(text, systemImage: icon).font(.caption.bold()).padding(.horizontal, 12).padding(.vertical, 7)

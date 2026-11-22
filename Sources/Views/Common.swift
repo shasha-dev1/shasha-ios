@@ -64,6 +64,8 @@ struct PosterCard: View {
             Text(TmdbRule.split(title).title).font(.caption).lineLimit(2).multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(TmdbRule.split(title).title + (progress.map { "، شاهدت \(Int($0 * 100))٪" } ?? ""))
     }
 }
 
