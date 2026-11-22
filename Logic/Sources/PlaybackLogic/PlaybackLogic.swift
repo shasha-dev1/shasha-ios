@@ -511,9 +511,27 @@ enum CloudSyncRule {
     /// 1.7.1: a local save time in Google's clock. `skewMs` = this phone's clock minus Google's (Date header; nil =
     /// unknown). Never later than "now" in Google's clock, so saves made while the clock was ahead come unstuck once
     /// it is right. Same rule as the TV app's CloudSyncCore.stamp.
+    /// 1.7.2: not capped at "now" any more — capping let an old event, re-sent after the clock was fixed, beat a newer
+    /// correct watch. The time the event happened is kept; an entry still in the future is handled by `prepareOwn`.
     static func stamp(_ localMs: Int64, skewMs: Int64?, nowLocalMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> Int64 {
-        let s = skewMs ?? 0
-        return min(localMs - s, nowLocalMs - s)
+        localMs - (skewMs ?? 0)
+    }
+
+    static let ownJitterMs: Int64 = 2 * 60 * 1000
+    struct Prepared { var send = File(); var withheld: Set<String> = []; var restamped: Set<String> = [] }
+
+    /// 1.7.2: this phone's entries before comparing and uploading. One still ahead of Google's "now" after the clock
+    /// correction was saved while the clock was wrong, so its real order is unknown: if the file has a valid entry for
+    /// the title, ours is withheld (not uploaded, not used to refuse the other device's entry, which is then applied)
+    /// and reported; if the file has nothing valid, it is sent with "now". Same rule as the TV app.
+    static func prepareOwn(_ mine: File, file: File, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> Prepared {
+        var p = Prepared()
+        for (k, e) in mine.progress {
+            if e.at <= nowMs + ownJitterMs { p.send.progress[k] = e; continue }
+            if let other = file.progress[k], sane(other, nowMs: nowMs) { p.withheld.insert(k) }
+            else { var x = e; x.at = nowMs; p.send.progress[k] = x; p.restamped.insert(k) }
+        }
+        return p
     }
     /// A time from the file (Google's clock) in this phone's clock, for storing locally.
     static func toLocal(_ fileMs: Int64, skewMs: Int64?) -> Int64 { fileMs + (skewMs ?? 0) }

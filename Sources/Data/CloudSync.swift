@@ -292,14 +292,17 @@ enum CloudSync {
         running = true; last = Date(); defer { running = false }
         let t0 = Perf.now()
         do {
-            var applied = 0, repaired = 0, future = 0
+            var applied = 0, repaired = 0, future = 0, withheld = 0
             for attempt in 0..<2 {
                 let remote = try await GoogleDrive.shared.read()
                 if let sk = await GoogleDrive.shared.clockSkew { skewMs = Int64(sk * 1000) }
                 // A reply that arrives after the playlist changed must not touch the new account.
                 guard library.active?.id == s.id else { return "تغيّر المصدر أثناء المزامنة — لم يُطبّق شيء" }
-                let local = localFile(acct)
                 let theirs = remote?.file ?? CloudSyncRule.File()
+                // 1.7.2: entries saved while this phone's clock was wrong are withheld when the TV has a valid one.
+                let prepared = CloudSyncRule.prepareOwn(localFile(acct), file: theirs)
+                withheld = prepared.withheld.count
+                let local = prepared.send
                 let prefix = acct + "|"
                 for (k, e) in CloudSyncRule.newer(theirs, than: local) where k.hasPrefix(prefix) {
                     let parts = k.split(separator: "|", maxSplits: 2)
@@ -312,7 +315,7 @@ enum CloudSync {
                     applied += 1
                 }
                 future = CloudSyncRule.futureCount(theirs)
-                let mine = localFile(acct)
+                let mine = CloudSyncRule.prepareOwn(localFile(acct), file: theirs).send
                 let merged = CloudSyncRule.merge(theirs, mine)
                 if merged == theirs { break }
                 if let remote {
@@ -342,6 +345,7 @@ enum CloudSync {
             var r = applied > 0 ? "تمت المزامنة: \(applied) من الجهاز الآخر" : "تمت المزامنة: لا جديد من الجهاز الآخر"
             if repaired > 0 { r += "\nالجهاز الآخر كتب في نفس اللحظة — أُعيد الدمج والرفع" }
             if future > 0 { r += "\nلم يُطبَّق \(future) تحديث من جهاز ساعته متقدمة أكثر من يوم (بقيت في الملف)" }
+            if withheld > 0 { r += "\nلم يُرسل \(withheld) تحديث حُفظ هنا والساعة غير مضبوطة: للجهاز الآخر تحديث صالح لنفس العناوين واعتُمد هو" }
             if let sk = await GoogleDrive.shared.clockSkew, abs(sk) > 300 {
                 r += "\nساعة هذا الجهاز مختلفة عن ساعة Google بـ \(Int(abs(sk) / 60)) دقيقة — المزامنة تصحح ذلك، لكن اضبط التاريخ والوقت تلقائيًا"
             }

@@ -582,14 +582,34 @@ final class CloudSyncRaceAndClockTests: XCTestCase {
         let raw = file(["k": e(70, now + skew - 1000)])
         XCTAssertEqual(CloudSyncRule.merge(cloud, raw, nowMs: now).progress["k"]?.pos, 10)   // why the correction matters
     }
-    func testFixingTheClockUnsticksFutureEntries() {
+    func testFixingTheClockSendsAnOrphanEntryAtNow() {
         let future = now + 3 * 24 * 3600 * 1000
         var cloud = file(["k": e(40, future)])
         XCTAssertTrue(CloudSyncRule.newer(cloud, than: file([:]), nowMs: now).isEmpty)          // stuck while wrong
-        let mine = file(["k": e(40, CloudSyncRule.stamp(future, skewMs: nil, nowLocalMs: now))])
-        cloud = CloudSyncRule.merge(cloud, mine, nowMs: now)
+        let p = CloudSyncRule.prepareOwn(file(["k": e(40, CloudSyncRule.stamp(future, skewMs: nil))]), file: cloud, nowMs: now)
+        XCTAssertEqual(p.restamped, ["k"])
+        cloud = CloudSyncRule.merge(cloud, p.send, nowMs: now)
         XCTAssertEqual(cloud.progress["k"]?.at, now)
-        XCTAssertEqual(CloudSyncRule.newer(cloud, than: file([:]), nowMs: now).count, 1)        // delivered now
+        XCTAssertEqual(CloudSyncRule.newer(cloud, than: file([:]), nowMs: now).count, 1)
+    }
+    func testOldEventFromAWrongClockNeverBeatsANewerCorrectWatch() {
+        // A (2 days ahead, skew unknown) paused at 40 an hour ago; B (right clock) watched to 75 ten minutes ago;
+        // A's clock is corrected (skew ≈ 0) and A syncs.
+        let aWrong = now - 3_600_000 + 2 * 24 * 3600 * 1000
+        var cloud = file(["k": e(75, now - 600_000)])
+        let aLocal = file(["k": e(40, CloudSyncRule.stamp(aWrong, skewMs: 0))])
+        let p = CloudSyncRule.prepareOwn(aLocal, file: cloud, nowMs: now)
+        XCTAssertEqual(p.withheld, ["k"]); XCTAssertNil(p.send.progress["k"])
+        cloud = CloudSyncRule.merge(cloud, p.send, nowMs: now)
+        XCTAssertEqual(cloud.progress["k"]?.pos, 75)
+        XCTAssertEqual(CloudSyncRule.newer(cloud, than: p.send, nowMs: now).map(\.key), ["k"])   // A takes B's
+        for _ in 0..<3 { cloud = CloudSyncRule.merge(cloud, CloudSyncRule.prepareOwn(aLocal, file: cloud, nowMs: now).send, nowMs: now) }
+        XCTAssertEqual(cloud.progress["k"]?.pos, 75)
+    }
+    func testOwnEntryWithinJitterIsSentAsIs() {
+        let p = CloudSyncRule.prepareOwn(file(["k": e(1, now + 60_000)]), file: file([:]), nowMs: now)
+        XCTAssertEqual(p.send.progress["k"]?.at, now + 60_000)
+        XCTAssertTrue(p.withheld.isEmpty && p.restamped.isEmpty)
     }
     func testRoundTripThroughLocalClockIsStable() {
         let skew: Int64 = 7 * 60_000

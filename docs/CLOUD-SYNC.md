@@ -64,3 +64,16 @@ with the right time. Device 2 days behind: its newer action still wins (without 
 a clock was ahead and before it was measured sit in the file as "future" (not applied, counted, kept); once the clock is
 right (or measured) the device re-sends them capped at "now", the other device applies them, nothing stays stuck.
 Tests: CloudSyncRaceAndClockTests (iPhone), CloudSyncCoreTest clock* (TV).
+
+## 1.7.2 / TV 0.9.15 — event time is kept; unknown order never replaces a newer entry
+Correction of 1.7.1: capping own times at "now" let an old event, re-sent after a clock fix, beat a newer correct
+watch from the other device. Now the time an event happened is kept (`stamp` = local time − measured skew, no cap).
+An own entry still ahead of Google's "now" (+2 min) after the correction was saved while the clock was wrong and before
+the skew was measured; its order is unknown (`prepareOwn`):
+- the file has a valid entry for that title → ours is not uploaded, the other device's entry is applied here, and the
+  sync message reports it («لم يُرسل … واعتُمد هو»);
+- the file has nothing valid → ours is sent with "now".
+The send time is not stored separately in the file (format v1 unchanged); identity stays the per-title key.
+Tests: testOldEventFromAWrongClockNeverBeatsANewerCorrectWatch (iPhone), oldEventFromAWrongClockNeverBeatsANewerCorrectWatch (TV).
+**Status: release candidate for device testing; the write-race limit above still applies — the version check narrows,
+but doesn't close, the gap between check and upload.**
