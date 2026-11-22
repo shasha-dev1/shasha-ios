@@ -200,3 +200,27 @@ New tests: WorkRuleTests (6), CloudSyncSafetyTests (8). TV 0.9.12: CloudSyncCore
 3. Groups: «المجموعات» button → search, swipe to pin; pinned/recent first in the row; leave and come back → same group.
 4. Settings → Appearance → Home rows: hide/reorder; Discovery rows don't repeat titles.
 5. Sync both ways (TV 0.9.12 + iPhone 1.6.0): pause on TV → resume on iPhone; pause on iPhone → resume on TV; finish an episode on one → watched on the other; airplane mode → play → back online → "Sync now" sends it; Settings shows pending / last success / reason.
+
+## 1.7.0 — branch `work/1.7` (CI results in the table below; NOT tried on the device)
+Main stays at 1.6.0 (`ad3fef6`, CI #98 success) until every 1.7.0 batch is green.
+
+| Batch | Commit | State |
+|---|---|---|
+| Sync: read back after upload + re-merge, repairs/future/clock reported, sync on reconnect, background time; version-choice label; tests | `9bb47cd` | see Actions |
+| Manual TMDB correction; per-series audio/subtitle language | `6567437` | see Actions |
+| Live: previous channel, recent channels (picker + Home) | `a6cfd82` | see Actions |
+| Accessibility: VoiceOver labels, 44 pt targets, badge contrast | `629f26f` | see Actions |
+
+### Offline test (no new stream needed)
+1. With the network on, sync once (Settings → accounts → «مزامنة الآن»): «بانتظار الإرسال» disappears.
+2. Turn on airplane mode. Open a title that is already cached on screen, or simply long-press a Continue-watching card and
+   choose «وضع علامة مكتمل» or «إزالة من متابعة المشاهدة» — these change local progress without any network.
+3. Settings → accounts: «بانتظار الإرسال: 1» (or more). «مزامنة الآن» fails with a network reason; the change stays.
+4. Turn airplane mode off. Within a few seconds the app syncs by itself (network-back notice) — or press «مزامنة الآن».
+   «بانتظار الإرسال» goes, «آخر مزامنة ناجحة» updates; on the TV, «مزامنة الآن» shows the change.
+
+### Two-way and race test (TV 0.9.13 + iPhone 1.7.0)
+- Pause on TV → «مزامنة الآن» on TV → open the iPhone: resumes there. And the reverse.
+- Remove a title from Continue watching on the iPhone → sync both a few times → it stays removed on both.
+- Press «مزامنة الآن» on both devices at the same moment → both titles' progress is still there afterwards; the phone may
+  say «الجهاز الآخر كتب في نفس اللحظة — أُعيد الدمج والرفع».
