@@ -20,7 +20,7 @@ struct GroupsManagerView: View {
                     let hidden = library.isHidden(c.id, section)
                     let locked = library.isLocked(c.id, section)
                     HStack(spacing: 14) {
-                        Text(c.name).lineLimit(2).foregroundStyle(hidden ? .secondary : .primary).strikethrough(hidden)
+                        Text(Chips.name(c)).lineLimit(2).foregroundStyle(hidden ? .secondary : .primary).strikethrough(hidden)
                         Spacer()
                         Button { library.toggle("hidden", c.id, section) } label: {
                             Image(systemName: hidden ? "eye.slash" : "eye").foregroundStyle(hidden ? Color.secondary : Theme.teal)

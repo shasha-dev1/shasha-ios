@@ -145,3 +145,9 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Now: when the series is matched on TMDB, the selected season's episodes take TMDB's name, overview and still image where the provider has none (Arabic first, English per episode when Arabic is missing). GET /tv/{id}/season/{n}, kept in memory for the run.
 - English overviews are machine-translated on the device in one batch per season (iOS 18+, same switch), labelled «ترجمة آلية».
 - Needs a TMDB key in Settings. Timings: «TMDB حلقات الموسم», «ترجمة آلية (حلقات)».
+
+## 1.4.3 — group chips (built only, not tested on device)
+- Owner's screenshot: hundreds of provider groups in one horizontal row, decorated names (small-caps letters, emoji, flags, bars).
+- Names shown cleaned (`CategoryNameRule`, with tests): small caps and styled letters → plain, emoji/flags/ornaments removed, separators tidied. Display only; order / hide / lock still use the provider's id. Same names in Settings → groups.
+- New first button (when there are more than 6 groups): «كل المجموعات» sheet with search (same folding as title search) and the number of titles per group (counted off the main thread).
+- The row scrolls to the selected group.

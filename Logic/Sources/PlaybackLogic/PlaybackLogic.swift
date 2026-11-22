@@ -485,3 +485,47 @@ enum CloudSyncRule {
         remote.progress.filter { k, e in (local.progress[k]?.at ?? -1) < e.at }.map { ($0.key, $0.value) }.sorted { $0.entry.at < $1.entry.at }
     }
 }
+
+// MARK: - Category names on screen (1.4.3)
+
+/// Display form of a provider's group name: decorative letters turned into plain ones, emoji, flags and ornament
+/// symbols removed, separators tidied. Only for showing — order, hiding and locks keep using the provider's id.
+public enum CategoryNameRule {
+    private static let smallCaps: [Character: Character] = [
+        "ᴀ": "A", "ʙ": "B", "ᴄ": "C", "ᴅ": "D", "ᴇ": "E", "ꜰ": "F", "ɢ": "G", "ʜ": "H", "ɪ": "I", "ᴊ": "J", "ᴋ": "K",
+        "ʟ": "L", "ᴍ": "M", "ɴ": "N", "ᴏ": "O", "ᴘ": "P", "ǫ": "Q", "ʀ": "R", "ꜱ": "S", "ᴛ": "T", "ᴜ": "U", "ᴠ": "V",
+        "ᴡ": "W", "ʏ": "Y", "ᴢ": "Z",
+    ]
+    /// Ornaments seen around group names; treated as separators.
+    private static let ornaments: Set<Character> = ["|", "┃", "│", "║", "•", "●", "◆", "◇", "■", "□", "▪", "▶", "►", "◀", "◄",
+                                                    "★", "☆", "✦", "✧", "✪", "✯", "✰", "❖", "⭐", "♦", "»", "«", "~", "*", "#", "_", "=", "+"]
+
+    public static func display(_ raw: String) -> String {
+        let nfkc = raw.precomposedStringWithCompatibilityMapping      // 𝐁𝐎𝐋𝐃 / ＦＵＬＬ / ² → plain
+        var out = ""
+        for ch in nfkc {
+            if let m = smallCaps[ch] { out.append(m); continue }
+            if ornaments.contains(ch) { out.append(" "); continue }
+            let scalars = ch.unicodeScalars
+            if scalars.contains(where: { isDecoration($0) }) { out.append(" "); continue }
+            out.append(ch)
+        }
+        // Collapse spaces; trim spaces and dashes / colons left at the edges.
+        var words = out.split(whereSeparator: { $0 == " " || $0 == "\t" }).map(String.init)
+        while let f = words.first, f.allSatisfy({ "-–—:.,".contains($0) }) { words.removeFirst() }
+        while let l = words.last, l.allSatisfy({ "-–—:.,".contains($0) }) { words.removeLast() }
+        let s = words.joined(separator: " ")
+        return s.isEmpty ? raw.trimmingCharacters(in: .whitespacesAndNewlines) : s
+    }
+
+    private static func isDecoration(_ u: Unicode.Scalar) -> Bool {
+        let v = u.value
+        if (0x1F1E6...0x1F1FF).contains(v) { return true }           // flag letters
+        if (0xFE00...0xFE0F).contains(v) || v == 0x200D || v == 0x20E3 { return true } // variation selectors, joiners
+        if (0x1F000...0x1FAFF).contains(v) { return true }           // emoji and pictographs
+        if (0x2600...0x27BF).contains(v) { return true }             // dingbats and misc symbols
+        if (0x2500...0x25FF).contains(v) { return true }             // box drawing and geometric shapes
+        if (0xE0000...0xE007F).contains(v) { return true }           // tag characters (sub-flags)
+        return false
+    }
+}

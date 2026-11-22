@@ -122,24 +122,98 @@ enum LastUpdate {
 }
 
 /// Category chips (horizontal) used by Movies and Series.
+/// 1.4.3: names shown without the provider's decoration, a «كل المجموعات» list with search and counts, and the
+/// row scrolls to the selected group.
 struct Chips: View {
     let cats: [Category]
     @Binding var selected: String?
     var locked: Set<String> = []
+    /// Titles per group id, counted off the main thread when the list opens.
+    var counts: (() async -> [String: Int])? = nil
+    @State private var listOpen = false
+
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
-                chip("الكل", nil)
-                ForEach(cats) { chip(locked.contains($0.id) ? "🔒 " + $0.name : $0.name, $0.id) }
-            }.padding(.horizontal)
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    if cats.count > 6 {
+                        Button { listOpen = true } label: {
+                            Label("كل المجموعات", systemImage: "square.grid.2x2").labelStyle(.iconOnly)
+                                .font(.subheadline.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 8)
+                                .background(Theme.surface, in: Capsule()).foregroundStyle(Theme.accent)
+                        }
+                        .accessibilityLabel("كل المجموعات")
+                    }
+                    chip("الكل", nil).id("all")
+                    ForEach(cats) { c in chip(locked.contains(c.id) ? "🔒 " + Self.name(c) : Self.name(c), c.id).id(c.id) }
+                }.padding(.horizontal)
+            }
+            .onAppear { scroll(proxy, animated: false) }
+            .onChange(of: selected) { _ in scroll(proxy, animated: true) }
+        }
+        .sheet(isPresented: $listOpen) {
+            CategoryListSheet(cats: cats, selected: $selected, locked: locked, counts: counts)
         }
     }
+
+    static func name(_ c: Category) -> String { CategoryNameRule.display(c.name) }
+
+    private func scroll(_ proxy: ScrollViewProxy, animated: Bool) {
+        let target: String = selected ?? "all"
+        if animated { withAnimation(.easeInOut(duration: 0.25)) { proxy.scrollTo(target, anchor: .center) } }
+        else { proxy.scrollTo(target, anchor: .center) }
+    }
+
     private func chip(_ t: String, _ id: String?) -> some View {
         Button(t) { selected = id }
-            .font(.subheadline.weight(.semibold))
+            .font(.subheadline.weight(.semibold)).lineLimit(1)
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(selected == id ? Theme.accent : Theme.surface, in: Capsule())
             .foregroundStyle(selected == id ? Color.black : Color.white)
+    }
+}
+
+/// All groups in one list: search (Arabic letters folded the same way as title search), count per group.
+struct CategoryListSheet: View {
+    let cats: [Category]
+    @Binding var selected: String?
+    let locked: Set<String>
+    let counts: (() async -> [String: Int])?
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+    @State private var n: [String: Int] = [:]
+
+    private var shown: [Category] {
+        let q = SearchRule.fold(query.trimmingCharacters(in: .whitespaces))
+        guard !q.isEmpty else { return cats }
+        return cats.filter { SearchRule.matches(SearchRule.fold(Chips.name($0) + " " + $0.name), q) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if query.isEmpty { row("الكل", nil, n.values.reduce(0, +)) }
+                ForEach(shown) { c in row(Chips.name(c), c.id, n[c.id]) }
+                if shown.isEmpty { Text("لا توجد مجموعة بهذا الاسم").foregroundStyle(.secondary) }
+            }
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "ابحث عن مجموعة")
+            .navigationTitle("المجموعات (\(cats.count))").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } } }
+            .task { if let counts { n = await counts() } }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func row(_ title: String, _ id: String?, _ count: Int?) -> some View {
+        Button { selected = id; dismiss() } label: {
+            HStack {
+                if let id, locked.contains(id) { Image(systemName: "lock.fill").foregroundStyle(.secondary) }
+                Text(title).foregroundStyle(.primary).lineLimit(2)
+                Spacer()
+                if let count, count > 0 { Text(count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary) }
+                if selected == id { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
+            }
+        }
     }
 }
 

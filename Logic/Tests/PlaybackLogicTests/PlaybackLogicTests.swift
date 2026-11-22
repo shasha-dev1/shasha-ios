@@ -386,3 +386,18 @@ final class CloudSyncRuleTests: XCTestCase {
         XCTAssertEqual(Set(m.progress.keys), ["k7", "k8", "k9"])
     }
 }
+
+final class CategoryNameRuleTests: XCTestCase {
+    func testDecorationsRemoved() {
+        XCTAssertEqual(CategoryNameRule.display("ᴅᴏʟʙʏ ᴀᴜᴅɪᴏ"), "DOLBY AUDIO")
+        XCTAssertEqual(CategoryNameRule.display("🇸🇦 | مسلسلات عربية"), "مسلسلات عربية")
+        XCTAssertEqual(CategoryNameRule.display("★ AR | Netflix ★"), "AR Netflix")
+        XCTAssertEqual(CategoryNameRule.display("𝐓𝐔𝐑𝐊𝐈𝐒𝐇 - "), "TURKISH")
+        XCTAssertEqual(CategoryNameRule.display("🔥🔥 4K UHD 🔥"), "4K UHD")
+    }
+    func testPlainKept() {
+        XCTAssertEqual(CategoryNameRule.display("يعرض الآن تركي مترجم"), "يعرض الآن تركي مترجم")
+        XCTAssertEqual(CategoryNameRule.display("Action 2024"), "Action 2024")
+        XCTAssertEqual(CategoryNameRule.display("🔥"), "🔥")   // nothing left → original
+    }
+}
