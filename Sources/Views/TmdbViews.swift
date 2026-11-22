@@ -94,12 +94,19 @@ final class TmdbRows: ObservableObject {
             async let tt = Tmdb.shared.list(.trending, .tv)
             async let pm = Tmdb.shared.list(.popular, .movie)
             async let pt = Tmdb.shared.list(.popular, .tv)
+            async let nm = Tmdb.shared.list(.newTop, .movie)
+            async let nt = Tmdb.shared.list(.newTop, .tv)
             let (a, b, c, d) = try await (tm, tt, pm, pt)
+            let (e, f) = try await (nm, nt)
             let l = await library.lookup()
             func items(_ x: [TmdbTitle]) -> [Item] { x.map { Item(title: $0, hit: library.hit($0, l)) } }
             // Available first, the rest after, each keeping TMDB's order.
             func ordered(_ x: [Item]) -> [Item] { x.filter { $0.hit != nil } + x.filter { $0.hit == nil } }
-            rows = [Row(id: "tm", name: "أفلام رائجة هذا الأسبوع", items: ordered(items(a))),
+            // New and highly rated: only what is in the library (the owner's request).
+            func available(_ x: [TmdbTitle]) -> [Item] { items(x).filter { $0.hit != nil } }
+            rows = [Row(id: "nm", name: "أفلام جديدة تقييمها عالي", items: available(e)),
+                    Row(id: "nt", name: "مسلسلات جديدة تقييمها عالي", items: available(f)),
+                    Row(id: "tm", name: "أفلام رائجة هذا الأسبوع", items: ordered(items(a))),
                     Row(id: "tt", name: "مسلسلات رائجة هذا الأسبوع", items: ordered(items(b))),
                     Row(id: "pm", name: "الأفلام الأشهر", items: ordered(items(c))),
                     Row(id: "pt", name: "المسلسلات الأشهر", items: ordered(items(d)))].filter { !$0.items.isEmpty }

@@ -170,16 +170,31 @@ actor Tmdb {
 
     // MARK: Lists (trending / popular)
 
-    enum ListKind: String { case trending, popular }
+    enum ListKind: String { case trending, popular, newTop }
     private var lists: [String: (at: Date, items: [TmdbTitle])] = [:]
 
     /// Trending this week or popular, movies or series, in Arabic. Cached for 6 hours.
     func list(_ l: ListKind, _ kind: TmdbTitle.Kind) async throws -> [TmdbTitle] {
         let k = "\(l.rawValue)|\(kind.rawValue)"
         if let c = lists[k], Date().timeIntervalSince(c.at) < 6 * 3600 { return c.items }
-        let path = l == .trending ? "/trending/\(kind.rawValue)/week" : "/\(kind.rawValue)/popular"
-        guard let json = try await get(path, ["language": lang]) else { return [] }
-        let items = (json["results"] as? [[String: Any]] ?? []).compactMap { Self.title($0, kind) }
+        var items: [TmdbTitle] = []
+        if l == .newTop {
+            // 1.4.0: released in the last 12 months AND rated ≥ 7 on TMDB with enough votes (200 films / 100 series),
+            // most popular first, two pages — GET /discover/{movie|tv}. Same rule as the TV app.
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
+            let since = f.string(from: Date().addingTimeInterval(-365 * 86400))
+            for page in 1...2 {
+                guard let json = try await get("/discover/\(kind.rawValue)", [
+                    kind == .movie ? "primary_release_date.gte" : "first_air_date.gte": since,
+                    "vote_average.gte": "7", "vote_count.gte": kind == .movie ? "200" : "100",
+                    "sort_by": "popularity.desc", "include_adult": "false", "language": lang, "page": String(page)]) else { break }
+                items += (json["results"] as? [[String: Any]] ?? []).compactMap { Self.title($0, kind) }
+            }
+        } else {
+            let path = l == .trending ? "/trending/\(kind.rawValue)/week" : "/\(kind.rawValue)/popular"
+            guard let json = try await get(path, ["language": lang]) else { return [] }
+            items = (json["results"] as? [[String: Any]] ?? []).compactMap { Self.title($0, kind) }
+        }
         lists[k] = (Date(), items)
         return items
     }
