@@ -44,7 +44,7 @@ struct MoviesView: View {
                 }
                 SectionNotice(section: .movies)
                 Chips(cats: library.cats(.movies), selected: guarded($cat, .movies, library), locked: lockedSet(.movies, library),
-                      counts: { let all = library.movies; return await Task.detached(priority: .userInitiated) { all.reduce(into: [String: Int]()) { $0[$1.categoryId, default: 0] += 1 } }.value })
+                      counts: { [all = library.movies] in await Task.detached(priority: .userInitiated) { all.reduce(into: [String: Int]()) { $0[$1.categoryId, default: 0] += 1 } }.value })
                     .padding(.vertical, 6)
                 if !items.isEmpty { Text("\(items.count.formatted()) فيلم").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal) }
                 let _ = tick
@@ -287,7 +287,7 @@ struct SeriesView: View {
                 }
                 SectionNotice(section: .shows)
                 Chips(cats: library.cats(.series), selected: guarded($cat, .series, library), locked: lockedSet(.series, library),
-                      counts: { let all = library.shows; return await Task.detached(priority: .userInitiated) { all.reduce(into: [String: Int]()) { $0[$1.categoryId, default: 0] += 1 } }.value })
+                      counts: { [all = library.shows] in await Task.detached(priority: .userInitiated) { all.reduce(into: [String: Int]()) { $0[$1.categoryId, default: 0] += 1 } }.value })
                     .padding(.vertical, 6)
                 if !items.isEmpty { Text("\(items.count.formatted()) مسلسل").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal) }
                 let _ = tick

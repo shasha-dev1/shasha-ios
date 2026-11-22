@@ -22,7 +22,9 @@ enum MachineTranslate {
     static func sourceLanguage(_ s: String) -> Locale.Language? {
         let r = NLLanguageRecognizer()
         r.processString(s)
-        guard let (lang, p) = r.languageHypotheses(withMaximum: 1).first, p >= 0.6, lang != .arabic, lang != .undetermined else { return nil }
+        guard let best = r.languageHypotheses(withMaximum: 1).first, best.value >= 0.6,
+              best.key != .arabic, best.key != .undetermined else { return nil }
+        let lang = best.key
         return Locale.Language(identifier: lang.rawValue)
     }
 
