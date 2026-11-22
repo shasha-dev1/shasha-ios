@@ -14,7 +14,12 @@ struct HomeView: View {
     @State private var traktHits: [TraktHit] = []
     struct TraktHit { let id: String; let hit: Library.Hit; let progress: Double; let at: Date }
     @State private var tmdbSheet: TmdbTitle?
-    struct Found { var q = ""; var ch: [Channel] = []; var mv: [Movie] = []; var sh: [Show] = [] }
+    struct Found {
+        var q = ""; var ch: [Channel] = []; var mv: [Movie] = []; var sh: [Show] = []
+        var totals: (ch: Int, mv: Int, sh: Int) = (0, 0, 0)
+    }
+    /// «40 من 312» when the list is cut, else the count.
+    private func countText(_ shown: Int, _ total: Int) -> String { total > shown ? "\(shown) من \(total)" : "\(shown)" }
 
     var body: some View {
         NavigationStack {
@@ -42,16 +47,21 @@ struct HomeView: View {
                 let t0 = Perf.now()
                 let r = await Task.detached(priority: .userInitiated) { () -> Found in
                     let f = SearchRule.fold(q)
-                    func pick<T>(_ all: [T], _ names: [String], _ cat: (T) -> String, _ blocked: Set<String>) -> [T] {
-                        var out: [T] = []
+                    // 1.6.0: exact name first, then names starting with the query, then a word starting with it,
+                    // then the rest; the total is counted so the screen can say "40 of 312".
+                    func pick<T>(_ all: [T], _ names: [String], _ cat: (T) -> String, _ blocked: Set<String>) -> (items: [T], total: Int) {
+                        var ranked: [(rank: Int, i: Int)] = []
                         for (i, n) in names.enumerated() where i < all.count && n.contains(f) && !blocked.contains(cat(all[i])) {
-                            out.append(all[i]); if out.count == 40 { break }
+                            let r = n == f ? 0 : n.hasPrefix(f) ? 1 : n.contains(" " + f) ? 2 : 3
+                            ranked.append((r, i))
                         }
-                        return out
+                        let top = ranked.sorted { $0.rank != $1.rank ? $0.rank < $1.rank : $0.i < $1.i }.prefix(40)
+                        return (top.map { all[$0.i] }, ranked.count)
                     }
-                    return Found(q: q, ch: pick(ch, ix.channelSearch, { $0.categoryId }, bl),
-                                 mv: pick(mv, ix.movieSearch, { $0.categoryId }, bm),
-                                 sh: pick(sh, ix.showSearch, { $0.categoryId }, bs))
+                    let c = pick(ch, ix.channelSearch, { $0.categoryId }, bl)
+                    let m = pick(mv, ix.movieSearch, { $0.categoryId }, bm)
+                    let s = pick(sh, ix.showSearch, { $0.categoryId }, bs)
+                    return Found(q: q, ch: c.items, mv: m.items, sh: s.items, totals: (c.total, m.total, s.total))
                 }.value
                 guard !Task.isCancelled else { return }
                 found = r
@@ -294,14 +304,14 @@ struct HomeView: View {
                 Text("لا توجد نتائج لـ «\(q)».").foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.top, 40)
             }
             if !sh.isEmpty {
-                Shelf(title: "مسلسلات (\(sh.count))") {
+                Shelf(title: "مسلسلات (\(countText(sh.count, found.totals.sh)))") {
                     ForEach(sh) { s in
                         NavigationLink { SeriesDetail(show: s, play: $play) } label: { PosterCard(title: s.name, poster: s.poster).frame(width: 112) }.buttonStyle(.plain)
                     }
                 }
             }
             if !mv.isEmpty {
-                Shelf(title: "أفلام (\(mv.count))") {
+                Shelf(title: "أفلام (\(countText(mv.count, found.totals.mv)))") {
                     ForEach(mv) { m in
                         NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster).frame(width: 112) }.buttonStyle(.plain)
                     }
@@ -309,7 +319,7 @@ struct HomeView: View {
             }
             if !ch.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("قنوات (\(ch.count))").font(.title3.bold()).padding(.horizontal)
+                    Text("قنوات (\(countText(ch.count, found.totals.ch)))").font(.title3.bold()).padding(.horizontal)
                     ForEach(Array(ch.enumerated()), id: \.element.id) { i, c in
                         Button { play = .live(list: ch, index: i) } label: {
                             HStack(spacing: 12) {
