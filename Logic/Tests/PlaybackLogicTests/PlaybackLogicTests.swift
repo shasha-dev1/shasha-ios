@@ -1,4 +1,5 @@
 import XCTest
+import CryptoKit
 @testable import PlaybackLogic
 
 final class StallDetectorTests: XCTestCase {
@@ -356,12 +357,17 @@ final class TraktResumeRuleTests: XCTestCase {
 }
 
 final class CloudSyncRuleTests: XCTestCase {
-    let fakeHash: (String) -> String = { s in String(repeating: "a", count: 8) + String(s.count, radix: 16).padding(toLength: 56, withPad: "0", startingAt: 0) }
     func testAccountIgnoresSchemeCaseAndPath() {
         let a = CloudSyncRule.account(server: "http://Example.com:8080/", user: "u", sha256: { $0 })
         XCTAssertEqual(a, String("example.com:8080|u".prefix(16)))
         XCTAssertEqual(CloudSyncRule.account(server: "http://example.com", user: "u", sha256: { $0 }), String("example.com:80|u".prefix(16)))
         XCTAssertNil(CloudSyncRule.account(server: "nonsense", user: "u", sha256: { $0 }))
+    }
+    func testKnownHashSameAsTvApp() {
+        // sha256("example.com:80|u") — the TV app's CloudSyncCoreTest checks the same value.
+        let h = CloudSyncRule.account(server: "http://example.com", user: "u", sha256: { s in
+            SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined() })
+        XCTAssertEqual(h, "99a6431f6092f25a")
     }
     func testMergeNewestWins() {
         var a = CloudSyncRule.File(); var b = CloudSyncRule.File()
