@@ -174,3 +174,7 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 
 ## 1.5.2 — linking diagnostics (built only)
 - After 1.5.1 the owner still saw invalid_grant and Settings showed "not linked" (no refresh token saved), so the "already claimed by an earlier check" explanation is not proven. Now every token reply is logged in the diagnostics report as «ربط Google: ردّ» (HTTP code + error name, or whether tokens/refresh came back; no tokens or keys), and the sheet shows Google's error_description.
+
+## Verified on device 2026-11-22 18:35 — Drive linking (iPhone)
+- Owner's screenshots: link sheet «تم الربط ✓», Settings → accounts shows «مربوط بحساب Google», first sync «تمت المزامنة: لا جديد من الجهاز الآخر», last success 6:35 PM. Scope drive.file, project In production.
+- TV app 0.9.11 linking and a cross-device resume test are still owed.
