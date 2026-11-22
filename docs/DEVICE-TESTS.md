@@ -163,3 +163,8 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 ## 1.4.6 — link code changed on every return (built only)
 - Owner: "the code changes every time I leave the app". The sheet (or the whole app, closed by iOS for memory while in the browser) was rebuilt and asked Google for a new code, so the approved code was never the one being waited for.
 - Now the pending code is kept in the Keychain until it expires and reused when the sheet opens again; cleared on success, refusal, expiry or error.
+
+## 1.5.0 — Settings redesign (built only, not tested on device)
+- Owner approved the drawn preview (2026-11-22). Settings is now a hub: active-source card (name, state, film/series/channel counts, refresh, sources page, last success), four status tiles (Drive sync, TMDB, Trakt, machine translation) and a short list of sections, each on its own page: playback/audio/subtitles, groups, accounts, appearance, storage, diagnostics.
+- Nothing removed: the same section views are reused inside the new pages; sources (switch / add / swipe-delete / refresh) moved to «المصادر». The server address is no longer shown on screen.
+- Player, colours, subtitles and PiP settings unchanged.

@@ -1,64 +1,264 @@
 import SwiftUI
 
+/// 1.5.0: Settings as a hub — active-source card, status tiles, short list of sections that open their own pages.
+/// Same sections and settings as before (nothing removed), only arranged differently. The server address is no
+/// longer shown on screen, so screenshots don't carry it.
 struct SettingsView: View {
     /// Credit line injected at build time (SHASHA_CREDIT secret), so it is not stored in the public source.
     private var credit: String {
         let c = (Bundle.main.object(forInfoDictionaryKey: "ShashaCredit") as? String ?? "").trimmingCharacters(in: .whitespaces)
         return c.isEmpty || c.hasPrefix("$(") ? "شاشة" : c
     }
+    private var version: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") + " (" + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "") + ")"
+    }
     @EnvironmentObject var library: Library
     @State private var adding = false
-    @State private var groupsOpen = false
+    @State private var tick = 0            // re-reads link states when coming back to the page
+    @AppStorage(MachineTranslate.key) private var translate = true
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("المصادر") {
-                    ForEach(library.sources) { s in
-                        Button { library.select(s) } label: {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(s.name).foregroundStyle(.primary)
-                                    Text(s.kind == .xtream ? "Xtream · \(URL(string: s.server)?.host ?? "")" : "M3U").font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                if s.id == library.active?.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.teal) }
-                            }
-                        }
-                        .swipeActions { Button(role: .destructive) { library.remove(s) } label: { Label("حذف", systemImage: "trash") } }
-                    }
-                    Button { adding = true } label: { Label("إضافة قائمة", systemImage: "plus") }
-                    Button { Task { await library.reload() } } label: { Label("تحديث القائمة الآن", systemImage: "arrow.clockwise") }
-                    HStack {
-                        Text("آخر تحديث ناجح").foregroundStyle(.secondary)
-                        Spacer()
-                        if library.loading { ProgressView() }
-                        else { Text(library.lastSuccess.map(LastUpdate.text) ?? "لم يتم بعد").foregroundStyle(.secondary) }
-                    }.font(.footnote)
+            ScrollView {
+                VStack(spacing: 14) {
+                    sourceCard
+                    statusTiles
+                    sectionList
+                    VStack(spacing: 2) {
+                        Text(credit).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+                        Text("الإصدار \(version) · mpv وFFmpeg (LGPL)").font(.caption2).foregroundStyle(.secondary)
+                    }.padding(.top, 6).padding(.bottom, 24)
                 }
-                GroupsSettingsSection(open: $groupsOpen)
-                LanguageSettingsSection()
-                SubsSettingsSection()
-                TmdbSettingsSection()
-                CloudSyncSection()
-                TraktSettingsSection()
-                AppearanceSection()
-                StorageSection()
-                Section {
-                    NavigationLink { PerfView() } label: { Label("قياسات الأداء", systemImage: "speedometer") }
-                } header: { Text("التشخيص") } footer: {
-                    Text("تسجّل مدة فتح التطبيق وتحميل المكتبة والبحث وفتح المسلسل والرجوع من المشغّل، بدون أي روابط أو بيانات دخول.")
+                .padding(.horizontal)
+                .id(tick)
+            }
+            .background(Color.black.ignoresSafeArea())
+            .navigationTitle("الإعدادات")
+            .sheet(isPresented: $adding) { NavigationStack { SetupView() } }
+            .onAppear { tick += 1 }
+            .onReceive(NotificationCenter.default.publisher(for: .cloudSyncApplied)) { _ in tick += 1 }
+        }
+    }
+
+    // MARK: Active source
+
+    private var sourceCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Text(String((library.active?.name ?? "؟").prefix(1)).uppercased())
+                    .font(.title3.weight(.bold)).foregroundStyle(.black)
+                    .frame(width: 46, height: 46).background(Theme.accent, in: RoundedRectangle(cornerRadius: 13))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(library.active?.name ?? "لا يوجد مصدر").font(.headline)
+                    Text(library.active.map { $0.kind == .xtream ? "Xtream · المصدر النشط" : "M3U · المصدر النشط" } ?? "أضف قائمتك للبدء")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
-                Section("حول التطبيق") {
-                    HStack { Text("الإصدار"); Spacer(); Text((Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") + " (" + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "") + ")") }
-                    Text(credit).foregroundStyle(Theme.accent).bold()
-                    Text("يشغّل قوائمك الخاصة فقط. المشغّل مبني على mpv وFFmpeg (رخصة LGPL).").font(.footnote).foregroundStyle(.secondary)
+                Spacer()
+                stateChip
+            }
+            if library.active != nil {
+                HStack(spacing: 8) {
+                    countBox("أفلام", library.movies.count)
+                    countBox("مسلسلات", library.shows.count)
+                    countBox("قنوات", library.channels.count)
                 }
             }
-            .navigationTitle("الإعدادات")
-            .navigationDestination(isPresented: $groupsOpen) { GroupsManagerView() }
-            .sheet(isPresented: $adding) { NavigationStack { SetupView() } }
+            HStack(spacing: 8) {
+                Button { Task { await library.reload() } } label: {
+                    Label(library.loading ? "جارٍ التحديث…" : "تحديث", systemImage: "arrow.clockwise")
+                        .frame(maxWidth: .infinity).padding(.vertical, 10)
+                        .background(Theme.accent, in: RoundedRectangle(cornerRadius: 11)).foregroundStyle(.black)
+                }
+                .disabled(library.loading || library.active == nil)
+                NavigationLink { SourcesPage(adding: $adding) } label: {
+                    Label("المصادر", systemImage: "arrow.left.arrow.right")
+                        .frame(maxWidth: .infinity).padding(.vertical, 10)
+                        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 11)).foregroundStyle(Theme.accent)
+                }
+            }
+            .font(.subheadline.weight(.semibold))
+            Text("آخر تحديث ناجح: " + (library.lastSuccess.map(LastUpdate.text) ?? "لم يتم بعد"))
+                .font(.caption2).foregroundStyle(.secondary)
         }
+        .padding(14)
+        .background(Color(red: 0.105, green: 0.10, blue: 0.09), in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Theme.accent.opacity(0.25), lineWidth: 0.5))
+    }
+
+    private var chipState: (text: String, color: Color) {
+        if library.loading { return ("يحدّث", Theme.accent) }
+        if library.active == nil { return ("بدون مصدر", .secondary) }
+        return library.lastSuccess == nil ? ("غير محدّث", .orange) : ("متصل", Theme.teal)
+    }
+
+    private var stateChip: some View {
+        let st = chipState
+        return Text(st.text).font(.caption2.weight(.semibold)).foregroundStyle(st.color)
+            .padding(.horizontal, 10).padding(.vertical, 4).background(st.color.opacity(0.15), in: Capsule())
+    }
+
+    private func countBox(_ label: String, _ n: Int) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(n.formatted()).font(.subheadline.weight(.bold)).monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10).padding(.vertical, 7)
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    // MARK: Status tiles
+
+    private var statusTiles: some View {
+        let cols = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+        return LazyVGrid(columns: cols, spacing: 10) {
+            NavigationLink { SettingsPage(title: "المزامنة") { CloudSyncSection() } } label: {
+                tile("icloud.and.arrow.up", "المزامنة", syncLine.0, syncLine.1, .mint)
+            }
+            NavigationLink { SettingsPage(title: "TMDB") { TmdbSettingsSection() } } label: {
+                tile("film.stack", "TMDB", TmdbKey.value != nil ? "مفعّل" : "غير مضاف", TmdbKey.value != nil, .blue)
+            }
+            NavigationLink { SettingsPage(title: "Trakt") { TraktSettingsSection() } } label: {
+                tile("chart.line.uptrend.xyaxis", "Trakt", TraktKeys.isLinked ? "مربوط" : "غير مربوط", TraktKeys.isLinked, .pink)
+            }
+            NavigationLink { SettingsPage(title: "TMDB") { TmdbSettingsSection() } } label: {
+                tile("character.bubble", "الترجمة الآلية", translate ? "تعمل" : "متوقفة", translate, Theme.accent)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var syncLine: (String, Bool) {
+        guard DriveKeys.isLinked else { return ("غير مربوطة", false) }
+        if let d = CloudSync.lastSuccess { return ("مربوطة · " + LastUpdate.text(d), true) }
+        return ("مربوطة", true)
+    }
+
+    private func tile(_ icon: String, _ title: String, _ line: String, _ on: Bool, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Image(systemName: icon).font(.system(size: 18, weight: .semibold)).foregroundStyle(color)
+            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+            HStack(spacing: 4) {
+                Circle().fill(on ? color : Color.secondary.opacity(0.5)).frame(width: 6, height: 6)
+                Text(line).font(.caption2).foregroundStyle(on ? color : .secondary).lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color(white: 0.09), in: RoundedRectangle(cornerRadius: 16))
+        .contentShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: Sections
+
+    private var sectionList: some View {
+        VStack(spacing: 0) {
+            NavigationLink { SettingsPage(title: "التشغيل والصوت والترجمة") { LanguageSettingsSection(); SubsSettingsSection() } } label: {
+                row("play.fill", .purple, "التشغيل والصوت والترجمة")
+            }
+            divider
+            NavigationLink { GroupsPage() } label: { row("square.grid.2x2.fill", .orange, "المجموعات", "ترتيب · إخفاء · قفل") }
+            divider
+            NavigationLink { SettingsPage(title: "الحسابات والربط") { TmdbSettingsSection(); CloudSyncSection(); TraktSettingsSection() } } label: {
+                row("link", .teal, "الحسابات والربط", "TMDB · Drive · Trakt")
+            }
+            divider
+            NavigationLink { SettingsPage(title: "المظهر") { AppearanceSection() } } label: { row("paintpalette.fill", .pink, "المظهر") }
+            divider
+            NavigationLink { SettingsPage(title: "التخزين") { StorageSection() } } label: { row("internaldrive.fill", .gray, "التخزين") }
+            divider
+            NavigationLink { DiagnosticsPage() } label: { row("waveform.path.ecg", .gray, "التشخيص والأداء") }
+        }
+        .buttonStyle(.plain)
+        .background(Color(white: 0.09), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var divider: some View { Divider().overlay(Color.white.opacity(0.06)).padding(.leading, 54) }
+
+    private func row(_ icon: String, _ color: Color, _ title: String, _ detail: String? = nil) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon).font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+                .frame(width: 30, height: 30).background(color.gradient, in: RoundedRectangle(cornerRadius: 8))
+            Text(title).foregroundStyle(.primary)
+            Spacer()
+            if let detail { Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(1) }
+            Image(systemName: "chevron.forward").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 11)
+        .contentShape(Rectangle())
+    }
+
+}
+
+/// A plain settings page holding one or more of the existing sections.
+struct SettingsPage<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+    var body: some View {
+        List { content }
+            .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// Sources: switch, add, delete (swipe), refresh, last success — the old first section, on its own page.
+struct SourcesPage: View {
+    @EnvironmentObject var library: Library
+    @Binding var adding: Bool
+    var body: some View {
+        List {
+            Section {
+                ForEach(library.sources) { s in
+                    Button { library.select(s) } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(s.name).foregroundStyle(.primary)
+                                Text(s.kind == .xtream ? "Xtream" : "M3U").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if s.id == library.active?.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.teal) }
+                        }
+                    }
+                    .swipeActions { Button(role: .destructive) { library.remove(s) } label: { Label("حذف", systemImage: "trash") } }
+                }
+            } footer: { Text("اضغط على مصدر للتبديل إليه، واسحب لليسار للحذف.") }
+            Section {
+                Button { adding = true } label: { Label("إضافة قائمة", systemImage: "plus") }
+                Button { Task { await library.reload() } } label: { Label("تحديث القائمة الآن", systemImage: "arrow.clockwise") }
+                HStack {
+                    Text("آخر تحديث ناجح").foregroundStyle(.secondary)
+                    Spacer()
+                    if library.loading { ProgressView() }
+                    else { Text(library.lastSuccess.map(LastUpdate.text) ?? "لم يتم بعد").foregroundStyle(.secondary) }
+                }.font(.footnote)
+            }
+        }
+        .navigationTitle("المصادر").navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// Groups: the existing section (manager, lock now), with its own push to the manager.
+struct GroupsPage: View {
+    @State private var open = false
+    var body: some View {
+        List { GroupsSettingsSection(open: $open) }
+            .navigationTitle("المجموعات").navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: $open) { GroupsManagerView() }
+    }
+}
+
+struct DiagnosticsPage: View {
+    var body: some View {
+        List {
+            Section {
+                NavigationLink { PerfView() } label: { Label("قياسات الأداء", systemImage: "speedometer") }
+            } footer: {
+                Text("تسجّل مدة فتح التطبيق وتحميل المكتبة والبحث وفتح المسلسل والرجوع من المشغّل، بدون أي روابط أو بيانات دخول.")
+            }
+            Section("حول التطبيق") {
+                Text("يشغّل قوائمك الخاصة فقط. المشغّل مبني على mpv وFFmpeg (رخصة LGPL).").font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        .navigationTitle("التشخيص والأداء").navigationBarTitleDisplayMode(.inline)
     }
 }
 
