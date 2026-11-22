@@ -67,7 +67,7 @@ struct HomeView: View {
                 found = r
                 Perf.shared.record("بحث الرئيسية: حتى ظهور النتائج", since: t0, "\(q.count) حرف · \(r.ch.count)/\(r.mv.count)/\(r.sh.count)", span: true)
             }
-            .onChange(of: play?.id) { _ in tick += 1 }
+            .onChange(of: play?.id) { id in if id == nil { tick += 1 } }   // 1.7.1: only on close (opening recomputed 3 screens under the player)
         }
     }
 

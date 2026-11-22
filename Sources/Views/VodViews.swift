@@ -100,7 +100,7 @@ struct MoviesView: View {
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
             .onAppear { tick += 1; restoreCat() }
-            .onChange(of: play?.id) { _ in tick += 1 }   // back from the player: refresh "Continue watching"
+            .onChange(of: play?.id) { id in if id == nil { tick += 1 } }   // 1.7.1: only on close (opening recomputed 3 screens under the player)   // back from the player: refresh "Continue watching"
             .onChange(of: cat) { c in if restored { library.noteCat(c, .movies) } }
             .onChange(of: library.active?.id) { _ in restored = false; cat = nil; restoreCat() }
             .onChange(of: library.version) { _ in restoreCat() }
@@ -372,7 +372,7 @@ struct SeriesView: View {
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { SortMenu(sort: $sort, mine: $mine) } }
             .refreshable { await library.reload() }
             .onAppear { tick += 1; restoreCat() }
-            .onChange(of: play?.id) { _ in tick += 1 }   // back from the player: refresh "Continue watching"
+            .onChange(of: play?.id) { id in if id == nil { tick += 1 } }   // 1.7.1: only on close (opening recomputed 3 screens under the player)   // back from the player: refresh "Continue watching"
             .onChange(of: cat) { c in if restored { library.noteCat(c, .series) } }
             .onChange(of: library.active?.id) { _ in restored = false; cat = nil; restoreCat() }
             .onChange(of: library.version) { _ in restoreCat() }
