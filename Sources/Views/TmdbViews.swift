@@ -259,6 +259,7 @@ struct CloudSyncSection: View {
     @State private var busy = false
     @State private var status: String?
     @State private var guide = false
+    @State private var confirmUnlink = false
 
     var body: some View {
         Section {
@@ -267,8 +268,17 @@ struct CloudSyncSection: View {
                 Button { Task { busy = true; status = await CloudSync.sync(library, force: true); busy = false } } label: {
                     HStack { Label("مزامنة الآن", systemImage: "arrow.triangle.2.circlepath"); Spacer(); if busy { ProgressView() } }
                 }
-                if let t = CloudSync.lastSuccess { Text("آخر مزامنة ناجحة: \(LastUpdate.text(t))").font(.footnote).foregroundStyle(.secondary) }
-                Button(role: .destructive) { Task { await GoogleDrive.shared.disconnect(); linked = false; status = "تم فصل الربط" } } label: { Label("فصل الربط", systemImage: "xmark.icloud") }
+                Text("آخر مزامنة ناجحة: " + (CloudSync.lastSuccess.map(LastUpdate.text) ?? "لم تتم بعد"))
+                    .font(.footnote).foregroundStyle(CloudSync.lastSuccess == nil ? Color.orange : Color.secondary)
+                let pending = CloudSync.pendingCount(library)
+                if pending > 0 { Text("بانتظار الإرسال: \(pending)").font(.footnote).foregroundStyle(.secondary) }
+                if let n = CloudSync.nextAutoTry, n > Date() {
+                    Text("المحاولة التلقائية التالية: \(LastUpdate.text(n))").font(.footnote).foregroundStyle(.secondary)
+                }
+                Button(role: .destructive) { confirmUnlink = true } label: { Label("فصل الربط", systemImage: "xmark.icloud") }
+                    .confirmationDialog("فصل حساب Google؟", isPresented: $confirmUnlink, titleVisibility: .visible) {
+                        Button("فصل الربط", role: .destructive) { Task { await GoogleDrive.shared.disconnect(); linked = false; status = "تم فصل الربط" } }
+                    } message: { Text("يتوقف هذا الجهاز عن المزامنة. ملف المزامنة في Drive وبياناتك على الجهاز يبقيان كما هما.") }
             } else {
                 TextField("Client ID (Google)", text: $clientId).textInputAutocapitalization(.never).autocorrectionDisabled()
                 SecureField("Client Secret", text: $secret)
@@ -279,7 +289,9 @@ struct CloudSyncSection: View {
                 } label: { Label("ربط حساب Google", systemImage: "link") }
                 Button { guide = true } label: { Label("طريقة إنشاء Client ID", systemImage: "questionmark.circle") }
             }
-            if let s = status ?? CloudSync.lastResult { Text(s).font(.footnote).foregroundStyle(.secondary) }
+            if let s = status ?? CloudSync.lastResult {
+                Text(s).font(.footnote).foregroundStyle(s.hasPrefix("تعذّرت") ? Color.red : Color.secondary)
+            }
         } header: { Text("المزامنة مع تطبيق التلفاز") } footer: {
             Text("يحفظ نقاط التوقف في ملف واحد (shasha-sync-v1.json) في Google Drive حقك؛ التطبيق يشوف الملفات اللي أنشأها فقط. لا تحذف الملف. استخدم نفس Client ID في التلفاز والجوال ونفس حساب Google، ونفس اشتراك Xtream. المفاتيح تبقى في سلسلة المفاتيح على هذا الجهاز.")
         }

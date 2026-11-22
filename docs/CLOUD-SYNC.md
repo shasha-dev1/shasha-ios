@@ -15,3 +15,14 @@ Sign-in: Google device flow (`/device/code`, poll `/token` with `grant_type=urn:
 - Merge: per key the larger `at` wins; the file keeps the newest 3000 entries. A device applies only entries of its
   active account that are newer than its own, and uploads the merged file when it changed.
 - iPhone keys: `movie:<id>` / `ep:<id>`. TV keys: `<playlistId>:movie:<id>` / `<playlistId>:ep:<id>`.
+
+## 1.6.0 additions (iPhone; format stays `"v":1`)
+- Optional `"x":true` on an entry = removed from "Continue watching" at `at`. Readers that don't know it ignore it
+  (TV 0.9.10/0.9.11 parse it away; when such a TV rewrites the file the flag is dropped, which only means the other
+  device doesn't learn about the removal — no progress is lost).
+- `w:false` with `pos` ≤ 5 = marked "not watched / start over" at `at`.
+- A file that can't be parsed, is larger than 4 MB, or has `v` > 1 is refused: nothing applied, nothing uploaded.
+- Entries whose `at` is more than 24 h in the future are ignored in merges (wrong device clock).
+- Before writing, the phone re-reads Drive's `version` of the file; if the other device wrote meanwhile it merges
+  again (once), so simultaneous saves don't overwrite each other.
+- Before the first change of a day the previous contents are saved as `shasha-sync-v1.backup.json`.

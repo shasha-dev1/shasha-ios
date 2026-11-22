@@ -454,7 +454,25 @@ enum CloudSyncRule {
         var w: Bool
         var at: Int64
         var show: String?
+        /// 1.6.0, optional: removed from "Continue watching" at `at`. Older readers ignore it (format stays v1).
+        var x: Bool? = nil
     }
+
+    enum FileError: Error, Equatable { case tooBig(Int), unreadable, newerFormat(Int) }
+
+    /// 1.6.0: a file that can't be read, is too big or is from a newer format is refused instead of being treated
+    /// as empty (an empty "remote" merged with local data and uploaded would wipe the other device's entries).
+    static func decode(_ data: Data, maxBytes: Int = 4_000_000) throws -> File {
+        guard data.count <= maxBytes else { throw FileError.tooBig(data.count) }
+        guard let f = try? JSONDecoder().decode(File.self, from: data) else { throw FileError.unreadable }
+        guard f.v <= 1 else { throw FileError.newerFormat(f.v) }
+        return f
+    }
+
+    /// 1.6.0: a save time more than a day in the future comes from a wrong clock; such an entry would win every
+    /// merge forever, so it is left out of merges and never applied.
+    static let futureSlackMs: Int64 = 24 * 3600 * 1000
+    static func sane(_ e: Entry, nowMs: Int64) -> Bool { e.at <= nowMs + futureSlackMs && e.at > 0 }
     struct File: Codable, Equatable {
         var v = 1
         var progress: [String: Entry] = [:]
@@ -470,9 +488,12 @@ enum CloudSyncRule {
     static func key(account: String, kind: String, id: String) -> String { "\(account)|\(kind)|\(id)" }
 
     /// Newest entry wins for each key; the file keeps at most `limit` entries (newest).
-    static func merge(_ a: File, _ b: File, limit: Int = 3000) -> File {
+    static func merge(_ a: File, _ b: File, limit: Int = 3000, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> File {
         var out = a.progress
-        for (k, e) in b.progress { if let o = out[k], o.at >= e.at { continue }; out[k] = e }
+        for (k, e) in b.progress where sane(e, nowMs: nowMs) {
+            if let o = out[k], sane(o, nowMs: nowMs), o.at >= e.at { continue }
+            out[k] = e
+        }
         if out.count > limit {
             let keep = out.sorted { $0.value.at > $1.value.at }.prefix(limit)
             out = Dictionary(uniqueKeysWithValues: keep.map { ($0.key, $0.value) })
@@ -481,8 +502,9 @@ enum CloudSyncRule {
     }
 
     /// Entries of `remote` that are newer than this device's own (to apply locally).
-    static func newer(_ remote: File, than local: File) -> [(key: String, entry: Entry)] {
-        remote.progress.filter { k, e in (local.progress[k]?.at ?? -1) < e.at }.map { ($0.key, $0.value) }.sorted { $0.entry.at < $1.entry.at }
+    static func newer(_ remote: File, than local: File, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> [(key: String, entry: Entry)] {
+        remote.progress.filter { k, e in sane(e, nowMs: nowMs) && (local.progress[k]?.at ?? -1) < e.at }
+            .map { ($0.key, $0.value) }.sorted { $0.entry.at < $1.entry.at }
     }
 }
 

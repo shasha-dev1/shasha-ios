@@ -531,10 +531,18 @@ enum Store {
 
     /// 1.3.0: a position from the other device (Google Drive sync). Keeps that device's save time, and places the
     /// title in the recent list by that time (not on top), so an older item from the TV doesn't jump ahead.
-    static func applyRemote(_ key: String, pos: Double, dur: Double, watched: Bool, at: Date) {
+    static func applyRemote(_ key: String, pos: Double, dur: Double, watched: Bool, at: Date, removed: Bool = false) {
         if watched || pos <= 5 || (dur > 0 && pos / dur > 0.95) { d.removeObject(forKey: "pos." + key) }
         else { d.set([pos, dur], forKey: "pos." + key) }
         d.set(at.timeIntervalSince1970, forKey: "posAt." + key)
+        // 1.6.0: watched / not watched / removed from the row travel with their time.
+        if watched { d.set(at.timeIntervalSince1970, forKey: "done." + key); d.removeObject(forKey: "undone." + key) }
+        else if pos <= 5 { d.set(at.timeIntervalSince1970, forKey: "undone." + key) }
+        if removed {
+            var h = d.dictionary(forKey: "contHidden") as? [String: Double] ?? [:]
+            h[key] = at.timeIntervalSince1970
+            d.set(h, forKey: "contHidden")
+        }
         var recent = d.stringArray(forKey: "recent") ?? []
         recent.removeAll { $0 == key }
         let i = recent.firstIndex { (positionTime($0) ?? .distantPast) < at } ?? recent.count
@@ -602,12 +610,19 @@ enum Store {
         d.removeObject(forKey: "pos." + key)
         d.set(Date().timeIntervalSince1970, forKey: "posAt." + key)
         d.set(Date().timeIntervalSince1970, forKey: "done." + key)
+        d.removeObject(forKey: "undone." + key)
     }
     /// Not watched / start over: no resume point and no "watched" mark.
     static func markUnwatched(_ key: String) {
         d.removeObject(forKey: "pos." + key)
         d.removeObject(forKey: "done." + key)
         d.set(Date().timeIntervalSince1970, forKey: "posAt." + key)
+        d.set(Date().timeIntervalSince1970, forKey: "undone." + key)
+    }
+    /// Marked "start over / not watched" after its last completion.
+    static func isUnwatched(_ key: String) -> Bool {
+        let u = d.double(forKey: "undone." + key)
+        return u > 0 && u >= d.double(forKey: "done." + key)
     }
     static func watchedAt(_ key: String) -> Date? {
         let t = d.double(forKey: "done." + key); return t > 0 ? Date(timeIntervalSince1970: t) : nil

@@ -427,3 +427,57 @@ final class WorkRuleTests: XCTestCase {
         XCTAssertEqual(WorkRule.key("2012", kind: "movie"), "")
     }
 }
+
+final class CloudSyncSafetyTests: XCTestCase {
+    func testUnreadableFileIsRefusedNotEmpty() {
+        XCTAssertThrowsError(try CloudSyncRule.decode(Data("not json".utf8))) { XCTAssertEqual($0 as? CloudSyncRule.FileError, .unreadable) }
+    }
+    func testNewerFormatIsRefused() {
+        XCTAssertThrowsError(try CloudSyncRule.decode(Data(#"{"v":2,"progress":{}}"#.utf8))) {
+            XCTAssertEqual($0 as? CloudSyncRule.FileError, .newerFormat(2))
+        }
+    }
+    func testTooBigIsRefused() {
+        XCTAssertThrowsError(try CloudSyncRule.decode(Data(repeating: 32, count: 11), maxBytes: 10))
+    }
+    func testTvFileWithoutNewFieldsDecodes() throws {
+        // Exactly what the TV app 0.9.10 writes (CloudSyncCore.encode).
+        let tv = #"{"v":1,"progress":{"99a6431f6092f25a|ep|77":{"pos":120.5,"dur":2700,"w":false,"at":1732280000000,"show":"9"}}}"#
+        let f = try CloudSyncRule.decode(Data(tv.utf8))
+        XCTAssertEqual(f.progress["99a6431f6092f25a|ep|77"]?.show, "9")
+        XCTAssertNil(f.progress["99a6431f6092f25a|ep|77"]?.x)
+    }
+    func testRemovalFlagRoundTripsAndIsOmittedWhenNil() throws {
+        var f = CloudSyncRule.File()
+        f.progress["a"] = .init(pos: 1, dur: 2, w: false, at: 5, show: nil, x: true)
+        f.progress["b"] = .init(pos: 1, dur: 2, w: false, at: 5, show: nil)
+        let data = try JSONEncoder().encode(f)
+        let text = String(decoding: data, as: UTF8.self)
+        XCTAssertEqual(text.components(separatedBy: "\"x\"").count - 1, 1)
+        XCTAssertEqual(try CloudSyncRule.decode(data), f)
+    }
+    func testFutureClockEntryNeverWins() {
+        let now: Int64 = 1_800_000_000_000
+        var local = CloudSyncRule.File(); var remote = CloudSyncRule.File()
+        local.progress["k"] = .init(pos: 30, dur: 100, w: false, at: now - 1000, show: nil)
+        remote.progress["k"] = .init(pos: 90, dur: 100, w: false, at: now + 3 * 24 * 3600 * 1000, show: nil)
+        XCTAssertTrue(CloudSyncRule.newer(remote, than: local, nowMs: now).isEmpty)
+        XCTAssertEqual(CloudSyncRule.merge(local, remote, nowMs: now).progress["k"]?.pos, 30)
+    }
+    func testRewatchAfterOldCompletionWins() {
+        let now: Int64 = 1_800_000_000_000
+        var tv = CloudSyncRule.File(); var phone = CloudSyncRule.File()
+        tv.progress["k"] = .init(pos: 0, dur: 100, w: true, at: now - 10_000, show: nil)
+        phone.progress["k"] = .init(pos: 20, dur: 100, w: false, at: now - 1_000, show: nil)
+        let m = CloudSyncRule.merge(tv, phone, nowMs: now)
+        XCTAssertEqual(m.progress["k"]?.w, false); XCTAssertEqual(m.progress["k"]?.pos, 20)
+    }
+    func testOlderCopyDoesNotUndoRemoval() {
+        let now: Int64 = 1_800_000_000_000
+        var cloud = CloudSyncRule.File(); var phone = CloudSyncRule.File()
+        cloud.progress["k"] = .init(pos: 40, dur: 100, w: false, at: now - 50_000, show: nil)
+        phone.progress["k"] = .init(pos: 40, dur: 100, w: false, at: now - 1_000, show: nil, x: true)
+        XCTAssertEqual(CloudSyncRule.merge(phone, cloud, nowMs: now).progress["k"]?.x, true)
+        XCTAssertTrue(CloudSyncRule.newer(cloud, than: phone, nowMs: now).isEmpty)
+    }
+}

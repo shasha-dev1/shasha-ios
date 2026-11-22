@@ -17,13 +17,15 @@ enum DriveKeys {
 }
 
 enum DriveError: LocalizedError {
-    case notConfigured, notLinked, http(Int, String?), network(String)
+    case notConfigured, notLinked, http(Int, String?), network(String), file(String), changedMeanwhile
     var errorDescription: String? {
         switch self {
         case .notConfigured: return "أدخل Client ID و Client Secret أولًا."
         case .notLinked: return "اربط حساب Google أولًا."
         case .http(let c, let m): return "Google ردّ \(c)\(m.map { " (\($0))" } ?? "")."
         case .network(let m): return "تعذّر الاتصال بـ Google: \(m)"
+        case .file(let m): return m
+        case .changedMeanwhile: return "الجهاز الآخر غيّر الملف في نفس اللحظة — أعد المحاولة"
         }
     }
 }
@@ -125,23 +127,63 @@ actor GoogleDrive {
         return r
     }
 
-    /// (file id, contents) — nil when the file doesn't exist yet.
-    func read() async throws -> (id: String, file: CloudSyncRule.File)? {
+    struct Remote { let id: String; let file: CloudSyncRule.File; let version: String?; let raw: Data }
+
+    /// The sync file — nil when it doesn't exist yet. 1.6.0: an unreadable / too big / newer-format file throws
+    /// (it used to be read as empty, and the next upload would have replaced the other device's entries).
+    func read() async throws -> Remote? {
+        guard let meta = try await find(Self.fileName) else { return nil }
+        let (c2, body) = try await send(try await authed("https://www.googleapis.com/drive/v3/files/\(meta.id)?alt=media"))
+        guard c2 == 200 else { throw DriveError.http(c2, nil) }
+        do {
+            return Remote(id: meta.id, file: try CloudSyncRule.decode(body), version: meta.version, raw: body)
+        } catch let e as CloudSyncRule.FileError {
+            switch e {
+            case .tooBig(let n): throw DriveError.file("ملف المزامنة أكبر من المتوقع (\(n / 1024) KB) — لم يُطبّق شيء")
+            case .unreadable: throw DriveError.file("ملف المزامنة غير مقروء — بياناتك المحلية لم تتغير")
+            case .newerFormat(let v): throw DriveError.file("ملف المزامنة من إصدار أحدث (v\(v)) — حدّث التطبيق")
+            }
+        }
+    }
+
+    /// Newest file with this name (not in the bin): id and version (Drive's own counter, bumped on each change).
+    private func find(_ name: String) async throws -> (id: String, version: String?)? {
         var c = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
-        c.queryItems = [URLQueryItem(name: "q", value: "name = '\(Self.fileName)' and trashed = false"),
-                        URLQueryItem(name: "fields", value: "files(id,modifiedTime)"),
+        c.queryItems = [URLQueryItem(name: "q", value: "name = '\(name)' and trashed = false"),
+                        URLQueryItem(name: "fields", value: "files(id,modifiedTime,version)"),
                         URLQueryItem(name: "orderBy", value: "modifiedTime desc")]
         let (code, d) = try await send(try await authed(c.url!.absoluteString))
         guard code == 200 else { throw DriveError.http(code, (json(d)["error"] as? [String: Any])?["message"] as? String) }
-        guard let id = (json(d)["files"] as? [[String: Any]])?.first?["id"] as? String else { return nil }
-        let (c2, body) = try await send(try await authed("https://www.googleapis.com/drive/v3/files/\(id)?alt=media"))
-        guard c2 == 200 else { throw DriveError.http(c2, nil) }
-        let f = (try? JSONDecoder().decode(CloudSyncRule.File.self, from: body)) ?? CloudSyncRule.File()
-        return (id, f)
+        guard let f = (json(d)["files"] as? [[String: Any]])?.first, let id = f["id"] as? String else { return nil }
+        return (id, f["version"] as? String)
+    }
+
+    /// Current version of the file, to see whether the other device wrote since we read it.
+    func version(of id: String) async throws -> String? {
+        let (code, d) = try await send(try await authed("https://www.googleapis.com/drive/v3/files/\(id)?fields=version"))
+        guard code == 200 else { throw DriveError.http(code, nil) }
+        return json(d)["version"] as? String
     }
 
     func write(_ f: CloudSyncRule.File, id: String?) async throws {
-        let data = try JSONEncoder().encode(f)
+        try await put(JSONEncoder().encode(f), name: Self.fileName, id: id,
+                      description: "Shasha: watch progress shared between your devices")
+    }
+
+    /// 1.6.0: before the first change of a day, the file as it was is kept as shasha-sync-v1.backup.json
+    /// (one copy, replaced at most once a day) so a bad merge can be undone by hand.
+    func backupIfDue(_ raw: Data) async {
+        let k = "cloud.backupAt"
+        guard Date().timeIntervalSince1970 - UserDefaults.standard.double(forKey: k) > 24 * 3600 else { return }
+        let name = "shasha-sync-v1.backup.json"
+        let existingId: String?
+        do { existingId = try await find(name)?.id } catch { return }
+        if (try? await put(raw, name: name, id: existingId, description: "Shasha: copy of the sync file before changes")) != nil {
+            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: k)
+        }
+    }
+
+    private func put(_ data: Data, name: String, id: String?, description: String) async throws {
         if let id {
             var r = try await authed("https://www.googleapis.com/upload/drive/v3/files/\(id)?uploadType=media", method: "PATCH")
             r.setValue("application/json", forHTTPHeaderField: "Content-Type"); r.httpBody = data
@@ -150,7 +192,7 @@ actor GoogleDrive {
         } else {
             let boundary = "shasha-\(UUID().uuidString)"
             var body = Data()
-            let meta = #"{"name":"\#(Self.fileName)","description":"Shasha: watch progress shared between your devices"}"#
+            let meta = #"{"name":"\#(name)","description":"\#(description)"}"#
             body.append("--\(boundary)\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n\(meta)\r\n".data(using: .utf8)!)
             body.append("--\(boundary)\r\nContent-Type: application/json\r\n\r\n".data(using: .utf8)!)
             body.append(data)
@@ -181,6 +223,8 @@ enum CloudSync {
     }
 
     /// This phone's progress for the active playlist, in the shared format.
+    /// 1.6.0: watched = no resume point and not marked "start over"; removed from Continue watching = `x` with the
+    /// removal time (so an older copy elsewhere can't bring it back).
     static func localFile(_ acct: String) -> CloudSyncRule.File {
         var f = CloudSyncRule.File()
         for key in Store.recent {
@@ -188,13 +232,33 @@ enum CloudSync {
             if key.hasPrefix("movie:") { kind = "movie"; id = String(key.dropFirst(6)) }
             else if key.hasPrefix("ep:") { kind = "ep"; id = String(key.dropFirst(3)) }
             else { continue }
-            guard let at = Store.positionTime(key) else { continue }      // saved before 1.2.0: no time to compare
+            guard let saved = Store.positionTime(key) else { continue }      // saved before 1.2.0: no time to compare
             let p = Store.position(key)
+            let hidden = Store.hiddenAt(key).flatMap { $0 >= saved ? $0 : nil }
+            let at = hidden ?? saved
             f.progress[CloudSyncRule.key(account: acct, kind: kind, id: id)] =
-                .init(pos: p?.pos ?? 0, dur: p?.dur ?? 0, w: p == nil, at: Int64(at.timeIntervalSince1970 * 1000),
-                      show: kind == "ep" ? Store.show(forEpisode: key) : nil)
+                .init(pos: p?.pos ?? 0, dur: p?.dur ?? 0, w: p == nil && !Store.isUnwatched(key), at: Int64(at.timeIntervalSince1970 * 1000),
+                      show: kind == "ep" ? Store.show(forEpisode: key) : nil, x: hidden == nil ? nil : true)
         }
         return f
+    }
+
+    // MARK: status (1.6.0)
+
+    /// Local entries saved after the last successful sync (they go out with the next one; nothing is lost if it
+    /// fails, the phone's own data is the queue).
+    static func pendingCount(_ library: Library) -> Int {
+        guard let s = library.active, let acct = account(s) else { return 0 }
+        let since = Int64((lastSuccess ?? .distantPast).timeIntervalSince1970 * 1000)
+        return localFile(acct).progress.values.filter { $0.at > since }.count
+    }
+    private static var fails: Int {
+        get { UserDefaults.standard.integer(forKey: "cloud.fails") }
+        set { UserDefaults.standard.set(newValue, forKey: "cloud.fails") }
+    }
+    /// After a failure, automatic syncs wait 1, 2, 4 … up to 30 minutes. "Sync now" always tries.
+    static var nextAutoTry: Date? {
+        let t = UserDefaults.standard.double(forKey: "cloud.nextTry"); return t > 0 ? Date(timeIntervalSince1970: t) : nil
     }
 
     @discardableResult
@@ -203,31 +267,53 @@ enum CloudSync {
         guard let s = library.active, s.kind == .xtream, let acct = account(s) else { return "المزامنة للقوائم من نوع Xtream فقط" }
         if running { return lastResult ?? "" }
         if !force, let last, Date().timeIntervalSince(last) < 30 { return lastResult ?? "" }
+        if !force, let n = nextAutoTry, Date() < n { return lastResult ?? "" }
         running = true; last = Date(); defer { running = false }
+        let t0 = Perf.now()
         do {
-            let remote = try await GoogleDrive.shared.read()
-            let local = localFile(acct)
-            let theirs = remote?.file ?? CloudSyncRule.File()
             var applied = 0
-            let prefix = acct + "|"
-            for (k, e) in CloudSyncRule.newer(theirs, than: local) where k.hasPrefix(prefix) {
-                let parts = k.split(separator: "|", maxSplits: 2)
-                guard parts.count == 3 else { continue }
-                let key = parts[1] == "movie" ? "movie:" + parts[2] : parts[1] == "ep" ? "ep:" + parts[2] : nil
-                guard let key else { continue }
-                Store.applyRemote(key, pos: e.pos, dur: e.dur, watched: e.w, at: Date(timeIntervalSince1970: Double(e.at) / 1000))
-                if let show = e.show, key.hasPrefix("ep:") { Store.remember(episodes: [key], show: show) }
-                applied += 1
+            for attempt in 0..<2 {
+                let remote = try await GoogleDrive.shared.read()
+                // A reply that arrives after the playlist changed must not touch the new account.
+                guard library.active?.id == s.id else { return "تغيّر المصدر أثناء المزامنة — لم يُطبّق شيء" }
+                let local = localFile(acct)
+                let theirs = remote?.file ?? CloudSyncRule.File()
+                let prefix = acct + "|"
+                for (k, e) in CloudSyncRule.newer(theirs, than: local) where k.hasPrefix(prefix) {
+                    let parts = k.split(separator: "|", maxSplits: 2)
+                    guard parts.count == 3 else { continue }
+                    let key = parts[1] == "movie" ? "movie:" + parts[2] : parts[1] == "ep" ? "ep:" + parts[2] : nil
+                    guard let key else { continue }
+                    Store.applyRemote(key, pos: e.pos, dur: e.dur, watched: e.w, at: Date(timeIntervalSince1970: Double(e.at) / 1000), removed: e.x == true)
+                    if let show = e.show, key.hasPrefix("ep:") { Store.remember(episodes: [key], show: show) }
+                    applied += 1
+                }
+                let merged = CloudSyncRule.merge(theirs, localFile(acct))
+                if merged == theirs { break }
+                if let remote {
+                    await GoogleDrive.shared.backupIfDue(remote.raw)
+                    // The other device may have written since we read: then read and merge again (once).
+                    if try await GoogleDrive.shared.version(of: remote.id) != remote.version {
+                        if attempt == 0 { continue } else { throw DriveError.changedMeanwhile }
+                    }
+                }
+                try await GoogleDrive.shared.write(merged, id: remote?.id)
+                break
             }
-            let merged = CloudSyncRule.merge(theirs, local)
-            if merged != theirs { try await GoogleDrive.shared.write(merged, id: remote?.id) }
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "cloud.lastSuccess")
+            fails = 0; UserDefaults.standard.removeObject(forKey: "cloud.nextTry")
+            Perf.shared.record("مزامنة Google", since: t0, "طُبّق \(applied)")
             let r = applied > 0 ? "تمت المزامنة: \(applied) من الجهاز الآخر" : "تمت المزامنة: لا جديد من الجهاز الآخر"
             lastResult = r
             if applied > 0 { NotificationCenter.default.post(name: .cloudSyncApplied, object: nil) }
             return r
         } catch {
-            let r = "تعذّرت المزامنة: " + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            fails += 1
+            let wait = min(30 * 60, 60 * (1 << min(fails - 1, 5)))
+            UserDefaults.standard.set(Date().timeIntervalSince1970 + Double(wait), forKey: "cloud.nextTry")
+            let why = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            Perf.shared.add("مزامنة Google فشلت", ms: 0, why)
+            let r = "تعذّرت المزامنة: " + why
             lastResult = r
             return r
         }
