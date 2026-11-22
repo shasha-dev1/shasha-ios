@@ -529,3 +529,37 @@ public enum CategoryNameRule {
         return false
     }
 }
+
+// MARK: - One work across provider copies (1.6.0)
+
+/// Identity of a film or series independent of the provider's item id, for "Continue watching": one card per work.
+/// Conservative on purpose: the cleaned title (CopyRule) plus the year when the name carries one. Two names with
+/// different years never match (a remake is another work); a name with a year and one without don't match either,
+/// so ambiguous copies stay separate rather than being merged by mistake. Films and series are keyed apart by the
+/// caller (different prefixes).
+public enum WorkRule {
+    /// A 4-digit year 1900–2099 in brackets "(2022)" / "[2022]" or as the last word.
+    public static func year(_ name: String) -> Int? {
+        let patterns = [#"[\(\[]\s*((19|20)\d{2})\s*[\)\]]"#, #"(?:^|\s)((19|20)\d{2})\s*$"#]
+        for p in patterns {
+            guard let re = try? NSRegularExpression(pattern: p) else { continue }
+            let ns = name as NSString
+            if let m = re.firstMatch(in: name, range: NSRange(location: 0, length: ns.length)), m.numberOfRanges > 1 {
+                return Int(ns.substring(with: m.range(at: 1)))
+            }
+        }
+        return nil
+    }
+
+    /// "movie|the lord of the rings the rings of power|2022"; empty when the name has no letters or digits.
+    public static func key(_ name: String, kind: String) -> String {
+        var base = CopyRule.key(name)
+        if let y = year(name) {
+            // CopyRule keeps a bare trailing year as a word; drop it so "(2022)" and "2022" give the same key.
+            if base.hasSuffix(" \(y)") { base = String(base.dropLast(5)) }
+            else if base == "\(y)" { base = "" }
+        }
+        guard !base.isEmpty else { return "" }
+        return "\(kind)|\(base)|\(year(name).map(String.init) ?? "")"
+    }
+}

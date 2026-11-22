@@ -318,20 +318,83 @@ final class Library: ObservableObject {
         set(s, "hidden").union(isUnlocked ? [] : set(s, "locked"))
     }
 
+    // MARK: 1.6.0 — one "Continue watching" for Home, Movies and Series
+
+    struct ContinueEntry: Identifiable {
+        enum Item { case movie(Movie), show(Show, episodeKey: String) }
+        let item: Item
+        /// Store key of what was played ("movie:…" or "ep:…").
+        let storeKey: String
+        /// One work across provider copies (WorkRule); the newest copy played wins.
+        let work: String
+        let at: Date
+        var id: String { work.isEmpty ? storeKey : work }
+        var name: String { switch item { case .movie(let m): return m.name; case .show(let s, _): return s.name } }
+        var poster: String? { switch item { case .movie(let m): return m.poster; case .show(let s, _): return s.poster } }
+    }
+
+    /// Films with a resume point and series with a played episode, newest first, one card per work, without
+    /// hidden/locked groups and without items removed from the row. Same list on every screen.
+    func continueEntries(movies okM: (String) -> Bool, shows okS: (String) -> Bool, limit: Int = 20) -> [ContinueEntry] {
+        var out: [ContinueEntry] = []
+        var seen = Set<String>()
+        for key in Store.recent where !Store.isHiddenFromContinue(key) {
+            let at = Store.positionTime(key) ?? .distantPast
+            if key.hasPrefix("movie:") {
+                guard Store.position(key) != nil, let i = index.moviePos[String(key.dropFirst(6))], i < movies.count else { continue }
+                let m = movies[i]
+                guard okM(m.categoryId) else { continue }
+                let w = WorkRule.key(m.name, kind: "movie")
+                guard seen.insert(w.isEmpty ? key : w).inserted else { continue }
+                out.append(ContinueEntry(item: .movie(m), storeKey: key, work: w, at: at))
+            } else if key.hasPrefix("ep:") {
+                guard let sid = Store.show(forEpisode: key), let i = index.showPos[sid], i < shows.count else { continue }
+                let s = shows[i]
+                guard okS(s.categoryId) else { continue }
+                let w = WorkRule.key(s.name, kind: "show")
+                guard seen.insert(w.isEmpty ? "show:" + sid : w).inserted else { continue }
+                out.append(ContinueEntry(item: .show(s, episodeKey: key), storeKey: key, work: w, at: at))
+            }
+            if out.count >= limit { break }
+        }
+        return out
+    }
+
+    /// «م2 ح5 · بقي 23 د» / «توقفت عند 1:02:15» — what the card says besides the title.
+    func continueDetail(_ e: ContinueEntry) -> String {
+        var parts: [String] = []
+        if case .show = e.item, let n = Store.numbers(forEpisode: e.storeKey) { parts.append("م\(n.season) ح\(n.number)") }
+        if let p = Store.position(e.storeKey) {
+            if p.dur > p.pos, p.dur > 0 { parts.append("بقي \(max(1, Int((p.dur - p.pos) / 60))) د") }
+            else { parts.append("توقفت عند " + Clock.text(p.pos)) }
+        } else if case .show = e.item { parts.append("الحلقة التالية") }
+        return parts.joined(separator: " · ")
+    }
+
     /// Other copies of a title (other provider groups), from the index.
     func copies(of show: Show) -> [Show] {
         guard let i = index.showPos[show.id], i < index.showKey.count else { return [] }
         let k = index.showKey[i]
         guard !k.isEmpty else { return [] }
         let b = blocked(.series)
-        return (index.showCopies[k] ?? []).compactMap { $0 < shows.count ? shows[$0] : nil }.filter { $0.id != show.id && !b.contains($0.categoryId) }
+        let y = WorkRule.year(show.name)
+        return (index.showCopies[k] ?? []).compactMap { $0 < shows.count ? shows[$0] : nil }
+            .filter { $0.id != show.id && !b.contains($0.categoryId) && Self.sameYear(y, WorkRule.year($0.name)) }
     }
     func copies(of movie: Movie) -> [Movie] {
         guard let i = index.moviePos[movie.id], i < index.movieKey.count else { return [] }
         let k = index.movieKey[i]
         guard !k.isEmpty else { return [] }
         let b = blocked(.movies)
-        return (index.movieCopies[k] ?? []).compactMap { $0 < movies.count ? movies[$0] : nil }.filter { $0.id != movie.id && !b.contains($0.categoryId) }
+        let y = WorkRule.year(movie.name)
+        return (index.movieCopies[k] ?? []).compactMap { $0 < movies.count ? movies[$0] : nil }
+            .filter { $0.id != movie.id && !b.contains($0.categoryId) && Self.sameYear(y, WorkRule.year($0.name)) }
+    }
+
+    /// 1.6.0: a copy with another year is another work (remake), not another version.
+    nonisolated static func sameYear(_ a: Int?, _ b: Int?) -> Bool {
+        guard let a, let b else { return true }
+        return a == b
     }
 
     /// Library size for the measurements (counts only).
@@ -454,7 +517,10 @@ enum Store {
 
     /// Saved until 95 % watched, then cleared (watched).
     static func setPosition(_ key: String, _ pos: Double, _ dur: Double) {
-        if dur > 0 && pos / dur > 0.95 { d.removeObject(forKey: "pos." + key) } else { d.set([pos, dur], forKey: "pos." + key) }
+        if dur > 0 && pos / dur > 0.95 {
+            d.removeObject(forKey: "pos." + key)
+            d.set(Date().timeIntervalSince1970, forKey: "done." + key)  // 1.6.0: watched, with its time
+        } else { d.set([pos, dur], forKey: "pos." + key) }
         d.set(Date().timeIntervalSince1970, forKey: "posAt." + key)     // 1.2.0: when, to compare with Trakt
         var recent = d.stringArray(forKey: "recent") ?? []
         recent.removeAll { $0 == key }; recent.insert(key, at: 0)
@@ -500,6 +566,52 @@ enum Store {
         d.set(m, forKey: "epshow")
     }
     static func show(forEpisode key: String) -> String? { (d.dictionary(forKey: "epshow") as? [String: String])?[key] }
+
+    // MARK: 1.6.0 — continue-watching actions and episode numbers
+
+    /// Episode key → "season|number", so a continue card can say «م2 ح5».
+    static func remember(numbers: [String: String]) {
+        var m = d.dictionary(forKey: "epnum") as? [String: String] ?? [:]
+        m.merge(numbers) { _, new in new }
+        if m.count > 5000 { let r = Set(Store.recent); m = m.filter { r.contains($0.key) } }
+        d.set(m, forKey: "epnum")
+    }
+    static func numbers(forEpisode key: String) -> (season: Int, number: Int)? {
+        guard let v = (d.dictionary(forKey: "epnum") as? [String: String])?[key] else { return nil }
+        let p = v.split(separator: "|").compactMap { Int($0) }
+        return p.count == 2 ? (p[0], p[1]) : nil
+    }
+
+    /// Removed from "Continue watching" (not from history). The item comes back only when it is played again
+    /// after the removal (a newer save time), never because of an older copy.
+    static func hideFromContinue(_ key: String) {
+        var h = d.dictionary(forKey: "contHidden") as? [String: Double] ?? [:]
+        h[key] = Date().timeIntervalSince1970
+        d.set(h, forKey: "contHidden")
+    }
+    static func hiddenAt(_ key: String) -> Date? {
+        (d.dictionary(forKey: "contHidden") as? [String: Double])?[key].map { Date(timeIntervalSince1970: $0) }
+    }
+    static func isHiddenFromContinue(_ key: String) -> Bool {
+        guard let h = hiddenAt(key) else { return false }
+        return (positionTime(key) ?? .distantPast) <= h
+    }
+
+    /// Watched: the resume point goes, the time is kept (newest event wins in sync).
+    static func markWatched(_ key: String) {
+        d.removeObject(forKey: "pos." + key)
+        d.set(Date().timeIntervalSince1970, forKey: "posAt." + key)
+        d.set(Date().timeIntervalSince1970, forKey: "done." + key)
+    }
+    /// Not watched / start over: no resume point and no "watched" mark.
+    static func markUnwatched(_ key: String) {
+        d.removeObject(forKey: "pos." + key)
+        d.removeObject(forKey: "done." + key)
+        d.set(Date().timeIntervalSince1970, forKey: "posAt." + key)
+    }
+    static func watchedAt(_ key: String) -> Date? {
+        let t = d.double(forKey: "done." + key); return t > 0 ? Date(timeIntervalSince1970: t) : nil
+    }
 }
 
 /// Holds the replaced lists until a background thread lets them go.

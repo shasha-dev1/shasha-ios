@@ -38,6 +38,7 @@ struct MoviesView: View {
                             ForEach(cont.prefix(20)) { m in
                                 NavigationLink { MovieDetail(movie: m, play: $play) } label: { PosterCard(title: m.name, poster: m.poster, progress: progress("movie:" + m.id)).frame(width: 110) }
                                     .buttonStyle(.plain)
+                                    .contextMenu { ContinueMenu(storeKey: "movie:" + m.id) { tick += 1 } }
                             }
                         }.padding(.horizontal)
                     }
@@ -138,26 +139,30 @@ struct FavButton: View {
 /// redraw of the Movies screen (each page of posters while scrolling, each return from the player, each refresh).
 @MainActor func continueMovies(_ library: Library, _ ok: (String) -> Bool) -> [Movie] {
     Perf.shared.measure("الأفلام: متابعة المشاهدة") {
-        let pos = library.index.moviePos, all = library.movies
-        return Store.recent.compactMap { key -> Movie? in
-            guard key.hasPrefix("movie:"), Store.position(key) != nil, let i = pos[String(key.dropFirst(6))], i < all.count, ok(all[i].categoryId) else { return nil }
-            return all[i]
-        }.prefix(20).map { $0 }
+        // 1.6.0: the shared list (one card per work, removed items left out), films only.
+        library.continueEntries(movies: ok, shows: { _ in false }).compactMap { e -> Movie? in
+            if case .movie(let m) = e.item { return m } else { return nil }
+        }
     }
 }
 
 /// Series with a recently played episode (one entry per series), most recent first.
 @MainActor func continueShows(_ library: Library, _ ok: (String) -> Bool) -> [(show: Show, episodeKey: String)] {
     Perf.shared.measure("المسلسلات: متابعة المشاهدة") {
-        let pos = library.index.showPos, all = library.shows
-        var seen = Set<String>()
-        var out: [(show: Show, episodeKey: String)] = []
-        for key in Store.recent where key.hasPrefix("ep:") {
-            guard let sid = Store.show(forEpisode: key), let i = pos[sid], i < all.count, ok(all[i].categoryId), seen.insert(sid).inserted else { continue }
-            out.append((all[i], key))
-            if out.count >= 20 { break }
+        library.continueEntries(movies: { _ in false }, shows: ok).compactMap { e -> (show: Show, episodeKey: String)? in
+            if case .show(let s, let k) = e.item { return (s, k) } else { return nil }
         }
-        return out
+    }
+}
+
+/// 1.6.0: long-press actions on a continue card (same on every screen).
+struct ContinueMenu: View {
+    let storeKey: String
+    let onChange: () -> Void
+    var body: some View {
+        Button { Store.hideFromContinue(storeKey); onChange() } label: { Label("إزالة من متابعة المشاهدة", systemImage: "eye.slash") }
+        Button { Store.markWatched(storeKey); onChange() } label: { Label("وضع علامة مكتمل", systemImage: "checkmark.circle") }
+        Button { Store.markUnwatched(storeKey); onChange() } label: { Label("البدء من البداية", systemImage: "backward.end") }
     }
 }
 
@@ -281,6 +286,7 @@ struct SeriesView: View {
                                     PosterCard(title: c.show.name, poster: c.show.poster, progress: progress(c.episodeKey)).frame(width: 110)
                                 }
                                 .buttonStyle(.plain)
+                                .contextMenu { ContinueMenu(storeKey: c.episodeKey) { tick += 1 } }
                             }
                         }.padding(.horizontal)
                     }
@@ -537,6 +543,7 @@ struct SeriesDetail: View {
                     probe: ep.probe, container: ep.ext, traktName: show.name)
         }
         Store.remember(episodes: queue.map(\.key), show: show.id)
+        Store.remember(numbers: Dictionary(episodes.map { (key($0), "\($0.season)|\($0.number)") }, uniquingKeysWith: { a, _ in a }))
         play = .vod(list: queue, index: i)
     }
 }

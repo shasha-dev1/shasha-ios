@@ -71,12 +71,19 @@ struct HomeView: View {
             let cont = Perf.shared.measure("الرئيسية: متابعة المشاهدة") { continueItems(okM, okS) }
             if let hero = cont.first {
                 NavigationLink { hero.destination } label: { HeroCard(item: hero) }.buttonStyle(.plain).padding(.horizontal)
+                    .contextMenu { if let k = hero.storeKey { ContinueMenu(storeKey: k) { tick += 1 } } }
             }
             if cont.count > 1 {
                 Shelf(title: "متابعة المشاهدة") {
                     ForEach(cont.dropFirst()) { c in
-                        NavigationLink { c.destination } label: { PosterCard(title: c.title, poster: c.poster, progress: c.progress).frame(width: 112) }
+                        NavigationLink { c.destination } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                PosterCard(title: c.title, poster: c.poster, progress: c.progress)
+                                if !c.detail.isEmpty { Text(c.detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
+                            }.frame(width: 112)
+                        }
                             .buttonStyle(.plain)
+                            .contextMenu { if let k = c.storeKey { ContinueMenu(storeKey: k) { tick += 1 } } }
                     }
                 }
             }
@@ -199,6 +206,10 @@ struct HomeView: View {
         let progress: Double?
         var fromTrakt = false
         let destination: AnyView
+        /// 1.6.0: «م2 ح5 · بقي 23 د», the played key (for the long-press menu) and the work key (one card per work).
+        var detail = ""
+        var storeKey: String? = nil
+        var work = ""
     }
 
     /// Recently played films (with a resume point) and series (any episode played), newest first.
@@ -220,40 +231,38 @@ struct HomeView: View {
     private func continueItems(_ okM: (String) -> Bool, _ okS: (String) -> Bool) -> [ContinueItem] {
         let local = localContinueItems(okM, okS)
         guard !traktHits.isEmpty else { return local.map(\.item) }
-        // Merge this phone's history with pauses from other devices, newest first, one entry per title.
+        // Merge this phone's history with pauses from other devices, newest first, one entry per work.
         var all = local
-        for h in traktHits where !local.contains(where: { $0.item.id == h.id }) {
+        var works = Set(local.map { $0.item.work.isEmpty ? $0.item.id : $0.item.work })
+        for h in traktHits {
             switch h.hit {
             case .movie(let m) where okM(m.categoryId):
+                let w = WorkRule.key(m.name, kind: "movie")
+                guard works.insert(w.isEmpty ? h.id : w).inserted, !Store.isHiddenFromContinue("movie:" + m.id) else { continue }
                 all.append((ContinueItem(id: h.id, title: m.name, poster: m.poster, progress: h.progress, fromTrakt: true,
-                                         destination: AnyView(MovieDetail(movie: m, play: $play))), h.at))
+                                         destination: AnyView(MovieDetail(movie: m, play: $play)), work: w), h.at))
             case .show(let s) where okS(s.categoryId):
+                let w = WorkRule.key(s.name, kind: "show")
+                guard works.insert(w.isEmpty ? h.id : w).inserted else { continue }
                 all.append((ContinueItem(id: h.id, title: s.name, poster: s.poster, progress: h.progress, fromTrakt: true,
-                                         destination: AnyView(SeriesDetail(show: s, play: $play))), h.at))
+                                         destination: AnyView(SeriesDetail(show: s, play: $play)), work: w), h.at))
             default: break
             }
         }
         return all.sorted { $0.at > $1.at }.prefix(20).map(\.item)
     }
 
+    /// 1.6.0: the shared list from Library (same as the Movies and Series screens).
     private func localContinueItems(_ okM: (String) -> Bool, _ okS: (String) -> Bool) -> [(item: ContinueItem, at: Date)] {
-        let ix = library.index
-        var out: [(item: ContinueItem, at: Date)] = []
-        var seenShows = Set<String>()
-        for key in Store.recent {
-            let at = Store.positionTime(key) ?? .distantPast
-            if key.hasPrefix("movie:") {
-                guard let mi = ix.moviePos[String(key.dropFirst(6))], mi < library.movies.count, case let m = library.movies[mi], okM(m.categoryId), Store.position(key) != nil else { continue }
-                out.append((ContinueItem(id: key, title: m.name, poster: m.poster, progress: progress(key),
-                                        destination: AnyView(MovieDetail(movie: m, play: $play))), at))
-            } else if key.hasPrefix("ep:"), let sid = Store.show(forEpisode: key), let si = ix.showPos[sid], si < library.shows.count, case let s = library.shows[si],
-                      okS(s.categoryId), seenShows.insert(sid).inserted {
-                out.append((ContinueItem(id: "show:" + sid, title: s.name, poster: s.poster, progress: progress(key),
-                                        destination: AnyView(SeriesDetail(show: s, play: $play))), at))
+        library.continueEntries(movies: okM, shows: okS).map { e in
+            let dest: AnyView
+            switch e.item {
+            case .movie(let m): dest = AnyView(MovieDetail(movie: m, play: $play))
+            case .show(let s, _): dest = AnyView(SeriesDetail(show: s, play: $play))
             }
-            if out.count >= 20 { break }
+            return (ContinueItem(id: e.id, title: e.name, poster: e.poster, progress: progress(e.storeKey), destination: dest,
+                                 detail: library.continueDetail(e), storeKey: e.storeKey, work: e.work), e.at)
         }
-        return out
     }
 
     // MARK: Search
@@ -310,9 +319,10 @@ struct HeroCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(item.fromTrakt ? "تكملة من جهاز آخر (Trakt)" : "تكملة المشاهدة").font(.caption.weight(.semibold)).foregroundStyle(Theme.teal)
                 Text(TmdbRule.split(item.title).title).font(.title3.bold()).lineLimit(3).minimumScaleFactor(0.8).multilineTextAlignment(.leading)
+                if !item.detail.isEmpty { Text(item.detail).font(.subheadline).foregroundStyle(.secondary) }
                 if let p = item.progress {
                     ProgressView(value: p).tint(Theme.accent)
-                    Text("شاهدت \(Int(p * 100))٪").font(.caption).foregroundStyle(.secondary)
+                    if item.detail.isEmpty { Text("شاهدت \(Int(p * 100))٪").font(.caption).foregroundStyle(.secondary) }
                 }
                 Spacer(minLength: 0)
                 Label("استكمال", systemImage: "play.fill").font(.subheadline.weight(.bold))

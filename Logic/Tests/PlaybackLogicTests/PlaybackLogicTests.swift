@@ -401,3 +401,29 @@ final class CategoryNameRuleTests: XCTestCase {
         XCTAssertEqual(CategoryNameRule.display("🔥"), "🔥")   // nothing left → original
     }
 }
+
+final class WorkRuleTests: XCTestCase {
+    func testProviderCopiesOfOneWorkShareAKey() {
+        let a = WorkRule.key("4K-AMZ - The Lord of the Rings: The Rings of Power (2022) (US)", kind: "show")
+        let b = WorkRule.key("The Lord of the Rings: The Rings of Power (2022)", kind: "show")
+        XCTAssertFalse(a.isEmpty)
+        XCTAssertEqual(a, b)
+    }
+    func testDifferentYearsAreDifferentWorks() {
+        XCTAssertNotEqual(WorkRule.key("Dune (1984)", kind: "movie"), WorkRule.key("Dune (2021)", kind: "movie"))
+    }
+    func testYearAndNoYearStaySeparate() {
+        XCTAssertNotEqual(WorkRule.key("Dune (2021)", kind: "movie"), WorkRule.key("Dune", kind: "movie"))
+    }
+    func testFilmAndSeriesNeverMatch() {
+        XCTAssertNotEqual(WorkRule.key("Fargo (1996)", kind: "movie"), WorkRule.key("Fargo (1996)", kind: "show"))
+    }
+    func testBareAndBracketedYearMatch() {
+        XCTAssertEqual(WorkRule.key("Lanterns (2026) (US)", kind: "show"), WorkRule.key("Lanterns 2026", kind: "show"))
+    }
+    func testYearParsing() {
+        XCTAssertEqual(WorkRule.year("Lanterns (2026) (US)"), 2026)
+        XCTAssertNil(WorkRule.year("رجال تحت الطربوش"))
+        XCTAssertEqual(WorkRule.key("2012", kind: "movie"), "")
+    }
+}
