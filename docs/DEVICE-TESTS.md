@@ -201,15 +201,15 @@ New tests: WorkRuleTests (6), CloudSyncSafetyTests (8). TV 0.9.12: CloudSyncCore
 4. Settings → Appearance → Home rows: hide/reorder; Discovery rows don't repeat titles.
 5. Sync both ways (TV 0.9.12 + iPhone 1.6.0): pause on TV → resume on iPhone; pause on iPhone → resume on TV; finish an episode on one → watched on the other; airplane mode → play → back online → "Sync now" sends it; Settings shows pending / last success / reason.
 
-## 1.7.0 — branch `work/1.7` (CI results in the table below; NOT tried on the device)
-Main stays at 1.6.0 (`ad3fef6`, CI #98 success) until every 1.7.0 batch is green.
+## 1.7.0 — merged to main after CI #99–#103 passed (built and logic-tested; NOT tried on the device)
+Previous main: 1.6.0 `ad3fef6`, CI #98 success (runs/45042865983).
 
 | Batch | Commit | State |
 |---|---|---|
-| Sync: read back after upload + re-merge, repairs/future/clock reported, sync on reconnect, background time; version-choice label; tests | `9bb47cd` | see Actions |
-| Manual TMDB correction; per-series audio/subtitle language | `6567437` | see Actions |
-| Live: previous channel, recent channels (picker + Home) | `a6cfd82` | see Actions |
-| Accessibility: VoiceOver labels, 44 pt targets, badge contrast | `629f26f` | see Actions |
+| Sync: read back after upload + re-merge, repairs/future/clock reported, sync on reconnect, background time; version-choice label; tests | `9bb47cd` | built + tests passed, CI #99 (runs/45044037470) |
+| Manual TMDB correction; per-series audio/subtitle language | `6567437` | built + tests passed, CI #100 (runs/45044228162) |
+| Live: previous channel, recent channels (picker + Home) | `a6cfd82` | built + tests passed, CI #101 (runs/45044363510) |
+| Accessibility: VoiceOver labels, 44 pt targets, badge contrast | `629f26f` | built + tests passed, CI #102 (runs/45044419335) |
 
 ### Offline test (no new stream needed)
 1. With the network on, sync once (Settings → accounts → «مزامنة الآن»): «بانتظار الإرسال» disappears.
