@@ -748,3 +748,19 @@ enum SubFileCheck {
         }
     }
 }
+
+/// 1.7.8: subtitle delay kept on this phone per film/episode copy (video version = provider id) AND per subtitle:
+/// an added file by the SHA-256 of its content, an embedded track by its number and language. Not shared between
+/// devices. Old entries go once there are more than `maxEntries` (oldest use first).
+enum SubDelayRule {
+    static let maxEntries = 500
+    static func key(item: String, subtitle: String) -> String { item + "|" + subtitle }
+    static func fileIdent(sha256: String) -> String { "sha:" + String(sha256.prefix(32)) }
+    static func trackIdent(id: String, lang: String) -> String { "track:" + id + ":" + lang }
+    struct Entry: Equatable { var delay: Double; var usedMs: Int64 }
+    /// Keys to drop: the oldest beyond the limit.
+    static func prune(_ d: [String: Entry], max: Int = maxEntries) -> [String] {
+        guard d.count > max else { return [] }
+        return d.sorted { $0.value.usedMs < $1.value.usedMs }.prefix(d.count - max).map(\.key)
+    }
+}

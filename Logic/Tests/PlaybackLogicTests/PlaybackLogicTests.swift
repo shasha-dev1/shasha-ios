@@ -727,3 +727,20 @@ final class SubFileCheckTests: XCTestCase {
     }
 }
 
+/// 1.7.8: delay per subtitle and video version.
+final class SubDelayRuleTests: XCTestCase {
+    func testKeysSeparateVersionAndSubtitle() {
+        let a = SubDelayRule.key(item: "movie:1", subtitle: SubDelayRule.fileIdent(sha256: String(repeating: "a", count: 64)))
+        let b = SubDelayRule.key(item: "movie:2", subtitle: SubDelayRule.fileIdent(sha256: String(repeating: "a", count: 64)))
+        let c = SubDelayRule.key(item: "movie:1", subtitle: SubDelayRule.trackIdent(id: "3", lang: "ar"))
+        XCTAssertEqual(Set([a, b, c]).count, 3)
+        XCTAssertEqual(a, "movie:1|sha:" + String(repeating: "a", count: 32))
+    }
+    func testOldestGoBeyondTheLimit() {
+        var d: [String: SubDelayRule.Entry] = [:]
+        for i in 0..<5 { d["k\(i)"] = .init(delay: 1, usedMs: Int64(i)) }
+        XCTAssertEqual(Set(SubDelayRule.prune(d, max: 3)), ["k0", "k1"])
+        XCTAssertEqual(SubDelayRule.prune(d, max: 5), [])
+    }
+}
+

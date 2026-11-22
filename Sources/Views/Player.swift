@@ -3,6 +3,7 @@ import UIKit
 import MediaPlayer
 import AVFoundation
 import UniformTypeIdentifiers
+import CryptoKit
 
 /// What to play: a live channel inside its list (switch channels) or a film/episode inside its queue.
 enum PlayItem: Identifiable {
@@ -218,6 +219,7 @@ final class PlayerModel: ObservableObject {
         failed = false; endDecision = nil; viewerPaused = false; hasPlayed = false
         subDelay = 0; stall.reset(); buffering = true; timeMs = 0; lengthMs = 0
         pendingSubFile = nil
+        addedSubIdent = [:]; delayApplied = false
         lastPlayingMs = Int32(max(0, startSeconds) * 1000)
         cancelPiPAttempts()
         attachDrawable()
@@ -257,6 +259,10 @@ final class PlayerModel: ObservableObject {
             endDecision = EndRule.onEnded(lastTimeMs: lastPlayingMs, lengthMs: lengthMs)
         }
         buffering = !failed && endDecision == nil && (stalled || st == .opening)
+        if !delayApplied, s.loaded, itemKey != nil, mpv.tracks.contains(where: { $0.type == "sub" && $0.selected }) {
+            delayApplied = true
+            applyKeptDelay()
+        }
         if let f = pendingSubFile, s.loaded {
             pendingSubFile = nil
             addSubtitle(f) { ok in
@@ -329,11 +335,31 @@ final class PlayerModel: ObservableObject {
     func shiftSubs(_ d: Double) {
         subDelay = d == 0 ? 0 : (subDelay + d)
         mpv.setAsync("sub-delay", String(format: "%.2f", subDelay))
+        // 1.7.8: kept for this film/episode copy and this subtitle ("الأصلي" = 0 removes it).
+        if let k = delayKey() { SubDelayStore.set(k, subDelay) }
+    }
+
+    /// 1.7.8: subtitles this session added from files: mpv track id → identity by content.
+    private var addedSubIdent: [String: String] = [:]
+    private var delayApplied = false
+
+    /// Key for the selected subtitle of this film/episode copy, or nil (live, nothing selected).
+    func delayKey() -> String? {
+        guard let item = itemKey, let t = mpv.tracks.first(where: { $0.type == "sub" && $0.selected }) else { return nil }
+        return SubDelayRule.key(item: item, subtitle: addedSubIdent[t.id] ?? SubDelayRule.trackIdent(id: t.id, lang: t.lang))
+    }
+
+    /// The delay kept for the subtitle now selected (0 when none).
+    func applyKeptDelay() {
+        guard let k = delayKey() else { return }
+        let d = SubDelayStore.get(k) ?? 0
+        if d != subDelay { subDelay = d; mpv.setAsync("sub-delay", String(format: "%.2f", d)) }
     }
 
     /// Adds a downloaded subtitle file and switches to it.
     func addSubtitle(_ file: URL, done: ((Bool) -> Void)? = nil) {
         let before = Set(mpv.tracks.filter { $0.type == "sub" }.map(\.id))
+        let ident = (try? Data(contentsOf: file)).map { SubDelayRule.fileIdent(sha256: SHA256.hash(data: $0).map { String(format: "%02x", $0) }.joined()) }
         mpv.commandAsync(["sub-add", file.path, "select"])
         guard let done else { return }
         // 1.7.6: success only once mpv lists a new subtitle track and it is the selected one (up to 5 s). Whether
@@ -341,7 +367,11 @@ final class PlayerModel: ObservableObject {
         var tries = 0
         func poll() {
             tries += 1
-            if mpv.tracks.contains(where: { $0.type == "sub" && !before.contains($0.id) && $0.selected }) { done(true); return }
+            if let t = mpv.tracks.first(where: { $0.type == "sub" && !before.contains($0.id) && $0.selected }) {
+                if let ident { addedSubIdent[t.id] = ident }
+                applyKeptDelay()
+                done(true); return
+            }
             if tries >= 20 { done(false); return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { poll() }
         }
@@ -370,7 +400,10 @@ final class PlayerModel: ObservableObject {
         mpv.setAsync(property, id)
         // 1.7.0: remember the language (not the track number, which differs between episodes) for this series.
         if let k = workPrefKey, !t.lang.isEmpty { WorkLangPrefs.set(k, type, t.lang) }
-        if type == "sub" { clearItemOff() }
+        if type == "sub" {
+            clearItemOff()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.applyKeptDelay() }
+        }
         lastPick = "\(kind): طُلب اختيار \(property)=\(id) «\(t.name)»"
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
             guard let self else { return }
@@ -1648,6 +1681,25 @@ enum Orientation {
 }
 
 /// 1.7.0: audio / subtitle language chosen for one series (mpv language code from the track, or "off").
+/// 1.7.8: subtitle delays kept on this phone (see SubDelayRule).
+enum SubDelayStore {
+    private static let key = "subs.delay"
+    private static func load() -> [String: [Double]] { (UserDefaults.standard.dictionary(forKey: key) as? [String: [Double]]) ?? [:] }
+    static func get(_ k: String) -> Double? {
+        guard var d = load()[k], d.count == 2 else { return nil }
+        d[1] = Date().timeIntervalSince1970 * 1000
+        var all = load(); all[k] = d; UserDefaults.standard.set(all, forKey: key)
+        return d[0]
+    }
+    static func set(_ k: String, _ delay: Double) {
+        var all = load()
+        if delay == 0 { all.removeValue(forKey: k) } else { all[k] = [delay, Date().timeIntervalSince1970 * 1000] }
+        let entries = all.compactMapValues { v in v.count == 2 ? SubDelayRule.Entry(delay: v[0], usedMs: Int64(v[1])) : nil }
+        for old in SubDelayRule.prune(entries) { all.removeValue(forKey: old) }
+        UserDefaults.standard.set(all, forKey: key)
+    }
+}
+
 /// 1.7.6: "no subtitles" chosen for one film/episode (series also have WorkLangPrefs "off").
 enum ItemSubOff {
     private static let key = "subs.itemOff"

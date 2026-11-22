@@ -110,3 +110,9 @@ for that series); old files must not pile up.
   locally). Drive unreachable → the local copy is used as before.
 - Clean-up goes by the later of last upload and last use, and reads each file again right before deleting it; a
   file used or replaced since the list is skipped.
+
+## 1.7.8 (iPhone) — subtitle delay kept per subtitle and video version (local only; not device-tested)
+- Key = film/episode copy (provider id = video version) + subtitle identity: an added file by the SHA-256 of its
+  content, an embedded track by its number and language (`SubDelayRule`). Stored on the phone (`subs.delay`), at most
+  500 entries (oldest use dropped). Applied when that subtitle is selected/added or first selected after loading.
+- «الأصلي» resets to 0 and removes the kept value. Not shared with the TV.
