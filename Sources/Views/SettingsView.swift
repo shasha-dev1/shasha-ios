@@ -40,6 +40,7 @@ struct SettingsView: View {
                 LanguageSettingsSection()
                 SubsSettingsSection()
                 TmdbSettingsSection()
+                TraktSettingsSection()
                 AppearanceSection()
                 StorageSection()
                 Section {

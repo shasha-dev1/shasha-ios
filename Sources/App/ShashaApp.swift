@@ -63,7 +63,13 @@ struct RootView: View {
         }
         .onChange(of: library.activeId) { _ in epg.clear() }
         .onAppear { Perf.shared.startMonitor() }
-        .task { if !library.sources.isEmpty && !library.hasData { await library.start() } }
+        .task {
+            if !library.sources.isEmpty && !library.hasData { await library.start() }
+            await TraktSync.pull()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            Task { await TraktSync.pull() }
+        }
     }
 
     @ViewBuilder private var content: some View {

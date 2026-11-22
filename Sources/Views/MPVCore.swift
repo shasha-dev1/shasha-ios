@@ -125,7 +125,7 @@ final class MPVCore {
     private(set) var createdLab: MPVLab?
 
     /// Opens a stream. `alang`/`slang` are mpv language lists ("ara,ar,arabic").
-    func open(_ url: URL, start: Double, live: Bool, alang: String, slang: String, lab: MPVLab) {
+    func open(_ url: URL, start: Double, live: Bool, alang: String, slang: String, lab: MPVLab, startPercent: Double? = nil) {
         // A lab mode changes creation-time options, so a different mode needs a fresh instance.
         if mpv != nil, createdLab != lab { destroy() }
         MPVSessionFile.begin(secrets: MPVSessionFile.secrets(of: url))
@@ -135,7 +135,9 @@ final class MPVCore {
         update { $0 = State() }
         setAsync("alang", alang.isEmpty ? "" : alang)
         setAsync("slang", slang.isEmpty ? "ar,ara,arabic" : slang)
-        setAsync("start", start > 5 ? String(format: "%.0f", start) : "none")
+        // 1.2.0: a pause from another device (Trakt) is a percentage; mpv's start accepts "NN%".
+        if let p = startPercent, p >= 1, p < 95 { setAsync("start", String(format: "%.2f%%", p)) }
+        else { setAsync("start", start > 5 ? String(format: "%.0f", start) : "none") }
         setAsync("pause", "no")
         setAsync("vid", "auto")
         // Track choices, delay and picture shape set at runtime are options in mpv and would carry over to the

@@ -121,7 +121,13 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Scrolling: movies 0.8 % slow frames (was 3.0 % in 1.0.6), series stalls ≤ 113 ms.
 - A 9,956 ms "stall" in browsing: most likely the app was inactive (frames stop) — not counted any more.
 
-## 1.1.1 (built only)
+## 1.1.1 — CI build 74 = commit `541a62a` (built only)
 - Continue-watching on Movies/Series from the index (no full dictionaries per redraw), measured.
 - Saved library written and read part by part (format 2; old file ignored → one refresh).
 - Frame gaps while the app is inactive are ignored; memory sampled 30 s and 90 s into playback.
+
+## 1.2.0 (built only) — Trakt, shared with the TV app
+- Settings → Trakt: the viewer's own Client ID / Secret (same Trakt app as the TV), device-code sign-in (code + trakt.tv/activate, polling with Trakt's codes), username shown, «مزامنة الآن», log (no tokens), disconnect (revoke + local tokens and pauses removed). Keys/tokens in the Keychain only.
+- Scrobbling: films and episodes only (never live): start when playback runs, pause on the viewer's pause, on leaving pause (< 95 %) or stop (≥ 95 %, same rule as the app and the TV). Identity = title + year (+ TMDB id when a TMDB key is set). Unit-tested rules (TraktRule).
+- Pull: /sync/playback at launch, when the app returns to the front (≤ every 2 min) and on demand. A pause from another device wins only when this phone has no position or the pause is newer than the phone's own save (TraktResumeRule, tested); playback then starts at that percentage. Home «متابعة المشاهدة» merges those titles («تكملة من جهاز آخر»); a series page points at the episode paused on the TV.
+- Local positions now carry a save time (needed for the comparison); positions saved before 1.2.0 are kept as they are.

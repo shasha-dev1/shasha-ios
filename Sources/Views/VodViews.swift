@@ -205,7 +205,7 @@ struct MovieDetail: View {
                 let resume = Store.position(key)
                 Button {
                     play = .vod(list: [VodPlay(title: movie.name, url: movie.url, key: key, query: SubQuery.clean(movie.name),
-                                                  probe: info.probe, container: movie.ext)], index: 0)
+                                                  probe: info.probe, container: movie.ext, traktName: movie.name)], index: 0)
                 } label: {
                     VStack(spacing: 2) {
                         Label(resume != nil ? "استكمال" : "تشغيل", systemImage: "play.fill").font(.headline)
@@ -473,10 +473,26 @@ struct SeriesDetail: View {
 
     /// The episode in progress, else the one after the last started, else the first.
     private var nextEpisode: Episode? {
+        // 1.2.0: a newer pause from another device (Trakt) points at its episode.
+        if let t = traktEpisode { return t }
         if let e = episodes.first(where: { Store.position(key($0)) != nil }) { return e }
         let recent = Set(Store.recent)
         if let last = episodes.lastIndex(where: { recent.contains(key($0)) }), last + 1 < episodes.count { return episodes[last + 1] }
         return nil
+    }
+
+    /// The episode of this series paused most recently at Trakt, if newer than this phone's own progress.
+    private var traktEpisode: Episode? {
+        guard TraktKeys.isLinked else { return nil }
+        let clean = TmdbRule.split(show.name).title
+        let st = TraktRule.searchTitle(clean, fallbackYear: TmdbRule.year(clean))
+        let k = TmdbRule.key(st.title)
+        guard let p = TraktStore.pauses.first(where: { $0.kind == "episode" && TmdbRule.key($0.title) == k &&
+                    (st.year == nil || $0.year == nil || abs($0.year! - st.year!) <= 1) }),
+              let e = episodes.first(where: { $0.season == p.season && $0.number == p.number }) else { return nil }
+        let local = Store.recent.first { rk in episodes.contains { key($0) == rk } }
+        if let local, let at = Store.positionTime(local), at > p.pausedAt { return nil }
+        return e
     }
 
     private func open(_ e: Episode) {
@@ -486,7 +502,7 @@ struct SeriesDetail: View {
         let queue = episodes.map { ep in
             VodPlay(title: "\(show.name) · م\(ep.season) ح\(ep.number)", url: x.episodeURL(ep.id, ep.ext), key: key(ep),
                     query: SubQuery(name: base, season: ep.season, episode: ep.number), season: ep.season, number: ep.number,
-                    probe: ep.probe, container: ep.ext)
+                    probe: ep.probe, container: ep.ext, traktName: show.name)
         }
         Store.remember(episodes: queue.map(\.key), show: show.id)
         play = .vod(list: queue, index: i)

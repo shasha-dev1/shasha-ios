@@ -368,3 +368,77 @@ enum TmdbRule {
         return key(t)
     }
 }
+
+/// 1.2.0: pure parts of Trakt (ported from the TV app's TraktAuth / TraktScrobble, unit-tested). No tokens here.
+enum TraktRule {
+    enum Poll: Equatable { case success, pending, slowDown, expired, denied, alreadyUsed, invalidCode, failed(Int) }
+
+    /// Device-token poll status codes (Trakt device flow): 200 ok, 400 waiting for the user, 404 bad code,
+    /// 409 already used, 410 expired, 418 denied, 429 polling too fast.
+    static func poll(_ http: Int) -> Poll {
+        switch http {
+        case 200: return .success
+        case 400: return .pending
+        case 404: return .invalidCode
+        case 409: return .alreadyUsed
+        case 410: return .expired
+        case 418: return .denied
+        case 429: return .slowDown
+        default: return .failed(http)
+        }
+    }
+
+    enum Action: String { case start, pause, stop }
+
+    /// Percent watched (two decimals), nil when the duration is unknown.
+    static func percent(positionMs: Int, durationMs: Int) -> Double? {
+        guard durationMs > 0 else { return nil }
+        let p = Double(min(max(positionMs, 0), durationMs)) * 100 / Double(durationMs)
+        return (p * 100).rounded() / 100
+    }
+
+    /// A pause at 0 % says nothing.
+    static func worthSending(_ progress: Double) -> Bool { progress >= 1 }
+
+    /// Leaving: `stop` only when the app itself counts it watched (≥ 95 %), otherwise `pause` — Trakt's own stop
+    /// rule (≥ 80 % = watched) must not mark it watched earlier than the app does.
+    static func exitAction(_ progress: Double) -> Action { progress >= 95 ? .stop : .pause }
+
+    /// Search title + year from a provider name: the line with Latin letters, a trailing "(2026)" taken as the year.
+    static func searchTitle(_ name: String, fallbackYear: Int?) -> (title: String, year: Int?) {
+        let lines = name.split(whereSeparator: { $0 == "\n" || $0 == "|" }).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let pick = lines.first { $0.contains { ("a"..."z").contains($0) || ("A"..."Z").contains($0) } } ?? lines.first ?? name.trimmingCharacters(in: .whitespaces)
+        if let r = pick.range(of: #"[\s\-–]*[(\[]((19|20)\d{2})[)\]]\s*$"#, options: .regularExpression) {
+            return (String(pick[..<r.lowerBound]).trimmingCharacters(in: .whitespaces), Int(pick[r].filter(\.isNumber)))
+        }
+        return (pick, fallbackYear)
+    }
+
+    /// Scrobble identity: {"movie": {...}} or {"show": {...}, "episode": {"season", "number"}}.
+    static func identity(title: String, year: Int?, tmdb: Int?, season: Int?, number: Int?) -> [String: Any] {
+        var media: [String: Any] = ["title": title]
+        if let year, year > 1800 { media["year"] = year }
+        if let tmdb, tmdb > 0 { media["ids"] = ["tmdb": tmdb] }
+        if let season, let number { return ["show": media, "episode": ["season": season, "number": number]] }
+        return ["movie": media]
+    }
+
+    static func body(_ identity: [String: Any], progress: Double) -> Data? {
+        var b = identity
+        b["progress"] = (progress * 100).rounded() / 100
+        return try? JSONSerialization.data(withJSONObject: b, options: [.sortedKeys])
+    }
+}
+
+/// 1.2.0: where to resume when both this phone and Trakt (another device, e.g. the TV app) have a position.
+enum TraktResumeRule {
+    enum Choice: Equatable { case local, trakt(Double), none }
+    /// Trakt wins only when this phone has no position, or when its pause is clearly newer than this phone's save.
+    /// A local position without a save time (saved before 1.2.0) is kept: never overwrite the viewer's own data on a guess.
+    static func choose(localPos: Double?, localAt: Date?, traktPct: Double?, traktAt: Date?) -> Choice {
+        let t = traktPct.flatMap { $0 >= 1 && $0 < 95 ? $0 : nil }
+        guard let localPos, localPos > 5 else { return t.map { .trakt($0) } ?? .none }
+        guard let t, let traktAt, let localAt else { return .local }
+        return traktAt.timeIntervalSince(localAt) > 60 ? .trakt(t) : .local
+    }
+}

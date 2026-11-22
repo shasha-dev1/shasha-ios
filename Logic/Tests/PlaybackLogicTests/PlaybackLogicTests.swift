@@ -316,3 +316,41 @@ final class TmdbRuleTests: XCTestCase {
         XCTAssertEqual(TmdbRule.libraryKey("EN| The Batman (2022) [4K]"), TmdbRule.key("The Batman"))
     }
 }
+
+final class TraktRuleTests: XCTestCase {
+    func testPollCodes() {
+        XCTAssertEqual(TraktRule.poll(200), .success)
+        XCTAssertEqual(TraktRule.poll(400), .pending)
+        XCTAssertEqual(TraktRule.poll(418), .denied)
+        XCTAssertEqual(TraktRule.poll(429), .slowDown)
+        XCTAssertEqual(TraktRule.poll(500), .failed(500))
+    }
+    func testProgressAndExit() {
+        XCTAssertEqual(TraktRule.percent(positionMs: 500, durationMs: 1000), 50)
+        XCTAssertNil(TraktRule.percent(positionMs: 5, durationMs: 0))
+        XCTAssertEqual(TraktRule.exitAction(94.9), .pause)
+        XCTAssertEqual(TraktRule.exitAction(95), .stop)
+        XCTAssertFalse(TraktRule.worthSending(0.5))
+    }
+    func testSearchTitle() {
+        let r = TraktRule.searchTitle("Alıkara (2026)\nعلي كارا", fallbackYear: nil)
+        XCTAssertEqual(r.title, "Alıkara"); XCTAssertEqual(r.year, 2026)
+    }
+    func testIdentityEpisode() {
+        let i = TraktRule.identity(title: "The Diplomat", year: 2023, tmdb: 194764, season: 2, number: 3)
+        XCTAssertNotNil(i["show"]); XCTAssertEqual((i["episode"] as? [String: Int])?["number"], 3)
+        let b = TraktRule.body(i, progress: 12.345).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        XCTAssertEqual(b?["progress"] as? Double, 12.35)
+    }
+}
+
+final class TraktResumeRuleTests: XCTestCase {
+    func testChoices() {
+        let now = Date()
+        XCTAssertEqual(TraktResumeRule.choose(localPos: nil, localAt: nil, traktPct: 40, traktAt: now), .trakt(40))
+        XCTAssertEqual(TraktResumeRule.choose(localPos: 300, localAt: nil, traktPct: 40, traktAt: now), .local)
+        XCTAssertEqual(TraktResumeRule.choose(localPos: 300, localAt: now.addingTimeInterval(-3600), traktPct: 40, traktAt: now), .trakt(40))
+        XCTAssertEqual(TraktResumeRule.choose(localPos: 300, localAt: now, traktPct: 40, traktAt: now.addingTimeInterval(-3600)), .local)
+        XCTAssertEqual(TraktResumeRule.choose(localPos: nil, localAt: nil, traktPct: 97, traktAt: now), .none)
+    }
+}

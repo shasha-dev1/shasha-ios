@@ -148,3 +148,104 @@ struct TmdbInfoSheet: View {
         }
     }
 }
+
+// MARK: - 1.2.0 Trakt settings
+
+struct TraktSettingsSection: View {
+    @State private var clientId = ""
+    @State private var secret = ""
+    @State private var linking = false
+    @State private var status: String?
+    @State private var linked = TraktKeys.isLinked
+    @State private var busy = false
+
+    var body: some View {
+        Section {
+            if linked {
+                Label("مربوط: \(TraktKeys.username ?? "حساب Trakt")", systemImage: "checkmark.seal.fill").foregroundStyle(Theme.teal)
+                Button { Task { busy = true; status = await TraktSync.pull(force: true); busy = false } } label: {
+                    HStack { Label("مزامنة الآن", systemImage: "arrow.triangle.2.circlepath"); Spacer(); if busy { ProgressView() } }
+                }
+                if let t = TraktStore.pulledAt { Text("آخر مزامنة: \(LastUpdate.text(t)) · \(TraktStore.pauses.count) نقطة توقف").font(.footnote).foregroundStyle(.secondary) }
+                NavigationLink { TraktLogView() } label: { Label("سجل Trakt", systemImage: "list.bullet.rectangle") }
+                Button(role: .destructive) { Task { await Trakt.shared.disconnect(); linked = false; status = "تم فصل الربط" } } label: { Label("فصل الربط", systemImage: "link.badge.plus") }
+            } else {
+                TextField("Client ID", text: $clientId).textInputAutocapitalization(.never).autocorrectionDisabled()
+                SecureField("Client Secret", text: $secret)
+                Button {
+                    Keychain.set(clientId.filter { !$0.isWhitespace }.nilIfEmpty, for: TraktKeys.clientId)
+                    Keychain.set(secret.filter { !$0.isWhitespace }.nilIfEmpty, for: TraktKeys.secret)
+                    if TraktKeys.id == nil { status = "أدخل Client ID" } else { linking = true }
+                } label: { Label("ربط الحساب", systemImage: "link") }
+            }
+            if let status { Text(status).font(.footnote).foregroundStyle(.secondary) }
+        } header: { Text("Trakt (مزامنة مع تطبيق التلفاز)") } footer: {
+            Text("استخدم نفس تطبيق Trakt (Client ID و Secret) اللي في تطبيق التلفاز، واربط بنفس الحساب. الأفلام والحلقات فقط، لا تُرسل القنوات المباشرة. المفاتيح والرموز تبقى في سلسلة المفاتيح على هذا الجهاز.")
+        }
+        .onAppear { clientId = TraktKeys.id ?? ""; secret = TraktKeys.clientSecret ?? ""; linked = TraktKeys.isLinked }
+        .sheet(isPresented: $linking, onDismiss: { linked = TraktKeys.isLinked; if linked { Task { status = await TraktSync.pull(force: true) } } }) { TraktLinkSheet() }
+    }
+}
+
+/// Device sign-in: shows the code, opens trakt.tv/activate, polls until approved, denied or expired.
+struct TraktLinkSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    @State private var code: Trakt.DeviceCode?
+    @State private var message = "جارٍ طلب رمز الربط…"
+    @State private var done = false
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 18) {
+                if let code {
+                    Text("افتح الرابط واكتب هذا الرمز").font(.headline)
+                    Text(code.userCode).font(.system(size: 40, weight: .bold, design: .monospaced)).foregroundStyle(Theme.accent)
+                        .textSelection(.enabled)
+                    HStack {
+                        Button { UIPasteboard.general.string = code.userCode } label: { Label("نسخ الرمز", systemImage: "doc.on.doc") }.buttonStyle(.bordered)
+                        Button { if let u = URL(string: code.url) { openURL(u) } } label: { Label("فتح trakt.tv/activate", systemImage: "safari") }.buttonStyle(.borderedProminent)
+                    }
+                }
+                Text(message).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                if done { Button("تم") { dismiss() }.buttonStyle(.borderedProminent) }
+            }
+            .padding()
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } } }
+        }
+        .task { await run() }
+    }
+
+    private func run() async {
+        do {
+            let c = try await Trakt.shared.deviceCode()
+            code = c; message = "بانتظار موافقتك في Trakt…"
+            var interval = c.interval
+            let end = Date().addingTimeInterval(TimeInterval(c.expiresIn))
+            while Date() < end && !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(interval) * 1_000_000_000)
+                guard !Task.isCancelled else { return }
+                switch try await Trakt.shared.poll(c.deviceCode) {
+                case .success: message = "تم الربط: \(TraktKeys.username ?? "")"; done = true; return
+                case .pending: continue
+                case .slowDown: interval += 5
+                case .denied: message = "رفضت الربط في Trakt."; done = true; return
+                case .expired: message = "انتهت صلاحية الرمز. حاول من جديد."; done = true; return
+                case .alreadyUsed: message = "الرمز مستخدم. حاول من جديد."; done = true; return
+                case .invalidCode: message = "الرمز غير صالح."; done = true; return
+                case .failed(let h): message = "Trakt ردّ \(h)."; done = true; return
+                }
+            }
+            if !done { message = "انتهت المهلة."; done = true }
+        } catch {
+            message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription; done = true
+        }
+    }
+}
+
+struct TraktLogView: View {
+    var body: some View {
+        List(TraktLog.lines.reversed(), id: \.self) { Text($0).font(.system(size: 12, design: .monospaced)) }
+            .navigationTitle("سجل Trakt")
+    }
+}

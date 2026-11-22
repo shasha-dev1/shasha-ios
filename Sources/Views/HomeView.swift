@@ -10,6 +10,9 @@ struct HomeView: View {
     /// 1.0.3: search results computed off the main thread; an older search can't overwrite a newer one.
     @State private var found = Found()
     @StateObject private var tmdbRows = TmdbRows()
+    /// 1.2.0: titles paused on another device (Trakt) that are in this library.
+    @State private var traktHits: [TraktHit] = []
+    struct TraktHit { let id: String; let hit: Library.Hit; let progress: Double; let at: Date }
     @State private var tmdbSheet: TmdbTitle?
     struct Found { var q = ""; var ch: [Channel] = []; var mv: [Movie] = []; var sh: [Show] = [] }
 
@@ -25,6 +28,7 @@ struct HomeView: View {
             .refreshable { await library.reload() }
             .onAppear { tick += 1; Perf.shared.firstScreen("الرئيسية") }
             .task(id: library.version) { await tmdbRows.load(library) }
+            .task(id: "\(library.version)|\(TraktStore.pulledAt?.timeIntervalSince1970 ?? 0)|\(tick)") { await loadTraktHits() }
             .sheet(item: $tmdbSheet) { TmdbInfoSheet(title: $0) }
             .onChange(of: query) { _ in Perf.shared.mark("بحث الرئيسية") }
             .task(id: "\(query)|\(library.version)|\(library.groupsTick)") {
@@ -192,23 +196,59 @@ struct HomeView: View {
         let title: String
         let poster: String?
         let progress: Double?
+        var fromTrakt = false
         let destination: AnyView
     }
 
     /// Recently played films (with a resume point) and series (any episode played), newest first.
+    private func loadTraktHits() async {
+        let pauses = TraktStore.pauses
+        guard TraktKeys.isLinked, !pauses.isEmpty, library.hasData else { traktHits = []; return }
+        let l = await library.lookup()
+        traktHits = pauses.compactMap { p in
+            let t = TmdbTitle(kind: p.kind == "movie" ? .movie : .tv, tmdbId: p.tmdb ?? 0, name: p.title, originalName: p.title, year: p.year,
+                              overview: nil, poster: nil, backdrop: nil, rating: nil)
+            guard let h = library.hit(t, l) else { return nil }
+            switch h {
+            case .movie(let m): return TraktHit(id: "movie:" + m.id, hit: h, progress: p.progress / 100, at: p.pausedAt)
+            case .show(let s): return TraktHit(id: "show:" + s.id, hit: h, progress: p.progress / 100, at: p.pausedAt)
+            }
+        }
+    }
+
     private func continueItems(_ okM: (String) -> Bool, _ okS: (String) -> Bool) -> [ContinueItem] {
+        let local = localContinueItems(okM, okS)
+        guard !traktHits.isEmpty else { return local.map(\.item) }
+        // Merge this phone's history with pauses from other devices, newest first, one entry per title.
+        var all = local
+        for h in traktHits where !local.contains(where: { $0.item.id == h.id }) {
+            switch h.hit {
+            case .movie(let m) where okM(m.categoryId):
+                all.append((ContinueItem(id: h.id, title: m.name, poster: m.poster, progress: h.progress, fromTrakt: true,
+                                         destination: AnyView(MovieDetail(movie: m, play: $play))), h.at))
+            case .show(let s) where okS(s.categoryId):
+                all.append((ContinueItem(id: h.id, title: s.name, poster: s.poster, progress: h.progress, fromTrakt: true,
+                                         destination: AnyView(SeriesDetail(show: s, play: $play))), h.at))
+            default: break
+            }
+        }
+        return all.sorted { $0.at > $1.at }.prefix(20).map(\.item)
+    }
+
+    private func localContinueItems(_ okM: (String) -> Bool, _ okS: (String) -> Bool) -> [(item: ContinueItem, at: Date)] {
         let ix = library.index
-        var out: [ContinueItem] = []
+        var out: [(item: ContinueItem, at: Date)] = []
         var seenShows = Set<String>()
         for key in Store.recent {
+            let at = Store.positionTime(key) ?? .distantPast
             if key.hasPrefix("movie:") {
                 guard let mi = ix.moviePos[String(key.dropFirst(6))], mi < library.movies.count, case let m = library.movies[mi], okM(m.categoryId), Store.position(key) != nil else { continue }
-                out.append(ContinueItem(id: key, title: m.name, poster: m.poster, progress: progress(key),
-                                        destination: AnyView(MovieDetail(movie: m, play: $play))))
+                out.append((ContinueItem(id: key, title: m.name, poster: m.poster, progress: progress(key),
+                                        destination: AnyView(MovieDetail(movie: m, play: $play))), at))
             } else if key.hasPrefix("ep:"), let sid = Store.show(forEpisode: key), let si = ix.showPos[sid], si < library.shows.count, case let s = library.shows[si],
                       okS(s.categoryId), seenShows.insert(sid).inserted {
-                out.append(ContinueItem(id: "show:" + sid, title: s.name, poster: s.poster, progress: progress(key),
-                                        destination: AnyView(SeriesDetail(show: s, play: $play))))
+                out.append((ContinueItem(id: "show:" + sid, title: s.name, poster: s.poster, progress: progress(key),
+                                        destination: AnyView(SeriesDetail(show: s, play: $play))), at))
             }
             if out.count >= 20 { break }
         }
@@ -267,7 +307,7 @@ struct HeroCard: View {
         HStack(alignment: .top, spacing: 14) {
             PosterImage(url: item.poster, title: item.title).frame(width: 104, height: 156)
             VStack(alignment: .leading, spacing: 8) {
-                Text("تكملة المشاهدة").font(.caption.weight(.semibold)).foregroundStyle(Theme.teal)
+                Text(item.fromTrakt ? "تكملة من جهاز آخر (Trakt)" : "تكملة المشاهدة").font(.caption.weight(.semibold)).foregroundStyle(Theme.teal)
                 Text(TmdbRule.split(item.title).title).font(.title3.bold()).lineLimit(3).minimumScaleFactor(0.8).multilineTextAlignment(.leading)
                 if let p = item.progress {
                     ProgressView(value: p).tint(Theme.accent)

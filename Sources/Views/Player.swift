@@ -28,6 +28,8 @@ struct VodPlay: Hashable {
     /// Provider's ffprobe lines, and the file extension from the link (for diagnostics only).
     var probe: [String] = []
     var container: String? = nil
+    /// 1.2.0: provider name of the film / series, for Trakt (nil = not sent to Trakt).
+    var traktName: String? = nil
 }
 
 // MARK: - Engine
@@ -200,7 +202,7 @@ final class PlayerModel: ObservableObject {
     /// The item really played in this session.
     private var hasPlayed = false
 
-    func open(_ url: String, startSeconds: Double = 0, live: Bool = false, session: Int) {
+    func open(_ url: String, startSeconds: Double = 0, live: Bool = false, session: Int, startPercent: Double? = nil) {
         engineSessionId = session
         guard let u = URL(string: url) else { failed = true; return }
         self.live = live
@@ -211,7 +213,7 @@ final class PlayerModel: ObservableObject {
         attachDrawable()
         let lab = mpvLab; mpvLab = .normal
         DiagLog.shared.note(String(format: "[فتح] mpv | %@ | بداية من %.0f ث | وضع: %@", u.isFileURL ? "ملف محلي" : "HTTP", startSeconds, lab.rawValue))
-        mpv.open(u, start: startSeconds, live: live, alang: PlayerPrefs.audio, slang: PlayerPrefs.subs, lab: lab)
+        mpv.open(u, start: startSeconds, live: live, alang: PlayerPrefs.audio, slang: PlayerPrefs.subs, lab: lab, startPercent: startPercent)
         if rate != 1 { mpv.setAsync("speed", String(format: "%.2f", rate)) }
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.tick() }
@@ -538,6 +540,11 @@ struct PlayerScreen: View {
             // Leaving the app while a video plays: continue in the floating window.
             if p == .inactive && PlayerPrefs.autoPiP { model.startPiPIfPossible() }
         }
+        .onChange(of: model.playing) { on in if on && !isLive { TraktScrobbler.shared.playing(progress: traktPercent()) } }
+        .onChange(of: model.viewerPaused) { p in
+            guard !isLive else { return }
+            if p { TraktScrobbler.shared.paused(progress: traktPercent()) } else { TraktScrobbler.shared.playing(progress: traktPercent()) }
+        }
         .onChange(of: model.pipActive) { on in
             minimized = on
             if on { Orientation.portrait() } else { Orientation.landscape(); controls = true; scheduleHide() }
@@ -556,6 +563,7 @@ struct PlayerScreen: View {
             }
         }
         .onDisappear {
+            TraktScrobbler.shared.leave(progress: traktPercent())
             // 1.0.7: this closure captures the screen, and the screen holds the model (@StateObject): a cycle that
             // kept every player model and its mpv engine alive (1.0.6 report: 6 alive after 6 closes, +60–150 MB each).
             model.onMPVPiPUnavailable = nil
@@ -1174,6 +1182,9 @@ struct PlayerScreen: View {
 
     /// Opens a film/episode as a new session: older tasks and saves can no longer touch it.
     private func openVod(_ v: VodPlay, from start: Double? = nil) {
+        // 1.2.0 Trakt: the previous film/episode is left (pause or stop), the new one followed.
+        TraktScrobbler.shared.leave(progress: traktPercent())
+        if let n = v.traktName { TraktScrobbler.shared.begin(key: v.key, name: n, season: v.season, number: v.number) }
         DiagLog.shared.beginSession(v.title)
         let s = gate.begin(key: v.key)
         session = s
@@ -1181,10 +1192,18 @@ struct PlayerScreen: View {
         stoppedEarlyAt = nil
         nextVisible = false; nextDismissed = false
         let pos = start ?? ResumeRule.startPosition(stored: Store.position(v.key)?.pos) ?? 0
-        model.open(v.url, startSeconds: pos, session: s.id)
+        // A newer pause from another device (the TV app through Trakt) wins over an older position on this phone.
+        var traktPct: Double?
+        if start == nil, let n = v.traktName, TraktKeys.isLinked,
+           case .trakt(let p) = TraktResumeRule.choose(localPos: Store.position(v.key)?.pos, localAt: Store.positionTime(v.key),
+                                                      traktPct: traktPause(n, v)?.progress, traktAt: traktPause(n, v)?.pausedAt) {
+            traktPct = p
+        }
+        model.open(v.url, startSeconds: traktPct == nil ? pos : 0, session: s.id, startPercent: traktPct)
+        if let p = traktPct { flashText(String(format: "تكملة من Trakt عند %.0f٪", p)) }
         if fit != .fit { model.apply(fit) }
         resumeTask?.cancel()
-        resumeAt = (start == nil && pos > 0) ? pos : nil
+        resumeAt = (start == nil && pos > 0 && traktPct == nil) ? pos : nil
         if resumeAt != nil {
             let id = s.id
             resumeTask = Task { _ = await Delayed.run(after: 8_000_000_000, stillValid: { await MainActor.run { gate.isCurrent(id) } }) {
@@ -1297,6 +1316,17 @@ struct PlayerScreen: View {
     }
 
     /// Saves the resume point of the session on screen, only with numbers that belong to it.
+    private func traktPercent() -> Double? {
+        TraktRule.percent(positionMs: Int(model.timeMs), durationMs: Int(model.lengthMs))
+    }
+
+    private func traktPause(_ name: String, _ v: VodPlay) -> TraktPause? {
+        let clean = TmdbRule.split(name).title
+        let st = TraktRule.searchTitle(clean, fallbackYear: TmdbRule.year(clean))
+        if let s = v.season, let n = v.number { return TraktStore.episode(show: st.title, year: st.year, tmdb: nil, season: s, number: n) }
+        return TraktStore.movie(title: st.title, year: st.year, tmdb: nil)
+    }
+
     private func saveResume() {
         guard !isLive, stoppedEarlyAt == nil,
               let save = ResumeRule.save(screen: session, engineSessionId: model.engineSessionId, timeMs: model.timeMs, lengthMs: model.lengthMs)

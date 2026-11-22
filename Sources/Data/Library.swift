@@ -455,12 +455,19 @@ enum Store {
     /// Saved until 95 % watched, then cleared (watched).
     static func setPosition(_ key: String, _ pos: Double, _ dur: Double) {
         if dur > 0 && pos / dur > 0.95 { d.removeObject(forKey: "pos." + key) } else { d.set([pos, dur], forKey: "pos." + key) }
+        d.set(Date().timeIntervalSince1970, forKey: "posAt." + key)     // 1.2.0: when, to compare with Trakt
         var recent = d.stringArray(forKey: "recent") ?? []
         recent.removeAll { $0 == key }; recent.insert(key, at: 0)
         d.set(Array(recent.prefix(60)), forKey: "recent")
     }
 
     static var recent: [String] { d.stringArray(forKey: "recent") ?? [] }
+
+    /// Time of the last local save of this position (nil for positions saved before 1.2.0).
+    static func positionTime(_ key: String) -> Date? {
+        let t = d.double(forKey: "posAt." + key)
+        return t > 0 ? Date(timeIntervalSince1970: t) : nil
+    }
 
     static func isFavorite(_ id: String) -> Bool { (d.stringArray(forKey: "fav") ?? []).contains(id) }
 
