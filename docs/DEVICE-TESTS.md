@@ -224,3 +224,20 @@ Previous main: 1.6.0 `ad3fef6`, CI #98 success (runs/45042865983).
 - Remove a title from Continue watching on the iPhone → sync both a few times → it stays removed on both.
 - Press «مزامنة الآن» on both devices at the same moment → both titles' progress is still there afterwards; the phone may
   say «الجهاز الآخر كتب في نفس اللحظة — أُعيد الدمج والرفع».
+
+## 1.7.1 — merged to main after CI #106 (runs/45046245039) and #107 (runs/45046301035) passed; NOT tried on the device
+- Sync times in Google's clock; race and clock tests (CloudSyncRaceAndClockTests); TV 0.9.14 adds the version check.
+- Screens refresh only when the player closes; A/B «تجميد الشاشات خلف المشغّل» (off by default); mpv cache in the report.
+
+### Device test — round 1: iPhone only (≈10 min)
+1. Play an episode with Arabic ASS subtitles: colours, subtitles, sound as before.
+2. Leave the app while playing → PiP with subtitles; back → full screen.
+3. Change the subtitle language in an episode; open the next episode: same language chosen.
+4. Close the player; Diagnostics → «تحديث» → «نسخ», send the report. Then turn on «تجميد الشاشات خلف المشغّل»,
+   open and close the same episode twice, copy the report again.
+
+### Device test — round 2: TV 0.9.14 + iPhone (≈10 min)
+1. Pause an episode on the TV, «مزامنة الآن» on the TV → iPhone resumes at the same point.
+2. Pause on the iPhone, «مزامنة الآن» → TV resumes there.
+3. Finish an episode on one device → shown as watched on the other after sync.
+4. Remove a title from Continue watching on the iPhone → sync both twice → gone on both, stays gone.
