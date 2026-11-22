@@ -198,6 +198,8 @@ final class PlayerModel: ObservableObject {
     }
     /// Subtitle track to re-select after a reopen (mpv track id).
     var pendingSubtitleId: String?
+    /// 1.7.5: a kept/shared subtitle for this film/episode, added once mpv has loaded the file.
+    var pendingSubFile: URL?
     /// 1.7.0: "show:<seriesId>" while an episode plays (per-series audio/subtitle language), nil otherwise.
     var workPrefKey: String?
     private var stall = StallDetector()
@@ -210,6 +212,7 @@ final class PlayerModel: ObservableObject {
         self.live = live
         failed = false; endDecision = nil; viewerPaused = false; hasPlayed = false
         subDelay = 0; stall.reset(); buffering = true; timeMs = 0; lengthMs = 0
+        pendingSubFile = nil
         lastPlayingMs = Int32(max(0, startSeconds) * 1000)
         cancelPiPAttempts()
         attachDrawable()
@@ -249,6 +252,11 @@ final class PlayerModel: ObservableObject {
             endDecision = EndRule.onEnded(lastTimeMs: lastPlayingMs, lengthMs: lengthMs)
         }
         buffering = !failed && endDecision == nil && (stalled || st == .opening)
+        if let f = pendingSubFile, s.loaded {
+            pendingSubFile = nil
+            addSubtitle(f)
+            DiagLog.shared.note("[التطبيق] أُضيفت الترجمة المحفوظة لهذه الحلقة/الفيلم")
+        }
         if let want = pendingSubtitleId, mpv.tracks.contains(where: { $0.type == "sub" && $0.id == want }) {
             pendingSubtitleId = nil
             selectSubtitle(want)
@@ -526,7 +534,10 @@ struct PlayerScreen: View {
         .sheet(item: $sheet) { s in
             switch s {
             case .subs:
-                if let v = current { SubSearchSheet(query: v.query) { file in model.addSubtitle(file); show("تمت إضافة الترجمة") } }
+                if let v = current { SubSearchSheet(query: v.query) { file, r in
+                    model.addSubtitle(file); show("تمت إضافة الترجمة")
+                    SubShare.keep(file, storeKey: v.key, source: library.active, lang: r.language, label: "OpenSubtitles · " + r.release)
+                } }
             case .channels:
                 ChannelPickerSheet(channels: channels, current: index, previous: previousIndex) { i in sheet = nil; switchChannel(to: i) }
                     .environmentObject(library).environmentObject(epg)
@@ -1242,6 +1253,15 @@ struct PlayerScreen: View {
         }
         model.workPrefKey = v.key.hasPrefix("ep:") ? Store.show(forEpisode: v.key).map { "show:" + $0 } : nil
         model.open(v.url, startSeconds: traktPct == nil ? pos : 0, session: s.id, startPercent: traktPct)
+        // 1.7.5: the subtitle downloaded earlier for this film/episode (here or on the TV) comes back on, unless
+        // subtitles are off for this series.
+        if model.workPrefKey.flatMap({ WorkLangPrefs.get($0, "sub") }) != "off" {
+            let id = s.id, storeKey = v.key, src = library.active
+            Task {
+                guard let f = await SubShare.saved(storeKey: storeKey, source: src) else { return }
+                await MainActor.run { if gate.isCurrent(id) { model.pendingSubFile = f } }
+            }
+        }
         if let p = traktPct { flashText(String(format: "تكملة من Trakt عند %.0f٪", p)) }
         if fit != .fit { model.apply(fit) }
         resumeTask?.cancel()
@@ -1339,6 +1359,7 @@ struct PlayerScreen: View {
                 await MainActor.run {
                     guard gate.isCurrent(id) else { return }
                     model.addSubtitle(file); show("تمت إضافة الترجمة العربية")
+                    SubShare.keep(file, storeKey: v.key, source: library.active, lang: best.language, label: "OpenSubtitles · " + best.release)
                 }
             } catch {
                 await MainActor.run { show(error.localizedDescription) }

@@ -639,3 +639,34 @@ public enum WorkRule {
         return "\(kind)|\(base)|\(year(name).map(String.init) ?? "")"
     }
 }
+
+/// 1.7.5: subtitles downloaded from the internet, shared between the iPhone and the TV through Google Drive — one
+/// file per film/episode, next to the sync file (which is not changed). Same rules as the TV app's SubSyncCore.
+enum SubSyncRule {
+    static let prefix = "shasha-sub-v1-"
+    /// Owner's rule: old subtitles must not pile up. A file not updated for 30 days goes; at most 150 are kept.
+    static let maxAgeMs: Int64 = 30 * 24 * 3600 * 1000
+    static let maxCount = 150
+    /// Clean-up runs at most once a day.
+    static let pruneEveryMs: Int64 = 24 * 3600 * 1000
+
+    /// Drive file name for a sync key (`CloudSyncRule.key`): the key itself (it holds the account hash) is not in the
+    /// name, only the first 24 hex characters of its SHA-256.
+    static func fileName(key: String, sha256: (String) -> String) -> String { prefix + String(sha256(key).prefix(24)) + ".srt" }
+
+    struct Stored: Equatable { let id: String; let modifiedMs: Int64 }
+    /// Files to delete: every file older than 30 days, then the oldest beyond 150. A file with an unknown time
+    /// (modifiedMs <= 0) counts as old.
+    static func prune(_ files: [Stored], nowMs: Int64) -> [String] {
+        let fresh = files.filter { $0.modifiedMs > 0 && nowMs - $0.modifiedMs <= maxAgeMs }.sorted { $0.modifiedMs > $1.modifiedMs }
+        let old = files.filter { !($0.modifiedMs > 0 && nowMs - $0.modifiedMs <= maxAgeMs) }.map(\.id)
+        return old + fresh.dropFirst(maxCount).map(\.id)
+    }
+
+    /// Short text for Drive's appProperties (key + value must stay under 124 bytes).
+    static func clip(_ s: String, maxBytes: Int = 90) -> String {
+        var out = ""
+        for ch in s { if (out + String(ch)).utf8.count > maxBytes { break }; out.append(ch) }
+        return out
+    }
+}

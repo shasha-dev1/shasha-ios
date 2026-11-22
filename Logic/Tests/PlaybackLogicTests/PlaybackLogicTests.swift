@@ -651,3 +651,35 @@ final class CloudSyncRaceAndClockTests: XCTestCase {
         }
     }
 }
+
+/// 1.7.5: subtitle sharing through Drive. The names must be the same on both apps (same vectors in the TV tests).
+final class SubSyncRuleTests: XCTestCase {
+    let sha: (String) -> String = { SHA256.hash(data: Data($0.utf8)).map { String(format: "%02x", $0) }.joined() }
+    let day: Int64 = 24 * 3600 * 1000
+    let now: Int64 = 1_800_000_000_000
+
+    func testFileNamesMatchTheTvApp() {
+        XCTAssertEqual(SubSyncRule.fileName(key: "0123456789abcdef|movie|12345", sha256: sha), "shasha-sub-v1-200a02eb8884dc7d433f9fe5.srt")
+        XCTAssertEqual(SubSyncRule.fileName(key: "0123456789abcdef|ep|987654", sha256: sha), "shasha-sub-v1-b89e90fd6ac239417f88da25.srt")
+    }
+    func testOldFilesGo() {
+        let files = [SubSyncRule.Stored(id: "new", modifiedMs: now - day),
+                     SubSyncRule.Stored(id: "edge", modifiedMs: now - 30 * day),
+                     SubSyncRule.Stored(id: "old", modifiedMs: now - 31 * day),
+                     SubSyncRule.Stored(id: "unknown", modifiedMs: 0)]
+        XCTAssertEqual(Set(SubSyncRule.prune(files, nowMs: now)), ["old", "unknown"])
+    }
+    func testAtMost150AreKeptNewestFirst() {
+        let files = (0..<160).map { SubSyncRule.Stored(id: "f\($0)", modifiedMs: now - Int64($0) * 60_000) }
+        let gone = SubSyncRule.prune(files, nowMs: now)
+        XCTAssertEqual(gone.count, 10)
+        XCTAssertEqual(Set(gone), Set((150..<160).map { "f\($0)" }))
+    }
+    func testClipKeepsWholeCharacters() {
+        let s = String(repeating: "ترجمة ", count: 30)
+        let c = SubSyncRule.clip(s)
+        XCTAssertLessThanOrEqual(c.utf8.count, 90)
+        XCTAssertTrue(s.hasPrefix(c))
+    }
+}
+

@@ -3,7 +3,7 @@ import SwiftUI
 /// Search OpenSubtitles for the title playing now; tap a result to load it into the player.
 struct SubSearchSheet: View {
     @State var query: SubQuery
-    let onLoaded: (URL) -> Void
+    let onLoaded: (URL, SubResult) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var results: [SubResult] = []
     @State private var loading = false
@@ -68,7 +68,7 @@ struct SubSearchSheet: View {
     private func pick(_ r: SubResult) async {
         busyId = r.id
         defer { busyId = nil }
-        do { onLoaded(try await OnlineSubs.download(r)); dismiss() } catch { self.error = error.localizedDescription }
+        do { onLoaded(try await OnlineSubs.download(r), r); dismiss() } catch { self.error = error.localizedDescription }
     }
 }
 

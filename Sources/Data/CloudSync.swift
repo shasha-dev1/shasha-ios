@@ -211,6 +211,72 @@ actor GoogleDrive {
         }
     }
 
+    // MARK: Shared subtitles (1.7.5)
+
+    /// A subtitle file shared by this phone or the TV (see SubSyncRule). Marked with appProperties shashaSub=1 so the
+    /// clean-up can list them without matching on names.
+    struct SubFile { let id: String; let lang: String; let label: String }
+
+    func findSub(_ name: String) async throws -> SubFile? {
+        var c = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
+        c.queryItems = [URLQueryItem(name: "q", value: "name = '\(name)' and trashed = false"),
+                        URLQueryItem(name: "fields", value: "files(id,appProperties,modifiedTime)"),
+                        URLQueryItem(name: "orderBy", value: "modifiedTime desc")]
+        let (code, d) = try await send(try await authed(c.url!.absoluteString))
+        guard code == 200 else { throw DriveError.http(code, nil) }
+        guard let f = (json(d)["files"] as? [[String: Any]])?.first, let id = f["id"] as? String else { return nil }
+        let p = f["appProperties"] as? [String: String] ?? [:]
+        return SubFile(id: id, lang: p["lang"] ?? "", label: p["label"] ?? "")
+    }
+
+    func downloadSub(_ id: String) async throws -> Data {
+        let (code, d) = try await send(try await authed("https://www.googleapis.com/drive/v3/files/\(id)?alt=media"))
+        guard code == 200 else { throw DriveError.http(code, nil) }
+        return d
+    }
+
+    /// Creates the file, or replaces the content and details of the one with this name.
+    func putSub(_ data: Data, name: String, lang: String, label: String) async throws {
+        let existing = try await findSub(name)?.id
+        let meta: [String: Any] = ["name": name, "description": "Shasha: subtitle shared between your devices",
+                                   "appProperties": ["shashaSub": "1", "lang": SubSyncRule.clip(lang, maxBytes: 20),
+                                                     "label": SubSyncRule.clip(label)]]
+        let boundary = "shasha-\(UUID().uuidString)"
+        var body = Data()
+        body.append("--\(boundary)\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".data(using: .utf8)!)
+        body.append(try JSONSerialization.data(withJSONObject: meta))
+        body.append("\r\n--\(boundary)\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n".data(using: .utf8)!)
+        body.append(data)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        let url = existing.map { "https://www.googleapis.com/upload/drive/v3/files/\($0)?uploadType=multipart" }
+            ?? "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
+        var r = try await authed(url, method: existing == nil ? "POST" : "PATCH")
+        r.setValue("multipart/related; boundary=\(boundary)", forHTTPHeaderField: "Content-Type"); r.httpBody = body
+        let (code, _) = try await send(r)
+        guard code == 200 else { throw DriveError.http(code, nil) }
+    }
+
+    /// Every shared subtitle file (id and last change), for the clean-up.
+    func listSubs() async throws -> [SubSyncRule.Stored] {
+        var c = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
+        c.queryItems = [URLQueryItem(name: "q", value: "appProperties has { key='shashaSub' and value='1' } and trashed = false"),
+                        URLQueryItem(name: "fields", value: "files(id,modifiedTime)"),
+                        URLQueryItem(name: "pageSize", value: "1000")]
+        let (code, d) = try await send(try await authed(c.url!.absoluteString))
+        guard code == 200 else { throw DriveError.http(code, nil) }
+        let iso = ISO8601DateFormatter(); iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return (json(d)["files"] as? [[String: Any]] ?? []).compactMap { f in
+            guard let id = f["id"] as? String else { return nil }
+            let t = (f["modifiedTime"] as? String).flatMap { iso.date(from: $0) }
+            return SubSyncRule.Stored(id: id, modifiedMs: t.map { CloudSyncRule.ms($0.timeIntervalSince1970) } ?? 0)
+        }
+    }
+
+    func delete(_ id: String) async throws {
+        let (code, _) = try await send(try await authed("https://www.googleapis.com/drive/v3/files/\(id)", method: "DELETE"))
+        guard code == 204 || code == 200 || code == 404 else { throw DriveError.http(code, nil) }
+    }
+
     private func put(_ data: Data, name: String, id: String?, description: String) async throws {
         if let id {
             var r = try await authed("https://www.googleapis.com/upload/drive/v3/files/\(id)?uploadType=media", method: "PATCH")
