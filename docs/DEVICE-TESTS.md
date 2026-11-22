@@ -241,3 +241,13 @@ Previous main: 1.6.0 `ad3fef6`, CI #98 success (runs/45042865983).
 2. Pause on the iPhone, «مزامنة الآن» → TV resumes there.
 3. Finish an episode on one device → shown as watched on the other after sync.
 4. Remove a title from Continue watching on the iPhone → sync both twice → gone on both, stays gone.
+
+## 1.7.2 — release candidate for device testing (CI #110 runs/45047616775 and #111 runs/45047783361 success; NOT tried on the device)
+- Fix (`ab5d834`, separate commit): «تجميد الشاشات خلف المشغّل» keeps the screens in the view tree with the same identity —
+  only their frame is held while the full-screen player covers them; they keep updating. 1.7.1's version swapped the
+  view structure and would have reset scroll position, search, group and navigation when it was on.
+- Sync: event times kept; own entries of unknown order withheld when the other device has a valid one (`8122052`).
+- Memory: the report keeps the process memory lines («ذاكرة …», phys_footprint) next to the new mpv-cache lines; the
+  mpv cache is only part of the engine's memory (decoder/GPU surfaces are not in it).
+- Device test with «التجميد»: same episode and steps with it off, then on — check scroll position, search text and
+  chosen group on Movies/Series after closing the player, PiP still works, Continue watching updates, progress saved.
