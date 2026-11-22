@@ -116,22 +116,24 @@ struct SettingsView: View {
                 tile("icloud.and.arrow.up", "المزامنة", syncLine.0, syncLine.1, .mint)
             }
             NavigationLink { SettingsPage(title: "TMDB") { TmdbSettingsSection() } } label: {
-                tile("film.stack", "TMDB", TmdbKey.value != nil ? "مفعّل" : "غير مضاف", TmdbKey.value != nil, .blue)
+                tile("film.stack", "TMDB", TmdbKey.value != nil ? "المفتاح محفوظ" : "غير مضاف", TmdbKey.value != nil, .blue)
             }
             NavigationLink { SettingsPage(title: "Trakt") { TraktSettingsSection() } } label: {
                 tile("chart.line.uptrend.xyaxis", "Trakt", TraktKeys.isLinked ? "مربوط" : "غير مربوط", TraktKeys.isLinked, .pink)
             }
             NavigationLink { SettingsPage(title: "TMDB") { TmdbSettingsSection() } } label: {
-                tile("character.bubble", "الترجمة الآلية", translate ? "تعمل" : "متوقفة", translate, Theme.accent)
+                tile("character.bubble", "الترجمة الآلية", translate ? "مفعّلة (iOS 18+)" : "متوقفة", translate, Theme.accent)
             }
         }
         .buttonStyle(.plain)
     }
 
+    /// 1.6.0: "linked" and "synced" are different states; a failed last attempt is said so.
     private var syncLine: (String, Bool) {
         guard DriveKeys.isLinked else { return ("غير مربوطة", false) }
-        if let d = CloudSync.lastSuccess { return ("مربوطة · " + LastUpdate.text(d), true) }
-        return ("مربوطة", true)
+        if CloudSync.lastResult?.hasPrefix("تعذّرت") == true { return ("مربوطة · فشلت آخر مزامنة", false) }
+        if let d = CloudSync.lastSuccess { return ("آخر مزامنة " + LastUpdate.text(d), true) }
+        return ("مربوطة · لم تتم مزامنة بعد", false)
     }
 
     private func tile(_ icon: String, _ title: String, _ line: String, _ on: Bool, _ color: Color) -> some View {
@@ -204,6 +206,7 @@ struct SettingsPage<Content: View>: View {
 struct SourcesPage: View {
     @EnvironmentObject var library: Library
     @Binding var adding: Bool
+    @State private var toRemove: Source?
     var body: some View {
         List {
             Section {
@@ -218,7 +221,7 @@ struct SourcesPage: View {
                             if s.id == library.active?.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.teal) }
                         }
                     }
-                    .swipeActions { Button(role: .destructive) { library.remove(s) } label: { Label("حذف", systemImage: "trash") } }
+                    .swipeActions { Button(role: .destructive) { toRemove = s } label: { Label("حذف", systemImage: "trash") } }
                 }
             } footer: { Text("اضغط على مصدر للتبديل إليه، واسحب لليسار للحذف.") }
             Section {
@@ -233,6 +236,11 @@ struct SourcesPage: View {
             }
         }
         .navigationTitle("المصادر").navigationBarTitleDisplayMode(.inline)
+        // 1.6.0: removing a playlist asks first and says what goes with it.
+        .confirmationDialog("حذف «\(toRemove?.name ?? "")»؟", isPresented: Binding(get: { toRemove != nil }, set: { if !$0 { toRemove = nil } }),
+                            titleVisibility: .visible) {
+            Button("حذف المصدر", role: .destructive) { if let s = toRemove { library.remove(s) }; toRemove = nil }
+        } message: { Text("تُحذف بيانات الدخول والمكتبة المحفوظة لهذا المصدر من هذا الجهاز. ملف المزامنة في Google Drive لا يتأثر.") }
     }
 }
 
