@@ -249,3 +249,121 @@ struct TraktLogView: View {
             .navigationTitle("سجل Trakt")
     }
 }
+
+// MARK: - 1.3.0 Sync with the TV app (Google Drive)
+
+struct CloudSyncSection: View {
+    @EnvironmentObject var library: Library
+    @State private var clientId = ""
+    @State private var secret = ""
+    @State private var linking = false
+    @State private var linked = DriveKeys.isLinked
+    @State private var busy = false
+    @State private var status: String?
+    @State private var guide = false
+
+    var body: some View {
+        Section {
+            if linked {
+                Label("مربوط بحساب Google", systemImage: "checkmark.icloud.fill").foregroundStyle(Theme.teal)
+                Button { Task { busy = true; status = await CloudSync.sync(library, force: true); busy = false } } label: {
+                    HStack { Label("مزامنة الآن", systemImage: "arrow.triangle.2.circlepath"); Spacer(); if busy { ProgressView() } }
+                }
+                if let t = CloudSync.lastSuccess { Text("آخر مزامنة ناجحة: \(LastUpdate.text(t))").font(.footnote).foregroundStyle(.secondary) }
+                Button(role: .destructive) { Task { await GoogleDrive.shared.disconnect(); linked = false; status = "تم فصل الربط" } } label: { Label("فصل الربط", systemImage: "xmark.icloud") }
+            } else {
+                TextField("Client ID (Google)", text: $clientId).textInputAutocapitalization(.never).autocorrectionDisabled()
+                SecureField("Client Secret", text: $secret)
+                Button {
+                    Keychain.set(clientId.filter { !$0.isWhitespace }.nilIfEmpty, for: DriveKeys.clientId)
+                    Keychain.set(secret.filter { !$0.isWhitespace }.nilIfEmpty, for: DriveKeys.secret)
+                    if DriveKeys.id == nil || DriveKeys.clientSecret == nil { status = "أدخل Client ID و Client Secret" } else { linking = true }
+                } label: { Label("ربط حساب Google", systemImage: "link") }
+                Button { guide = true } label: { Label("طريقة إنشاء Client ID", systemImage: "questionmark.circle") }
+            }
+            if let s = status ?? CloudSync.lastResult { Text(s).font(.footnote).foregroundStyle(.secondary) }
+        } header: { Text("المزامنة مع تطبيق التلفاز") } footer: {
+            Text("يحفظ نقاط التوقف في ملف مخفي في Google Drive حقك (التطبيق يشوف ملفه فقط). استخدم نفس Client ID في التلفاز والجوال ونفس حساب Google، ونفس اشتراك Xtream. المفاتيح تبقى في سلسلة المفاتيح على هذا الجهاز.")
+        }
+        .onAppear { clientId = DriveKeys.id ?? ""; secret = DriveKeys.clientSecret ?? ""; linked = DriveKeys.isLinked }
+        .sheet(isPresented: $linking, onDismiss: {
+            linked = DriveKeys.isLinked
+            if linked { Task { status = await CloudSync.sync(library, force: true) } }
+        }) { DriveLinkSheet() }
+        .sheet(isPresented: $guide) { DriveGuideSheet() }
+    }
+}
+
+struct DriveLinkSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    @State private var code: GoogleDrive.DeviceCode?
+    @State private var message = "جارٍ طلب رمز الربط…"
+    @State private var done = false
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 18) {
+                if let code {
+                    Text("افتح الرابط واكتب هذا الرمز").font(.headline)
+                    Text(code.userCode).font(.system(size: 36, weight: .bold, design: .monospaced)).foregroundStyle(Theme.accent).textSelection(.enabled)
+                    HStack {
+                        Button { UIPasteboard.general.string = code.userCode } label: { Label("نسخ الرمز", systemImage: "doc.on.doc") }.buttonStyle(.bordered)
+                        Button { if let u = URL(string: code.url) { openURL(u) } } label: { Label("فتح google.com/device", systemImage: "safari") }.buttonStyle(.borderedProminent)
+                    }
+                }
+                Text(message).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                if done { Button("تم") { dismiss() }.buttonStyle(.borderedProminent) }
+            }
+            .padding()
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } } }
+        }
+        .task { await run() }
+    }
+
+    private func run() async {
+        do {
+            let c = try await GoogleDrive.shared.deviceCode()
+            code = c; message = "بانتظار موافقتك في Google…"
+            var interval = c.interval
+            let end = Date().addingTimeInterval(TimeInterval(c.expiresIn))
+            while Date() < end && !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(interval) * 1_000_000_000)
+                guard !Task.isCancelled else { return }
+                switch try await GoogleDrive.shared.poll(c.deviceCode) {
+                case .success: message = "تم الربط"; done = true; return
+                case .pending: continue
+                case .slowDown: interval += 5
+                case .denied: message = "رفضت الربط في Google."; done = true; return
+                case .expired: message = "انتهت صلاحية الرمز. حاول من جديد."; done = true; return
+                case .failed(let e): message = "Google ردّ: \(e)"; done = true; return
+                }
+            }
+            if !done { message = "انتهت المهلة."; done = true }
+        } catch { message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription; done = true }
+    }
+}
+
+struct DriveGuideSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("مرة وحدة، من الكمبيوتر أو الجوال:").font(.headline)
+                    Group {
+                        Text("1. افتح console.cloud.google.com وسوّ مشروع جديد (مثلًا Shasha).")
+                        Text("2. APIs & Services ← Library ← فعّل Google Drive API.")
+                        Text("3. OAuth consent screen (Google Auth Platform): نوع External، اسم التطبيق، بريدك. في Data Access أضف النطاق ‎.../auth/drive.appdata فقط.")
+                        Text("4. في Audience اضغط Publish app (In production). لو تركته Testing ينتهي الربط كل 7 أيام.")
+                        Text("5. Clients ← Create client ← النوع: TVs and Limited Input devices. انسخ Client ID و Client Secret.")
+                        Text("6. حطهم هنا وفي تطبيق التلفاز، واربط بنفس حساب Google في الجهازين.")
+                    }.font(.subheadline)
+                    Text("Google قد يعرض «التطبيق لم يتم التحقق منه» لأنك صاحب المشروع: اضغط Advanced ← Continue.").font(.footnote).foregroundStyle(.secondary)
+                }.padding()
+            }
+            .navigationTitle("إعداد Google Drive")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } } }
+        }
+    }
+}

@@ -463,6 +463,19 @@ enum Store {
 
     static var recent: [String] { d.stringArray(forKey: "recent") ?? [] }
 
+    /// 1.3.0: a position from the other device (Google Drive sync). Keeps that device's save time, and places the
+    /// title in the recent list by that time (not on top), so an older item from the TV doesn't jump ahead.
+    static func applyRemote(_ key: String, pos: Double, dur: Double, watched: Bool, at: Date) {
+        if watched || pos <= 5 || (dur > 0 && pos / dur > 0.95) { d.removeObject(forKey: "pos." + key) }
+        else { d.set([pos, dur], forKey: "pos." + key) }
+        d.set(at.timeIntervalSince1970, forKey: "posAt." + key)
+        var recent = d.stringArray(forKey: "recent") ?? []
+        recent.removeAll { $0 == key }
+        let i = recent.firstIndex { (positionTime($0) ?? .distantPast) < at } ?? recent.count
+        recent.insert(key, at: i)
+        d.set(Array(recent.prefix(60)), forKey: "recent")
+    }
+
     /// Time of the last local save of this position (nil for positions saved before 1.2.0).
     static func positionTime(_ key: String) -> Date? {
         let t = d.double(forKey: "posAt." + key)

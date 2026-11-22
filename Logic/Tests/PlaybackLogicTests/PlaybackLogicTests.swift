@@ -354,3 +354,29 @@ final class TraktResumeRuleTests: XCTestCase {
         XCTAssertEqual(TraktResumeRule.choose(localPos: nil, localAt: nil, traktPct: 97, traktAt: now), .none)
     }
 }
+
+final class CloudSyncRuleTests: XCTestCase {
+    let fakeHash: (String) -> String = { s in String(repeating: "a", count: 8) + String(s.count, radix: 16).padding(toLength: 56, withPad: "0", startingAt: 0) }
+    func testAccountIgnoresSchemeCaseAndPath() {
+        let a = CloudSyncRule.account(server: "http://Example.com:8080/", user: "u", sha256: { $0 })
+        XCTAssertEqual(a, String("example.com:8080|u".prefix(16)))
+        XCTAssertEqual(CloudSyncRule.account(server: "http://example.com", user: "u", sha256: { $0 }), String("example.com:80|u".prefix(16)))
+        XCTAssertNil(CloudSyncRule.account(server: "nonsense", user: "u", sha256: { $0 }))
+    }
+    func testMergeNewestWins() {
+        var a = CloudSyncRule.File(); var b = CloudSyncRule.File()
+        a.progress["k"] = .init(pos: 10, dur: 100, w: false, at: 1, show: nil)
+        b.progress["k"] = .init(pos: 50, dur: 100, w: false, at: 2, show: nil)
+        b.progress["j"] = .init(pos: 5, dur: 100, w: false, at: 1, show: nil)
+        let m = CloudSyncRule.merge(a, b)
+        XCTAssertEqual(m.progress["k"]?.pos, 50); XCTAssertEqual(m.progress.count, 2)
+        XCTAssertEqual(CloudSyncRule.merge(b, a).progress["k"]?.pos, 50)
+        XCTAssertEqual(CloudSyncRule.newer(b, than: a).map(\.key), ["j", "k"])
+    }
+    func testLimitKeepsNewest() {
+        var f = CloudSyncRule.File()
+        for i in 0..<10 { f.progress["k\(i)"] = .init(pos: 1, dur: 2, w: false, at: Int64(i), show: nil) }
+        let m = CloudSyncRule.merge(f, CloudSyncRule.File(), limit: 3)
+        XCTAssertEqual(Set(m.progress.keys), ["k7", "k8", "k9"])
+    }
+}

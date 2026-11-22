@@ -52,7 +52,10 @@ struct RootView: View {
             // The player is an overlay (not a full-screen cover) so it can stay alive, hidden, while the video
             // plays in the picture-in-picture window and the viewer browses the app.
             if let item = play {
-                PlayerScreen(item: item, close: { Perf.shared.untilNextFrame("رجوع من المشغّل"); minimized = false; play = nil }, minimized: $minimized)
+                PlayerScreen(item: item, close: {
+                    Perf.shared.untilNextFrame("رجوع من المشغّل"); minimized = false; play = nil
+                    Task { try? await Task.sleep(nanoseconds: 1_500_000_000); await CloudSync.sync(library, force: true) }
+                }, minimized: $minimized)
                     .id(item.id)
                     .environmentObject(library).environmentObject(epg)
                     .opacity(minimized ? 0 : 1)
@@ -66,9 +69,13 @@ struct RootView: View {
         .task {
             if !library.sources.isEmpty && !library.hasData { await library.start() }
             await TraktSync.pull()
+            await CloudSync.sync(library)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            Task { await TraktSync.pull() }
+            Task { await TraktSync.pull(); await CloudSync.sync(library) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+            Task { await CloudSync.sync(library, force: true) }      // leaving the app: send this phone's progress
         }
     }
 

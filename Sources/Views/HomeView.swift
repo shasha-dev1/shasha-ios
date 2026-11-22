@@ -27,6 +27,7 @@ struct HomeView: View {
             .navigationTitle("الرئيسية")
             .refreshable { await library.reload() }
             .onAppear { tick += 1; Perf.shared.firstScreen("الرئيسية") }
+            .onReceive(NotificationCenter.default.publisher(for: .cloudSyncApplied)) { _ in tick += 1 }
             .task(id: library.version) { await tmdbRows.load(library) }
             .task(id: "\(library.version)|\(TraktStore.pulledAt?.timeIntervalSince1970 ?? 0)|\(tick)") { await loadTraktHits() }
             .sheet(item: $tmdbSheet) { TmdbInfoSheet(title: $0) }

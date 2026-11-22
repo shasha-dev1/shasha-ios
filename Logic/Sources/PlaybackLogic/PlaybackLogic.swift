@@ -442,3 +442,46 @@ enum TraktResumeRule {
         return traktAt.timeIntervalSince(localAt) > 60 ? .trakt(t) : .local
     }
 }
+
+/// 1.3.0: progress shared between the iPhone app and the TV app through ONE small file in the viewer's own
+/// Google Drive (hidden app-data folder). Both apps use the same keys, so a film or episode matches exactly
+/// (same Xtream account = same ids) and resumes at the same second. Format (both apps, see docs/CLOUD-SYNC.md):
+/// {"v":1,"progress":{"<account>|movie|<id>":{"pos":s,"dur":s,"w":false,"at":ms,"show":"<seriesId>"}}}
+enum CloudSyncRule {
+    struct Entry: Codable, Equatable {
+        var pos: Double
+        var dur: Double
+        var w: Bool
+        var at: Int64
+        var show: String?
+    }
+    struct File: Codable, Equatable {
+        var v = 1
+        var progress: [String: Entry] = [:]
+    }
+
+    /// Account part of a key: SHA-256 of "host:port|user" (no password), first 16 hex characters. Same on both apps.
+    static func account(server: String, user: String, sha256: (String) -> String) -> String? {
+        guard let u = URL(string: server.trimmingCharacters(in: .whitespaces)), let host = u.host?.lowercased(), !host.isEmpty else { return nil }
+        let port = u.port ?? (u.scheme?.lowercased() == "https" ? 443 : 80)
+        return String(sha256("\(host):\(port)|\(user)").prefix(16))
+    }
+
+    static func key(account: String, kind: String, id: String) -> String { "\(account)|\(kind)|\(id)" }
+
+    /// Newest entry wins for each key; the file keeps at most `limit` entries (newest).
+    static func merge(_ a: File, _ b: File, limit: Int = 3000) -> File {
+        var out = a.progress
+        for (k, e) in b.progress { if let o = out[k], o.at >= e.at { continue }; out[k] = e }
+        if out.count > limit {
+            let keep = out.sorted { $0.value.at > $1.value.at }.prefix(limit)
+            out = Dictionary(uniqueKeysWithValues: keep.map { ($0.key, $0.value) })
+        }
+        return File(v: 1, progress: out)
+    }
+
+    /// Entries of `remote` that are newer than this device's own (to apply locally).
+    static func newer(_ remote: File, than local: File) -> [(key: String, entry: Entry)] {
+        remote.progress.filter { k, e in (local.progress[k]?.at ?? -1) < e.at }.map { ($0.key, $0.value) }.sorted { $0.entry.at < $1.entry.at }
+    }
+}
