@@ -1,8 +1,10 @@
 import Foundation
 import CryptoKit
 
-/// 1.3.0: progress shared with the TV app through one file in the viewer's own Google Drive (hidden app-data folder,
-/// scope drive.appdata: the app sees only its own file, nothing else in the Drive). Sign-in with Google's device flow
+/// 1.3.0: progress shared with the TV app through one file in the viewer's own Google Drive.
+/// 1.4.4: scope drive.file (the app sees only files it created, nothing else in the Drive). drive.appdata was the
+/// first choice, but Google's device flow refuses it in practice ("Invalid device flow scope", seen on the owner's
+/// phone 2026-11-22 and reported by other projects), so the file now sits in My Drive as shasha-sync-v1.json. Sign-in with Google's device flow
 /// using the viewer's own OAuth client ("TVs and Limited Input devices") — the SAME client in both apps, so both see
 /// the same app-data folder. Keys and tokens stay in the Keychain. Format: CloudSyncRule / docs/CLOUD-SYNC.md.
 enum DriveKeys {
@@ -29,7 +31,7 @@ enum DriveError: LocalizedError {
 actor GoogleDrive {
     static let shared = GoogleDrive()
     static let fileName = "shasha-sync-v1.json"
-    private let scope = "https://www.googleapis.com/auth/drive.appdata"
+    private let scope = "https://www.googleapis.com/auth/drive.file"
 
     private func form(_ url: String, _ fields: [String: String]) -> URLRequest {
         var r = URLRequest(url: URL(string: url)!, timeoutInterval: 25)
@@ -121,8 +123,7 @@ actor GoogleDrive {
     /// (file id, contents) — nil when the file doesn't exist yet.
     func read() async throws -> (id: String, file: CloudSyncRule.File)? {
         var c = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
-        c.queryItems = [URLQueryItem(name: "spaces", value: "appDataFolder"),
-                        URLQueryItem(name: "q", value: "name = '\(Self.fileName)' and trashed = false"),
+        c.queryItems = [URLQueryItem(name: "q", value: "name = '\(Self.fileName)' and trashed = false"),
                         URLQueryItem(name: "fields", value: "files(id,modifiedTime)"),
                         URLQueryItem(name: "orderBy", value: "modifiedTime desc")]
         let (code, d) = try await send(try await authed(c.url!.absoluteString))
@@ -144,7 +145,7 @@ actor GoogleDrive {
         } else {
             let boundary = "shasha-\(UUID().uuidString)"
             var body = Data()
-            let meta = #"{"name":"\#(Self.fileName)","parents":["appDataFolder"]}"#
+            let meta = #"{"name":"\#(Self.fileName)","description":"Shasha: watch progress shared between your devices"}"#
             body.append("--\(boundary)\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n\(meta)\r\n".data(using: .utf8)!)
             body.append("--\(boundary)\r\nContent-Type: application/json\r\n\r\n".data(using: .utf8)!)
             body.append(data)

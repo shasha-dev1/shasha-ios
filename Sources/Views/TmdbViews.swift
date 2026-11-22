@@ -281,7 +281,7 @@ struct CloudSyncSection: View {
             }
             if let s = status ?? CloudSync.lastResult { Text(s).font(.footnote).foregroundStyle(.secondary) }
         } header: { Text("المزامنة مع تطبيق التلفاز") } footer: {
-            Text("يحفظ نقاط التوقف في ملف مخفي في Google Drive حقك (التطبيق يشوف ملفه فقط). استخدم نفس Client ID في التلفاز والجوال ونفس حساب Google، ونفس اشتراك Xtream. المفاتيح تبقى في سلسلة المفاتيح على هذا الجهاز.")
+            Text("يحفظ نقاط التوقف في ملف واحد (shasha-sync-v1.json) في Google Drive حقك؛ التطبيق يشوف الملفات اللي أنشأها فقط. لا تحذف الملف. استخدم نفس Client ID في التلفاز والجوال ونفس حساب Google، ونفس اشتراك Xtream. المفاتيح تبقى في سلسلة المفاتيح على هذا الجهاز.")
         }
         .onAppear { clientId = DriveKeys.id ?? ""; secret = DriveKeys.clientSecret ?? ""; linked = DriveKeys.isLinked }
         .sheet(isPresented: $linking, onDismiss: {
@@ -352,7 +352,7 @@ struct DriveGuideSheet: View {
                     Group {
                         Text("1. افتح console.cloud.google.com وسوّ مشروع جديد (مثلًا Shasha).")
                         Text("2. APIs & Services ← Library ← فعّل Google Drive API.")
-                        Text("3. OAuth consent screen (Google Auth Platform): نوع External، اسم التطبيق، بريدك. في Data Access أضف النطاق ‎.../auth/drive.appdata فقط.")
+                        Text("3. OAuth consent screen (Google Auth Platform): نوع External، اسم التطبيق، بريدك. في Data Access أضف النطاق ‎.../auth/drive.file فقط.")
                         Text("4. في Audience اضغط Publish app (In production). لو تركته Testing ينتهي الربط كل 7 أيام.")
                         Text("5. Clients ← Create client ← النوع: TVs and Limited Input devices. انسخ Client ID و Client Secret.")
                         Text("6. حطهم هنا وفي تطبيق التلفاز، واربط بنفس حساب Google في الجهازين.")

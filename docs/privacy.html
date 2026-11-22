@@ -7,7 +7,7 @@
 <ul>
 <li>التطبيق لا يجمع بياناتك ولا يرسلها إلى أي خادم تابع للمطوّر. لا توجد حسابات ولا إعلانات ولا تحليلات.</li>
 <li>بيانات المصادر والمفاتيح التي تدخلها تبقى على جهازك (سلسلة المفاتيح في iOS، ومخزن مشفّر في Android).</li>
-<li><b>Google Drive (اختياري):</b> عند تفعيل المزامنة يستخدم التطبيق صلاحية <code>drive.appdata</code> فقط، ليحفظ ملفًا واحدًا (نقاط الاستئناف وما شوهد) في مجلد التطبيق المخفي في حسابك. لا يقرأ التطبيق أي ملف آخر في Drive. يمكنك إلغاء الربط من الإعدادات أو من myaccount.google.com/permissions.</li>
+<li><b>Google Drive (اختياري):</b> عند تفعيل المزامنة يستخدم التطبيق صلاحية <code>drive.file</code> فقط، ليحفظ ملفًا واحدًا باسم shasha-sync-v1.json (نقاط الاستئناف وما شوهد) في Drive حقك. هذه الصلاحية لا تسمح للتطبيق إلا بالملفات التي أنشأها، فلا يرى أي ملف آخر. يمكنك إلغاء الربط من الإعدادات أو من myaccount.google.com/permissions.</li>
 <li><b>TMDB وTrakt (اختياري):</b> عند إدخال مفاتيحك يتصل التطبيق بهذه الخدمات مباشرة من جهازك وفق سياساتها.</li>
 <li>استخدام التطبيق لبيانات Google يلتزم بسياسة بيانات المستخدم لخدمات Google API، بما فيها متطلبات الاستخدام المحدود.</li>
 </ul>
@@ -15,7 +15,7 @@
 <ul dir="ltr">
 <li>The app does not collect your data or send it to any server run by the developer. No accounts, ads or analytics.</li>
 <li>Sources and keys you enter stay on your device (iOS Keychain, encrypted storage on Android).</li>
-<li><b>Google Drive (optional):</b> when sync is turned on, the app uses only the <code>drive.appdata</code> scope to keep one file (resume points and watched state) in the hidden app folder of your own Drive. It reads no other Drive files. Unlink in Settings or at myaccount.google.com/permissions.</li>
+<li><b>Google Drive (optional):</b> when sync is turned on, the app uses only the <code>drive.file</code> scope to keep one file, shasha-sync-v1.json (resume points and watched state), in your own Drive. That scope only reaches files the app created; it sees no other Drive files. Unlink in Settings or at myaccount.google.com/permissions.</li>
 <li><b>TMDB and Trakt (optional):</b> with your own keys, the app talks to these services directly from your device, under their policies.</li>
 <li>Shasha's use of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements.</li>
 <li>Questions: open an issue in this project's GitHub repository.</li>

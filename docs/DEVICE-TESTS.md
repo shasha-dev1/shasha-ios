@@ -151,3 +151,7 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Names shown cleaned (`CategoryNameRule`, with tests): small caps and styled letters → plain, emoji/flags/ornaments removed, separators tidied. Display only; order / hide / lock still use the provider's id. Same names in Settings → groups.
 - New first button (when there are more than 6 groups): «كل المجموعات» sheet with search (same folding as title search) and the number of titles per group (counted off the main thread).
 - The row scrolls to the selected group.
+
+## 1.4.4 — Drive sync scope (built only, not tested on device)
+- Owner's linking failed: `Google 400 (Invalid device flow scope: .../auth/drive.appdata)`. Google's docs list drive.appdata for the device flow, but in practice it is refused (other projects report the same). Switched to drive.file; the file shasha-sync-v1.json now sits in My Drive. TV app 0.9.11 changed the same way.
+- Cloud console: Data access must list `.../auth/drive.file`.

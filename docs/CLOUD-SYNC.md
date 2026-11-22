@@ -1,7 +1,7 @@
 # Shasha cloud sync format (iPhone app ↔ TV app)
 
-One JSON file, `shasha-sync-v1.json`, in the signed-in Google account's **appDataFolder** (scope
-`https://www.googleapis.com/auth/drive.appdata` — the app sees only its own file). Both apps use the **same OAuth client**
+One JSON file, `shasha-sync-v1.json`, in the signed-in Google account's **My Drive** (scope
+`https://www.googleapis.com/auth/drive.file` — the app sees only files it created; changed from drive.appdata on 2026-11-22 because Google's device flow refuses drive.appdata with "Invalid device flow scope"). Both apps use the **same OAuth client**
 (type "TVs and Limited Input devices", the viewer's own Google Cloud project), so they share the folder.
 Sign-in: Google device flow (`/device/code`, poll `/token` with `grant_type=urn:ietf:params:oauth:grant-type:device_code`).
 
