@@ -481,3 +481,54 @@ final class CloudSyncSafetyTests: XCTestCase {
         XCTAssertTrue(CloudSyncRule.newer(cloud, than: phone, nowMs: now).isEmpty)
     }
 }
+
+final class CloudSyncConcurrencyTests: XCTestCase {
+    let now: Int64 = 1_800_000_000_000
+    func e(_ pos: Double, _ at: Int64, x: Bool? = nil) -> CloudSyncRule.Entry { .init(pos: pos, dur: 100, w: false, at: at, show: nil, x: x) }
+
+    func testOverwrittenUploadIsDetectedAndRepaired() {
+        var start = CloudSyncRule.File(); start.progress["s"] = e(1, now - 9000)
+        var phone = CloudSyncRule.File(); phone.progress["p"] = e(30, now - 2000)
+        var tv = CloudSyncRule.File(); tv.progress["t"] = e(60, now - 1000)
+        // Both read `start`; the phone uploads, then the TV uploads its own merge over it.
+        let onDrive = CloudSyncRule.merge(start, tv, nowMs: now)
+        XCTAssertFalse(CloudSyncRule.covers(onDrive, phone, nowMs: now))     // the phone's re-read notices
+        let repaired = CloudSyncRule.merge(onDrive, phone, nowMs: now)
+        XCTAssertTrue(CloudSyncRule.covers(repaired, phone, nowMs: now))
+        XCTAssertTrue(CloudSyncRule.covers(repaired, tv, nowMs: now))
+        XCTAssertEqual(Set(repaired.progress.keys), ["s", "p", "t"])
+    }
+    func testRemovalSurvivesRepeatedMergesWithTheTvsRow() {
+        var drive = CloudSyncRule.File(); drive.progress["k"] = e(40, now - 1000, x: true)
+        var tvRow = CloudSyncRule.File(); tvRow.progress["k"] = e(40, now - 1000)
+        for _ in 0..<5 { drive = CloudSyncRule.merge(drive, tvRow, nowMs: now) }
+        XCTAssertEqual(drive.progress["k"]?.x, true)
+        var replay = CloudSyncRule.File(); replay.progress["k"] = e(55, now)
+        XCTAssertNil(CloudSyncRule.merge(drive, replay, nowMs: now).progress["k"]?.x)   // played again later: back
+    }
+    func testFutureEntriesCountedKeptAndLimitInclusive() {
+        var f = CloudSyncRule.File()
+        f.progress["f"] = e(10, now + 2 * 24 * 3600 * 1000)
+        f.progress["edge"] = e(10, now + CloudSyncRule.futureSlackMs)
+        XCTAssertEqual(CloudSyncRule.futureCount(f, nowMs: now), 1)
+        XCTAssertEqual(CloudSyncRule.newer(f, than: CloudSyncRule.File(), nowMs: now).map(\.key), ["edge"])
+        var local = CloudSyncRule.File(); local.progress["ok"] = e(5, now)
+        XCTAssertNotNil(CloudSyncRule.merge(f, local, nowMs: now).progress["f"])          // stays in the file
+    }
+}
+
+final class WorkRuleEdgeTests: XCTestCase {
+    func testDubbedAndQualityCopiesAreOneWork() {
+        let a = WorkRule.key("AR-DUB - Frozen (2013) (مدبلج)", kind: "movie")
+        let b = WorkRule.key("4K | Frozen (2013)", kind: "movie")
+        XCTAssertFalse(a.isEmpty); XCTAssertEqual(a, b)
+    }
+    func testSimilarTitlesStayApart() {
+        XCTAssertNotEqual(WorkRule.key("Spider-Man (2002)", kind: "movie"), WorkRule.key("Spider-Man: No Way Home (2021)", kind: "movie"))
+        XCTAssertNotEqual(WorkRule.key("The Office (2005)", kind: "show"), WorkRule.key("The Office (2001)", kind: "show"))
+        XCTAssertNotEqual(WorkRule.key("Dune Part Two (2024)", kind: "movie"), WorkRule.key("Dune (2024)", kind: "movie"))
+    }
+    func testMissingYearOnBothMerges() {
+        XCTAssertEqual(WorkRule.key("رجال تحت الطربوش", kind: "show"), WorkRule.key("FHD - رجال تحت الطربوش", kind: "show"))
+    }
+}

@@ -26,3 +26,23 @@ Sign-in: Google device flow (`/device/code`, poll `/token` with `grant_type=urn:
 - Before writing, the phone re-reads Drive's `version` of the file; if the other device wrote meanwhile it merges
   again (once), so simultaneous saves don't overwrite each other.
 - Before the first change of a day the previous contents are saved as `shasha-sync-v1.backup.json`.
+
+## 1.7.0 / TV 0.9.13 — how simultaneous writes are kept
+Drive v3 has no conditional upload, so a write can't be refused when the file changed. Instead:
+1. Before uploading, the phone compares Drive's `version` with the one it read; if it changed, it reads and merges again.
+2. After uploading, both apps read the file again and check `covers(file, mine)` (every own entry present, or a newer
+   one). If not, the other device overwrote this upload: merge with what is there now and upload again (max 2–3 times).
+3. Every sync re-merges the device's whole local state, so an entry overwritten in a race comes back at the latest on
+   that device's next sync. Merges are per key, newest `at` wins, so repeating them is safe.
+Tests: CloudSyncConcurrencyTests (iPhone), CloudSyncCoreTest.lostWriteIsDetectedAndRepaired (TV).
+
+## Removal flag `x` — compatibility
+- iPhone ≥ 1.6.0 writes it; TV ≥ 0.9.13 applies it (hides the title from its Continue watching until played again
+  after that time) and writes it back for titles hidden there. TV 0.9.12 keeps it when rewriting but doesn't hide.
+- TV ≤ 0.9.11 drops it on rewrite: the removal then stays only on the iPhone. No progress is lost in any combination.
+- An older copy elsewhere can't undo a removal (its `at` is older); playing the title again later brings it back.
+Tests: CloudSyncConcurrencyTests.testRemovalSurvivesRepeatedMergesWithTheTvsRow, CloudSyncCoreTest.removedItemStaysRemovedOverRepeatedSyncs.
+
+## Clock
+Entries more than 24 h ahead are not applied and don't win merges, but stay in the file; both apps report how many.
+The phone compares its clock with Google's `Date` header and warns when it differs by more than 5 minutes.

@@ -501,6 +501,18 @@ enum CloudSyncRule {
         return File(v: 1, progress: out)
     }
 
+    /// 1.7.0: `file` holds each of `mine`'s entries or a newer one. Checked by reading the file again after an
+    /// upload: false means the other device wrote between our read and our upload (our write was overwritten), so
+    /// we merge and upload again. Same rule as the TV app's CloudSyncCore.covers.
+    static func covers(_ file: File, _ mine: File, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> Bool {
+        mine.progress.allSatisfy { k, e in !sane(e, nowMs: nowMs) || (file.progress[k]?.at ?? -1) >= e.at }
+    }
+
+    /// Entries ignored because their time is more than a day ahead (reported, never deleted from the file).
+    static func futureCount(_ file: File, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> Int {
+        file.progress.values.filter { $0.at > nowMs + futureSlackMs }.count
+    }
+
     /// Entries of `remote` that are newer than this device's own (to apply locally).
     static func newer(_ remote: File, than local: File, nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) -> [(key: String, entry: Entry)] {
         remote.progress.filter { k, e in sane(e, nowMs: nowMs) && (local.progress[k]?.at ?? -1) < e.at }

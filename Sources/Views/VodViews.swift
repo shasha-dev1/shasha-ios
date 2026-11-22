@@ -250,7 +250,10 @@ struct MovieDetail: View {
                 }
                 let copies = otherMovies
                 if !copies.isEmpty {
-                    Text("نسخ أخرى (\(copies.count))").font(.headline).padding(.horizontal)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("اختيار النسخة (\(copies.count) أخرى)").font(.headline)
+                        Text("النسخة التي تشغّلها هي التي تفتحها بطاقة «متابعة المشاهدة».").font(.caption2).foregroundStyle(.secondary)
+                    }.padding(.horizontal)
                     ForEach(copies) { c in
                         NavigationLink { MovieDetail(movie: c, play: $play) } label: { CopyRow(name: c.name, group: library.vodCats.first { $0.id == c.categoryId }?.name) }
                             .padding(.horizontal)
@@ -441,7 +444,7 @@ struct SeriesDetail: View {
                         ForEach(copies) { c in
                             NavigationLink { SeriesDetail(show: c, play: $play) } label: { CopyRow(name: c.name, group: library.seriesCats.first { $0.id == c.categoryId }?.name) }
                         }
-                    } label: { Text("نسخ أخرى (\(copies.count))").font(.headline) }
+                    } label: { Text("اختيار النسخة (\(copies.count) أخرى)").font(.headline) }
                     .padding(.horizontal)
                 }
                 let seasons = Array(Set(episodes.map(\.season))).sorted()

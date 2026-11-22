@@ -44,9 +44,23 @@ actor GoogleDrive {
         return r
     }
     private func send(_ r: URLRequest) async throws -> (Int, Data) {
-        do { let (d, resp) = try await URLSession.shared.data(for: r); return ((resp as? HTTPURLResponse)?.statusCode ?? 0, d) }
+        do {
+            let (d, resp) = try await URLSession.shared.data(for: r)
+            let h = resp as? HTTPURLResponse
+            // 1.7.0: Google's clock (Date header) vs this phone's, to warn when the phone's clock is wrong.
+            if let ds = h?.value(forHTTPHeaderField: "Date"), let server = Self.httpDate.date(from: ds) {
+                clockSkew = Date().timeIntervalSince(server)
+            }
+            return (h?.statusCode ?? 0, d)
+        }
         catch { throw DriveError.network(error.localizedDescription) }
     }
+    /// Seconds this phone's clock is ahead of Google's (negative = behind); nil until a reply was seen.
+    private(set) var clockSkew: TimeInterval?
+    private static let httpDate: DateFormatter = {
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "GMT")
+        f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"; return f
+    }()
     private func json(_ d: Data) -> [String: Any] { (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] ?? [:] }
 
     // MARK: Device sign-in
@@ -271,7 +285,7 @@ enum CloudSync {
         running = true; last = Date(); defer { running = false }
         let t0 = Perf.now()
         do {
-            var applied = 0
+            var applied = 0, repaired = 0, future = 0
             for attempt in 0..<2 {
                 let remote = try await GoogleDrive.shared.read()
                 // A reply that arrives after the playlist changed must not touch the new account.
@@ -288,7 +302,9 @@ enum CloudSync {
                     if let show = e.show, key.hasPrefix("ep:") { Store.remember(episodes: [key], show: show) }
                     applied += 1
                 }
-                let merged = CloudSyncRule.merge(theirs, localFile(acct))
+                future = CloudSyncRule.futureCount(theirs)
+                let mine = localFile(acct)
+                let merged = CloudSyncRule.merge(theirs, mine)
                 if merged == theirs { break }
                 if let remote {
                     await GoogleDrive.shared.backupIfDue(remote.raw)
@@ -298,12 +314,28 @@ enum CloudSync {
                     }
                 }
                 try await GoogleDrive.shared.write(merged, id: remote?.id)
+                // 1.7.0: the version check narrows the window but can't close it (Drive v3 has no conditional
+                // upload). Read again: if the TV wrote between our check and our upload, our entries are missing —
+                // merge with what is there now and upload again (twice at most). The TV app does the same.
+                var verified = false
+                for _ in 0..<3 {
+                    guard let now = try await GoogleDrive.shared.read() else { break }
+                    if CloudSyncRule.covers(now.file, mine) { verified = true; break }
+                    repaired += 1
+                    try await GoogleDrive.shared.write(CloudSyncRule.merge(now.file, mine), id: now.id)
+                }
+                if !verified { throw DriveError.changedMeanwhile }
                 break
             }
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "cloud.lastSuccess")
             fails = 0; UserDefaults.standard.removeObject(forKey: "cloud.nextTry")
-            Perf.shared.record("مزامنة Google", since: t0, "طُبّق \(applied)")
-            let r = applied > 0 ? "تمت المزامنة: \(applied) من الجهاز الآخر" : "تمت المزامنة: لا جديد من الجهاز الآخر"
+            Perf.shared.record("مزامنة Google", since: t0, "طُبّق \(applied) · إعادة رفع \(repaired) · مستقبلي \(future)")
+            var r = applied > 0 ? "تمت المزامنة: \(applied) من الجهاز الآخر" : "تمت المزامنة: لا جديد من الجهاز الآخر"
+            if repaired > 0 { r += "\nالجهاز الآخر كتب في نفس اللحظة — أُعيد الدمج والرفع" }
+            if future > 0 { r += "\nلم يُطبَّق \(future) تحديث من جهاز ساعته متقدمة أكثر من يوم (بقيت في الملف)" }
+            if let sk = await GoogleDrive.shared.clockSkew, abs(sk) > 300 {
+                r += "\nساعة هذا الجهاز مختلفة عن ساعة Google بـ \(Int(abs(sk) / 60)) دقيقة — اضبط التاريخ والوقت تلقائيًا"
+            }
             lastResult = r
             if applied > 0 { NotificationCenter.default.post(name: .cloudSyncApplied, object: nil) }
             return r

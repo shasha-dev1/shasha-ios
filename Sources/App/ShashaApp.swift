@@ -1,4 +1,5 @@
 import SwiftUI
+import Network
 import AVFoundation
 
 enum Theme {
@@ -75,8 +76,19 @@ struct RootView: View {
             Task { await TraktSync.pull(); await CloudSync.sync(library) }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
-            Task { await CloudSync.sync(library, force: true) }      // leaving the app: send this phone's progress
+            // Leaving the app: try to send this phone's progress. Not relied on (iOS may stop it) — the progress is
+            // already saved on the phone and goes out with the next sync. 1.7.0: asks iOS for a little time.
+            let id = UIApplication.shared.beginBackgroundTask(withName: "shasha.sync")
+            Task {
+                await CloudSync.sync(library, force: true)
+                UIApplication.shared.endBackgroundTask(id)
+            }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NetworkWatch.backOnline)) { _ in
+            // 1.7.0: the connection came back — send what was saved while offline.
+            Task { if CloudSync.pendingCount(library) > 0 { await CloudSync.sync(library, force: true) } }
+        }
+        .onAppear { NetworkWatch.shared.start() }
     }
 
     @ViewBuilder private var content: some View {
@@ -93,5 +105,28 @@ struct RootView: View {
                 }
             }
         }
+    }
+}
+
+/// 1.7.0: tells the app when the network comes back after being offline (no polling, no reconnect loop).
+final class NetworkWatch: @unchecked Sendable {
+    static let shared = NetworkWatch()
+    static let backOnline = Notification.Name("shasha.backOnline")
+    private let monitor = NWPathMonitor()
+    private var started = false
+    private var wasOffline = false
+
+    func start() {
+        guard !started else { return }
+        started = true
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            let online = path.status == .satisfied
+            if online && self.wasOffline {
+                DispatchQueue.main.async { NotificationCenter.default.post(name: NetworkWatch.backOnline, object: nil) }
+            }
+            self.wasOffline = !online
+        }
+        monitor.start(queue: DispatchQueue(label: "shasha.network"))
     }
 }

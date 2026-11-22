@@ -313,7 +313,7 @@ struct CopyRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(name).lineLimit(2).foregroundStyle(.primary).multilineTextAlignment(.leading)
-                if let group, !group.isEmpty { Text(group).font(.caption).foregroundStyle(.secondary) }
+                if let group, !group.isEmpty { Text(CategoryNameRule.display(group)).font(.caption).foregroundStyle(.secondary) }
             }
             Spacer()
             Image(systemName: "chevron.left").font(.caption).foregroundStyle(.tertiary)
