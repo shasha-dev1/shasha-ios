@@ -131,3 +131,11 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Scrobbling: films and episodes only (never live): start when playback runs, pause on the viewer's pause, on leaving pause (< 95 %) or stop (≥ 95 %, same rule as the app and the TV). Identity = title + year (+ TMDB id when a TMDB key is set). Unit-tested rules (TraktRule).
 - Pull: /sync/playback at launch, when the app returns to the front (≤ every 2 min) and on demand. A pause from another device wins only when this phone has no position or the pause is newer than the phone's own save (TraktResumeRule, tested); playback then starts at that percentage. Home «متابعة المشاهدة» merges those titles («تكملة من جهاز آخر»); a series page points at the episode paused on the TV.
 - Local positions now carry a save time (needed for the comparison); positions saved before 1.2.0 are kept as they are.
+
+## 1.4.1 — Arabic machine translation of descriptions (built only, not tested on device)
+- When a description has no Arabic text (no Arabic TMDB overview, or the provider's plot is in another language), the phone translates it on the device with Apple's Translation framework (iOS 18+). Nothing is sent anywhere by the app.
+- Source language detected on the device (NaturalLanguage, confidence ≥ 0.6); unsure or unsupported pair → the original stays, with no prompt.
+- First use: the system asks to download the language. If the viewer dismisses it, no more automatic prompts until the app restarts; a «ترجم» button retries.
+- Labelled «ترجمة آلية على الجهاز», with «النص الأصلي» to switch back. Switch in Settings → TMDB (on by default, like the TV app).
+- Timing goes to the diagnostics report as «ترجمة آلية».
+- To test: open a film whose summary is English → Arabic text + label; tap «النص الأصلي»; turn the switch off → English.

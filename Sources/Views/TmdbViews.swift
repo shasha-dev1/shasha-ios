@@ -2,6 +2,7 @@ import SwiftUI
 
 /// 1.0.9: Settings → TMDB key. The status shown is the result of a real call (never "saved" = "working").
 struct TmdbSettingsSection: View {
+    @AppStorage(MachineTranslate.key) private var translate = true
     @State private var key = ""
     @State private var status: String?
     @State private var ok = false
@@ -26,6 +27,7 @@ struct TmdbSettingsSection: View {
                 Button(role: .destructive) { TmdbKey.set(nil); key = ""; status = "تم حذف المفتاح"; ok = false } label: { Label("حذف المفتاح", systemImage: "trash") }
                 Button { Task { await Tmdb.shared.clearCache(); status = "تم مسح مطابقات TMDB المحفوظة"; ok = true } } label: { Label("إعادة المطابقة من جديد", systemImage: "arrow.clockwise") }
             }
+            Toggle("ترجمة الوصف للعربية آليًا (على الجهاز، iOS 18 فأحدث)", isOn: $translate)
         } header: { Text("TMDB (الخلفيات والملخصات والترند)") } footer: {
             Text("المفتاح من themoviedb.org ← الإعدادات ← API. يُحفظ في سلسلة المفاتيح على هذا الجهاز فقط. المحفوظ الآن: \(TmdbKey.mask(TmdbKey.value)).\nThis product uses the TMDB API but is not endorsed or certified by TMDB.")
         }
@@ -62,18 +64,7 @@ final class TmdbLoader: ObservableObject {
 }
 
 /// Overview that opens to its full length.
-struct ExpandableText: View {
-    let text: String
-    var lines = 4
-    @State private var open = false
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(text).font(.subheadline).lineLimit(open ? nil : lines).fixedSize(horizontal: false, vertical: true)
-            Button(open ? "أقل" : "المزيد") { withAnimation(.easeInOut(duration: 0.2)) { open.toggle() } }
-                .font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent)
-        }
-    }
-}
+// ExpandableText moved to MachineTranslate.swift (1.4.1: Arabic machine translation).
 
 /// 1.0.9: TMDB rows on Home. Every card says whether the title is in the viewer's library; only titles that are
 /// there open a page with a play button. The others open an information sheet (no play button).
