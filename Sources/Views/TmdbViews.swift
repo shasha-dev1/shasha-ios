@@ -61,6 +61,79 @@ final class TmdbLoader: ObservableObject {
         do { title = try await Tmdb.shared.match(kind: kind, providerName: name, providerId: providerId) }
         catch { failed = (error as? LocalizedError)?.errorDescription }
     }
+    /// After a manual correction.
+    func reload(_ kind: TmdbTitle.Kind, name: String, providerId: String? = nil) async {
+        started = false; title = nil; failed = nil
+        await load(kind, name: name, providerId: providerId)
+    }
+}
+
+/// 1.7.0: "Correct the TMDB match" — search, pick and pin a title, choose "no match", or go back to automatic.
+/// Pinned per work (kind + cleaned title + year), so all provider copies of the title use it; a cache refresh
+/// keeps it. Only titles of the same kind are offered (a film is never matched to a series).
+struct TmdbFixSheet: View {
+    let kind: TmdbTitle.Kind
+    let providerName: String
+    let onDone: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+    @State private var results: [TmdbTitle] = []
+    @State private var error: String?
+    @State private var busy = false
+    @State private var current: Int?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text(providerName).font(.footnote).foregroundStyle(.secondary)
+                    if let c = current { Text(c == 0 ? "التصحيح الحالي: بدون مطابقة" : "التصحيح الحالي: TMDB #\(c)").font(.footnote) }
+                }
+                Section("نتائج البحث") {
+                    if busy { ProgressView() }
+                    if let error { Text(error).font(.footnote).foregroundStyle(.red) }
+                    ForEach(results) { t in
+                        Button { Task { await Tmdb.shared.setOverride(kind, providerName: providerName, id: t.tmdbId); onDone(); dismiss() } } label: {
+                            HStack(spacing: 10) {
+                                PosterImage(url: t.poster, title: t.name).frame(width: 44, height: 66).clipShape(RoundedRectangle(cornerRadius: 6))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(t.name).foregroundStyle(.primary)
+                                    Text([t.year.map(String.init), t.originalName != t.name ? t.originalName : nil].compactMap { $0 }.joined(separator: " · "))
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+                Section {
+                    Button("بدون مطابقة (استخدم بيانات المزوّد فقط)") {
+                        Task { await Tmdb.shared.setOverride(kind, providerName: providerName, id: 0); onDone(); dismiss() }
+                    }
+                    if current != nil {
+                        Button("إلغاء التصحيح والرجوع للمطابقة التلقائية", role: .destructive) {
+                            Task { await Tmdb.shared.setOverride(kind, providerName: providerName, id: nil); onDone(); dismiss() }
+                        }
+                    }
+                }
+            }
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: kind == .movie ? "ابحث عن الفيلم" : "ابحث عن المسلسل")
+            .onSubmit(of: .search) { Task { await run() } }
+            .navigationTitle("تصحيح مطابقة TMDB").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } } }
+            .task {
+                current = await Tmdb.shared.override(kind, providerName: providerName)
+                if query.isEmpty { query = TmdbRule.split(providerName).title; await run() }
+            }
+        }
+    }
+
+    private func run() async {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return }
+        busy = true; defer { busy = false }
+        do { results = try await Tmdb.shared.search(q, kind); error = results.isEmpty ? "لا نتائج" : nil }
+        catch { self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+    }
 }
 
 /// Overview that opens to its full length.

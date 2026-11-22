@@ -205,6 +205,7 @@ struct MovieDetail: View {
     private var otherMovies: [Movie] { library.copies(of: movie) }
     @State private var info = MovieInfo()
     @StateObject private var tmdb = TmdbLoader()
+    @State private var fixing = false
     @Environment(\.openURL) private var openURL
 
     private var meta: String {
@@ -264,7 +265,15 @@ struct MovieDetail: View {
         }
         .background(Theme.bg)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { FavButton(key: "movie:" + movie.id) } }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) { FavButton(key: "movie:" + movie.id) }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if TmdbKey.value != nil { Button { fixing = true } label: { Image(systemName: "wand.and.stars") }.accessibilityLabel("تصحيح مطابقة TMDB") }
+            }
+        }
+        .sheet(isPresented: $fixing) {
+            TmdbFixSheet(kind: .movie, providerName: movie.name) { Task { await tmdb.reload(.movie, name: movie.name, providerId: info.tmdbId) } }
+        }
         .task {
             if let x = library.xtream { info = await x.movieInfo(movie.id) }
             await tmdb.load(.movie, name: movie.name, providerId: info.tmdbId)
@@ -393,6 +402,7 @@ struct SeriesDetail: View {
     @State private var loadError = false
     @State private var copiesOpen = false
     @StateObject private var tmdb = TmdbLoader()
+    @State private var fixing = false
     @State private var tmdbEps: [Int: Tmdb.EpisodeText] = [:]
     @State private var epTranslated: [String: String] = [:]
 
@@ -493,7 +503,15 @@ struct SeriesDetail: View {
         }
         .background(Theme.bg)
         .navigationTitle(TmdbRule.split(show.name).title).navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { FavButton(key: "show:" + show.id) } }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) { FavButton(key: "show:" + show.id) }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if TmdbKey.value != nil { Button { fixing = true } label: { Image(systemName: "wand.and.stars") }.accessibilityLabel("تصحيح مطابقة TMDB") }
+            }
+        }
+        .sheet(isPresented: $fixing) {
+            TmdbFixSheet(kind: .tv, providerName: show.name) { Task { await tmdb.reload(.tv, name: show.name) } }
+        }
         .task {
             let t0 = Perf.now()
             Perf.shared.mark("تفاصيل مسلسل")

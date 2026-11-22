@@ -198,6 +198,8 @@ final class PlayerModel: ObservableObject {
     }
     /// Subtitle track to re-select after a reopen (mpv track id).
     var pendingSubtitleId: String?
+    /// 1.7.0: "show:<seriesId>" while an episode plays (per-series audio/subtitle language), nil otherwise.
+    var workPrefKey: String?
     private var stall = StallDetector()
     /// The item really played in this session.
     private var hasPlayed = false
@@ -213,7 +215,12 @@ final class PlayerModel: ObservableObject {
         attachDrawable()
         let lab = mpvLab; mpvLab = .normal
         DiagLog.shared.note(String(format: "[فتح] mpv | %@ | بداية من %.0f ث | وضع: %@", u.isFileURL ? "ملف محلي" : "HTTP", startSeconds, lab.rawValue))
-        mpv.open(u, start: startSeconds, live: live, alang: PlayerPrefs.audio, slang: PlayerPrefs.subs, lab: lab, startPercent: startPercent)
+        // 1.7.0: a language picked during an earlier episode of this series wins over the general preference.
+        let wa = live ? nil : workPrefKey.flatMap { WorkLangPrefs.get($0, "audio") }
+        let ws = live ? nil : workPrefKey.flatMap { WorkLangPrefs.get($0, "sub") }
+        mpv.open(u, start: startSeconds, live: live, alang: wa ?? PlayerPrefs.audio, slang: (ws == "off" ? nil : ws) ?? PlayerPrefs.subs,
+                 lab: lab, startPercent: startPercent)
+        if ws == "off" { mpv.setAsync("sid", "no") }
         if rate != 1 { mpv.setAsync("speed", String(format: "%.2f", rate)) }
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.tick() }
@@ -330,6 +337,8 @@ final class PlayerModel: ObservableObject {
         }
         DiagLog.shared.note("[التطبيق] طلب اختيار \(kind) \(id) «\(t.name)»")
         mpv.setAsync(property, id)
+        // 1.7.0: remember the language (not the track number, which differs between episodes) for this series.
+        if let k = workPrefKey, !t.lang.isEmpty { WorkLangPrefs.set(k, type, t.lang) }
         lastPick = "\(kind): طُلب اختيار \(property)=\(id) «\(t.name)»"
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
             guard let self else { return }
@@ -340,6 +349,7 @@ final class PlayerModel: ObservableObject {
     }
 
     func subtitlesOff() {
+        if let k = workPrefKey { WorkLangPrefs.set(k, "sub", "off") }
         DiagLog.shared.note("[التطبيق] إيقاف كل الترجمات")
         mpv.setAsync("sid", "no")
         lastPick = "ترجمة: إيقاف كل المسارات"
@@ -1175,6 +1185,7 @@ struct PlayerScreen: View {
         DiagLog.shared.beginSession(ch.name)
         let s = gate.begin(key: "live:" + ch.id)
         session = s
+        model.workPrefKey = nil
         model.open(ch.url, live: true, session: s.id)
         if fit != .fit { model.apply(fit) }
         epg.load(ch, from: library.xtream)
@@ -1199,6 +1210,7 @@ struct PlayerScreen: View {
                                                       traktPct: traktPause(n, v)?.progress, traktAt: traktPause(n, v)?.pausedAt) {
             traktPct = p
         }
+        model.workPrefKey = v.key.hasPrefix("ep:") ? Store.show(forEpisode: v.key).map { "show:" + $0 } : nil
         model.open(v.url, startSeconds: traktPct == nil ? pos : 0, session: s.id, startPercent: traktPct)
         if let p = traktPct { flashText(String(format: "تكملة من Trakt عند %.0f٪", p)) }
         if fit != .fit { model.apply(fit) }
@@ -1477,4 +1489,12 @@ enum Orientation {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
         scene.requestGeometryUpdate(.iOS(interfaceOrientations: m)) { _ in }
     }
+}
+
+/// 1.7.0: audio / subtitle language chosen for one series (mpv language code from the track, or "off").
+enum WorkLangPrefs {
+    private static func key(_ work: String, _ type: String) -> String { "wlang.\(type).\(work)" }
+    static func get(_ work: String, _ type: String) -> String? { UserDefaults.standard.string(forKey: key(work, type)) }
+    static func set(_ work: String, _ type: String, _ lang: String) { UserDefaults.standard.set(lang, forKey: key(work, type)) }
+    static func clear(_ work: String) { for t in ["audio", "sub"] { UserDefaults.standard.removeObject(forKey: key(work, t)) } }
 }

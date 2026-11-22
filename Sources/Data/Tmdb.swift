@@ -76,7 +76,41 @@ actor Tmdb {
         guard let f = file, let d = try? JSONEncoder().encode(cache) else { return }
         try? d.write(to: f, options: [.atomic])
     }
-    func clearCache() { cache = [:]; persist() }
+    func clearCache() { cache = [:]; persist() }      // manual corrections (overrides) are kept
+
+    // MARK: 1.7.0 — manual match correction (pinned per work: kind + cleaned title + year)
+
+    /// key → TMDB id; 0 = "no TMDB match" (use the provider's data only).
+    private var overrides: [String: Int] = [:]
+    private var overridesLoaded = false
+    private var overridesFile: URL? {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("tmdb-overrides.json")
+    }
+    private func loadOverrides() {
+        guard !overridesLoaded else { return }
+        overridesLoaded = true
+        if let f = overridesFile, let d = try? Data(contentsOf: f), let o = try? JSONDecoder().decode([String: Int].self, from: d) { overrides = o }
+    }
+    static func workKey(_ kind: TmdbTitle.Kind, _ providerName: String) -> String {
+        let clean = TmdbRule.split(providerName).title
+        return "\(kind.rawValue)|\(TmdbRule.libraryKey(providerName))|\(TmdbRule.year(clean) ?? 0)"
+    }
+    /// Pins a TMDB title (id), "no match" (0) or removes the correction (nil → automatic matching again).
+    func setOverride(_ kind: TmdbTitle.Kind, providerName: String, id: Int?) {
+        loadOverrides(); load()
+        let k = Self.workKey(kind, providerName)
+        overrides[k] = id
+        cache[k] = nil
+        persistSoon()
+        if let f = overridesFile, let d = try? JSONEncoder().encode(overrides) { try? d.write(to: f, options: [.atomic]) }
+    }
+    func override(_ kind: TmdbTitle.Kind, providerName: String) -> Int? { loadOverrides(); return overrides[Self.workKey(kind, providerName)] }
+
+    /// Search results for the correction sheet (films only for a film, series only for a series).
+    func search(_ query: String, _ kind: TmdbTitle.Kind) async throws -> [TmdbTitle] {
+        guard let json = try await get("/search/\(kind.rawValue)", ["query": query, "language": lang]) else { return [] }
+        return (json["results"] as? [[String: Any]] ?? []).prefix(20).compactMap { Self.title($0, kind) }
+    }
 
     // MARK: HTTP
 
@@ -128,10 +162,18 @@ actor Tmdb {
     /// TMDB title for a library item. `providerId`: TMDB id the provider sent, if any (used first).
     /// nil = no confident match (cached; tried again after 7 days).
     func match(kind: TmdbTitle.Kind, providerName: String, providerId: String? = nil) async throws -> TmdbTitle? {
-        load()
+        load(); loadOverrides()
         let clean = TmdbRule.split(providerName).title
         let year = TmdbRule.year(clean)
         let ck = "\(kind.rawValue)|\(TmdbRule.libraryKey(providerName))|\(year ?? 0)"
+        // 1.7.0: a manual correction wins over the provider's id and over automatic matching.
+        if let o = overrides[ck] {
+            if o == 0 { return nil }
+            if let e = cache[ck], let t = e.title, t.tmdbId == o { return t }
+            let t = try await details(kind: kind, id: o)
+            cache[ck] = Entry(title: t, at: Date()); persistSoon()
+            return t
+        }
         if let e = cache[ck], e.title != nil || Date().timeIntervalSince(e.at) < 7 * 86400 { return e.title }
         if let t = inFlight[ck] { return try await t.value }
         let task = Task<TmdbTitle?, Error> {
