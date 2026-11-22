@@ -366,7 +366,7 @@ struct DriveLinkSheet: View {
             case .slowDown: break
             case .denied: message = "رفضت الربط في Google."; done = true; PendingDriveCode.code = nil
             case .expired: message = "انتهت صلاحية الرمز. اضغط ربط من جديد."; done = true; PendingDriveCode.code = nil
-            case .failed(let e) where e == "invalid_grant":
+            case .failed(let e) where e.hasPrefix("invalid_grant"):
                 // Google: "has already been claimed" — an earlier check (another copy of this sheet, or the run
                 // loop) already received the tokens. If they are here, the link worked.
                 PendingDriveCode.code = nil

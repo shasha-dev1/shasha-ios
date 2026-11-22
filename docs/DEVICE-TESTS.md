@@ -171,3 +171,6 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 
 ## 1.5.1 — link sheet showed «invalid_grant» (built only)
 - Google documents invalid_grant on the token step as a code that "has already been claimed". With the code kept across sheet rebuilds, an earlier check could already have received the tokens; the later check then got invalid_grant. Now: invalid_grant + tokens present = linked; without tokens the sheet asks for a new code.
+
+## 1.5.2 — linking diagnostics (built only)
+- After 1.5.1 the owner still saw invalid_grant and Settings showed "not linked" (no refresh token saved), so the "already claimed by an earlier check" explanation is not proven. Now every token reply is logged in the diagnostics report as «ربط Google: ردّ» (HTTP code + error name, or whether tokens/refresh came back; no tokens or keys), and the sheet shows Google's error_description.

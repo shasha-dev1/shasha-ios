@@ -69,6 +69,8 @@ actor GoogleDrive {
             "client_id": id, "client_secret": DriveKeys.clientSecret ?? "", "device_code": deviceCode,
             "grant_type": "urn:ietf:params:oauth:grant-type:device_code"]))
         let o = json(d)
+        let gotRefresh = o["refresh_token"] != nil
+        await MainActor.run { Perf.shared.add("ربط Google: ردّ", ms: 0, "HTTP \(code) \(o["error"] as? String ?? (gotRefresh ? "tokens+refresh" : "tokens"))") }
         if code == 200, saveTokens(o) { return .success }
         let err = o["error"] as? String ?? ""
         switch err {
@@ -76,7 +78,10 @@ actor GoogleDrive {
         case "slow_down": return .slowDown
         case "access_denied": return .denied
         case "expired_token": return .expired
-        default: return .failed(err.isEmpty ? "HTTP \(code)" : err)
+        default:
+            // 1.5.2: keep Google's own explanation (no secrets in it) to tell causes apart.
+            let why = (o["error_description"] as? String).map { " — \($0)" } ?? ""
+            return .failed(err.isEmpty ? "HTTP \(code)\(why)" : err + why)
         }
     }
 
