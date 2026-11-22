@@ -145,12 +145,15 @@ struct FreezeBehindPlayer: ViewModifier {
         let b = UIScreen.main.bounds.size
         return CGSize(width: min(b.width, b.height), height: max(b.width, b.height))
     }
+    // 1.7.2: one view structure whether on or off. The 1.7.1 version switched between two branches (if/else), which
+    // gives the screens a new identity each time the player opened or closed with the switch on — their scroll
+    // position, search text, chosen group and navigation would have been reset. Now only the frame values change:
+    // the screens stay in the view tree, keep their state and keep updating; only their size is held while the
+    // full-screen player covers them.
     func body(content: Content) -> some View {
-        if on {
-            content.frame(width: portrait.width, height: portrait.height, alignment: .topLeading).clipped()
-                .allowsHitTesting(false).accessibilityHidden(true)
-        } else {
-            content
-        }
+        content
+            .frame(width: on ? portrait.width : nil, height: on ? portrait.height : nil, alignment: .topLeading)
+            .allowsHitTesting(!on)
+            .accessibilityHidden(on)
     }
 }
