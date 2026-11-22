@@ -263,3 +263,11 @@ Previous main: 1.6.0 `ad3fef6`, CI #98 success (runs/45042865983).
 - Not changed: playback settings, cache size, colours, subtitles, PiP.
 - To check on the device: two syncs in a row → the second says "لا جديد"; the cache line shows MB values; memory
   lines «بعد مزامنة Google» / «بعد ترجمة آلية».
+
+## 1.7.4 — Drive 401 after a successful sync
+
+Device report (screenshot, 21:03): "linked", last success 20:59, then «تعذّرت المزامنة: ردّ Google 401 … invalid
+authentication credentials». The saved access token was still before its saved expiry, so the app kept sending it
+and every sync failed until that time passed. Fix: a 401 on a signed Drive request drops the saved access token,
+refreshes once with the refresh token and repeats the request once. A refused refresh (invalid_grant) still asks to
+link again. Logged in the performance report as «Google: رمز الدخول رُفض قبل انتهائه — جُدّد».

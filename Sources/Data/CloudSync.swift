@@ -43,7 +43,21 @@ actor GoogleDrive {
         r.httpBody = (c.percentEncodedQuery ?? "").replacingOccurrences(of: "+", with: "%2B").data(using: .utf8)
         return r
     }
+    /// 1.7.4: Google can refuse an access token before the expiry time we saved (device report: 401 "invalid
+    /// authentication credentials" four minutes after a successful sync). Until then every sync failed until that
+    /// saved time passed. Now a 401 on a signed request drops the saved token, gets a fresh one with the refresh
+    /// token and tries the same request once more. If the refresh itself is refused (invalid_grant) the user is asked
+    /// to link again, as before.
     private func send(_ r: URLRequest) async throws -> (Int, Data) {
+        let (code, d) = try await sendOnce(r)
+        guard code == 401, r.value(forHTTPHeaderField: "Authorization") != nil else { return (code, d) }
+        Keychain.set(nil, for: DriveKeys.access)
+        var again = r
+        again.setValue("Bearer \(try await token())", forHTTPHeaderField: "Authorization")
+        await MainActor.run { Perf.shared.add("Google: رمز الدخول رُفض قبل انتهائه — جُدّد", ms: 0, "") }
+        return try await sendOnce(again)
+    }
+    private func sendOnce(_ r: URLRequest) async throws -> (Int, Data) {
         do {
             let (d, resp) = try await URLSession.shared.data(for: r)
             let h = resp as? HTTPURLResponse
