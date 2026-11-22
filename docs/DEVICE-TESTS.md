@@ -155,3 +155,7 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 ## 1.4.4 — Drive sync scope (built only, not tested on device)
 - Owner's linking failed: `Google 400 (Invalid device flow scope: .../auth/drive.appdata)`. Google's docs list drive.appdata for the device flow, but in practice it is refused (other projects report the same). Switched to drive.file; the file shasha-sync-v1.json now sits in My Drive. TV app 0.9.11 changed the same way.
 - Cloud console: Data access must list `.../auth/drive.file`.
+
+## 1.4.5 — Drive link sheet stuck on «بانتظار موافقتك» (built only)
+- Owner approved in Google («Success! Device connected») but the sheet kept waiting. The polling loop runs only while the app is in front; after returning from Safari it may stay paused or its request may fail with a network error, which ended the loop.
+- Now: asks Google at once when the app comes back to the front, a «وافقت؟ تحقق الآن» button, and a network error no longer ends the wait.

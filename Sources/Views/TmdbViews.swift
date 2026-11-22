@@ -295,9 +295,11 @@ struct CloudSyncSection: View {
 struct DriveLinkSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var phase
     @State private var code: GoogleDrive.DeviceCode?
     @State private var message = "جارٍ طلب رمز الربط…"
     @State private var done = false
+    @State private var checking = false
 
     var body: some View {
         NavigationStack {
@@ -309,6 +311,10 @@ struct DriveLinkSheet: View {
                         Button { UIPasteboard.general.string = code.userCode } label: { Label("نسخ الرمز", systemImage: "doc.on.doc") }.buttonStyle(.bordered)
                         Button { if let u = URL(string: code.url) { openURL(u) } } label: { Label("فتح google.com/device", systemImage: "safari") }.buttonStyle(.borderedProminent)
                     }
+                    if !done {
+                        Button { Task { await check() } } label: { Label("وافقت؟ تحقق الآن", systemImage: "arrow.clockwise") }
+                            .disabled(checking)
+                    }
                 }
                 Text(message).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 if done { Button("تم") { dismiss() }.buttonStyle(.borderedProminent) }
@@ -317,6 +323,8 @@ struct DriveLinkSheet: View {
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { dismiss() } } }
         }
         .task { await run() }
+        // 1.4.5: back from Safari → ask Google at once (the timer loop may have been paused in the background).
+        .onChange(of: phase) { p in if p == .active { Task { await check() } } }
     }
 
     private func run() async {
@@ -325,20 +333,37 @@ struct DriveLinkSheet: View {
             code = c; message = "بانتظار موافقتك في Google…"
             var interval = c.interval
             let end = Date().addingTimeInterval(TimeInterval(c.expiresIn))
-            while Date() < end && !Task.isCancelled {
+            while Date() < end && !Task.isCancelled && !done {
                 try? await Task.sleep(nanoseconds: UInt64(interval) * 1_000_000_000)
-                guard !Task.isCancelled else { return }
-                switch try await GoogleDrive.shared.poll(c.deviceCode) {
-                case .success: message = "تم الربط"; done = true; return
-                case .pending: continue
-                case .slowDown: interval += 5
-                case .denied: message = "رفضت الربط في Google."; done = true; return
-                case .expired: message = "انتهت صلاحية الرمز. حاول من جديد."; done = true; return
-                case .failed(let e): message = "Google ردّ: \(e)"; done = true; return
-                }
+                guard !Task.isCancelled, !done else { return }
+                if await check() == .slowDown { interval += 5 }
             }
-            if !done { message = "انتهت المهلة."; done = true }
+            if !done { message = "انتهت المهلة. اضغط ربط من جديد."; done = true }
         } catch { message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription; done = true }
+    }
+
+    /// One question to Google. A network error (common right after returning from Safari) is not the end:
+    /// the next round asks again.
+    @discardableResult
+    private func check() async -> GoogleDrive.Poll? {
+        guard let c = code, !done, !checking else { return nil }
+        checking = true; defer { checking = false }
+        do {
+            let r = try await GoogleDrive.shared.poll(c.deviceCode)
+            switch r {
+            case .success: message = "تم الربط ✓"; done = true
+                NotificationCenter.default.post(name: .cloudSyncApplied, object: nil)
+            case .pending: message = "بانتظار موافقتك في Google…"
+            case .slowDown: break
+            case .denied: message = "رفضت الربط في Google."; done = true
+            case .expired: message = "انتهت صلاحية الرمز. اضغط ربط من جديد."; done = true
+            case .failed(let e): message = "Google ردّ: \(e)"; done = true
+            }
+            return r
+        } catch {
+            message = "تعذّر الاتصال بـGoogle، سأحاول مرة أخرى…"
+            return nil
+        }
     }
 }
 
