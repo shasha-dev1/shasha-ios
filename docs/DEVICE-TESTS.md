@@ -139,3 +139,9 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Labelled «ترجمة آلية على الجهاز», with «النص الأصلي» to switch back. Switch in Settings → TMDB (on by default, like the TV app).
 - Timing goes to the diagnostics report as «ترجمة آلية».
 - To test: open a film whose summary is English → Arabic text + label; tap «النص الأصلي»; turn the switch off → English.
+
+## 1.4.2 — episode descriptions (built only, not tested on device)
+- Cause: the phone showed only the provider's episode plot, and most providers send it empty. The TV app already used TMDB per season; the phone did not.
+- Now: when the series is matched on TMDB, the selected season's episodes take TMDB's name, overview and still image where the provider has none (Arabic first, English per episode when Arabic is missing). GET /tv/{id}/season/{n}, kept in memory for the run.
+- English overviews are machine-translated on the device in one batch per season (iOS 18+, same switch), labelled «ترجمة آلية».
+- Needs a TMDB key in Settings. Timings: «TMDB حلقات الموسم», «ترجمة آلية (حلقات)».

@@ -354,6 +354,8 @@ struct SeriesDetail: View {
     @State private var loadError = false
     @State private var copiesOpen = false
     @StateObject private var tmdb = TmdbLoader()
+    @State private var tmdbEps: [Int: Tmdb.EpisodeText] = [:]
+    @State private var epTranslated: [String: String] = [:]
 
     private var meta: String {
         let t = tmdb.title
@@ -435,13 +437,18 @@ struct SeriesDetail: View {
                 }
                 let current = nextEpisode?.id
                 let recent = Set(Store.recent)
-                ForEach(episodes.filter { $0.season == season }) { e in
-                    Button { open(e) } label: {
-                        EpisodeRow(episode: e, showName: show.name, progress: progress(key(e)), current: e.id == current,
-                                   watched: Store.position(key(e)) == nil && recent.contains(key(e)))
+                let shown = episodes.filter { $0.season == season }
+                LazyVStack(spacing: 14) {
+                    ForEach(shown) { e in
+                        Button { open(e) } label: {
+                            EpisodeRow(episode: e, showName: show.name, progress: progress(key(e)), current: e.id == current,
+                                       watched: Store.position(key(e)) == nil && recent.contains(key(e)),
+                                       tmdb: tmdbEps[e.number], translated: epTranslated)
+                        }
+                        .buttonStyle(.plain).padding(.horizontal)
                     }
-                    .buttonStyle(.plain).padding(.horizontal)
                 }
+                .modifier(TranslateBatch(texts: seasonTexts(shown), result: $epTranslated))
             }
             .padding(.bottom, 24)
         }
@@ -457,6 +464,27 @@ struct SeriesDetail: View {
             Perf.shared.mark("تفاصيل مسلسل: عرض الحلقات")
             await tmdb.load(.tv, name: show.name)
         }
+        .task(id: "\(tmdb.title?.tmdbId ?? 0):\(season)") { await loadTmdbSeason() }
+    }
+
+    /// 1.4.2: episode names/overviews/stills from TMDB for the selected season (the provider often sends none).
+    private func loadTmdbSeason() async {
+        tmdbEps = [:]
+        guard let t = tmdb.title, t.kind == .tv else { return }
+        let t0 = Perf.now()
+        guard let eps = try? await Tmdb.shared.season(tvId: t.tmdbId, number: season), !Task.isCancelled else { return }
+        tmdbEps = eps
+        Perf.shared.record("TMDB حلقات الموسم", since: t0, "\(eps.count) حلقة")
+    }
+
+    /// Texts on screen that may need Arabic: plots (provider or TMDB) and TMDB episode names.
+    private func seasonTexts(_ eps: [Episode]) -> [String] {
+        var out: [String] = []
+        for e in eps {
+            if let p = e.plot?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? tmdbEps[e.number]?.overview { out.append(p) }
+            if let n = tmdbEps[e.number]?.name, n.count >= 20 { out.append(n) }
+        }
+        return out
     }
 
     private func loadEpisodes() async {

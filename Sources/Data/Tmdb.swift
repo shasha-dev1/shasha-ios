@@ -168,6 +168,37 @@ actor Tmdb {
         return t
     }
 
+    // MARK: Episodes of one season (1.4.2)
+
+    struct EpisodeText: Equatable { let name: String?; let overview: String?; let still: String? }
+    private var seasons: [String: [Int: EpisodeText]] = [:]
+
+    /// Names and overviews of one season's episodes, keyed by episode number (GET /tv/{id}/season/{n}).
+    /// Arabic first; an episode with no Arabic overview takes the English one. Kept in memory for this run.
+    func season(tvId: Int, number: Int) async throws -> [Int: EpisodeText] {
+        let k = "\(tvId):\(number)"
+        if let c = seasons[k] { return c }
+        func parse(_ j: [String: Any]?) -> [Int: EpisodeText] {
+            var out: [Int: EpisodeText] = [:]
+            for e in (j?["episodes"] as? [[String: Any]] ?? []) {
+                guard let n = e["episode_number"] as? Int else { continue }
+                func clean(_ v: Any?) -> String? { (v as? String)?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty }
+                out[n] = EpisodeText(name: clean(e["name"]), overview: clean(e["overview"]), still: Self.image(e["still_path"], "w300"))
+            }
+            return out
+        }
+        var ar = parse(try await get("/tv/\(tvId)/season/\(number)", ["language": lang]))
+        if ar.isEmpty || ar.values.contains(where: { $0.overview == nil }) {
+            let en = parse(try? await get("/tv/\(tvId)/season/\(number)", ["language": "en-US"]))
+            for (n, e) in en {
+                let a = ar[n]
+                ar[n] = EpisodeText(name: a?.name ?? e.name, overview: a?.overview ?? e.overview, still: a?.still ?? e.still)
+            }
+        }
+        seasons[k] = ar
+        return ar
+    }
+
     // MARK: Lists (trending / popular)
 
     enum ListKind: String { case trending, popular, newTop }

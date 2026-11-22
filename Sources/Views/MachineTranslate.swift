@@ -145,3 +145,83 @@ private struct Translate18: ViewModifier {
     }
 }
 #endif
+
+// MARK: Many short texts at once (episode overviews of one season) — 1.4.2
+
+/// Translates every text in `texts` that needs it, in one batch, and fills `result` (original → Arabic).
+/// Same rules as the single description: on the device, automatic once, quiet when unsure or unsupported.
+struct TranslateBatch: ViewModifier {
+    let texts: [String]
+    @Binding var result: [String: String]
+
+    func body(content: Content) -> some View {
+        #if canImport(Translation)
+        if #available(iOS 18.0, *), MachineTranslate.enabled {
+            content.modifier(TranslateBatch18(texts: texts, result: $result))
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+}
+
+#if canImport(Translation)
+@available(iOS 18.0, *)
+private struct TranslateBatch18: ViewModifier {
+    let texts: [String]
+    @Binding var result: [String: String]
+    @State private var config: TranslationSession.Configuration?
+    @State private var pending: [String] = []
+
+    func body(content: Content) -> some View {
+        content
+            .task(id: texts) { await prepare() }
+            .translationTask(config) { session in
+                let todo = await MainActor.run { pending }
+                guard !todo.isEmpty else { return }
+                let t0 = Date()
+                let reqs = todo.enumerated().map { TranslationSession.Request(sourceText: $0.element, clientIdentifier: String($0.offset)) }
+                do {
+                    let rs = try await session.translations(from: reqs)
+                    await MainActor.run {
+                        var out = result
+                        for r in rs {
+                            guard let i = r.clientIdentifier.flatMap(Int.init), i < todo.count else { continue }
+                            let t = r.targetText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !t.isEmpty { out[todo[i]] = t; MachineTranslate.store(todo[i], t) }
+                        }
+                        result = out
+                        Perf.shared.add("ترجمة آلية (حلقات)", ms: Date().timeIntervalSince(t0) * 1000, "\(todo.count) نص", span: true)
+                    }
+                } catch {
+                    await MainActor.run {
+                        MachineTranslate.autoStopped = true
+                        Perf.shared.add("ترجمة آلية فشلت (حلقات)", ms: 0, error.localizedDescription)
+                    }
+                }
+            }
+    }
+
+    @MainActor private func prepare() async {
+        var out = result
+        var need: [String] = []
+        for t in Set(texts) where MachineTranslate.wanted(t) {
+            if let c = MachineTranslate.cached(t) { out[t] = c } else { need.append(t) }
+        }
+        if out != result { result = out }
+        guard !need.isEmpty, !MachineTranslate.autoStopped,
+              let src = MachineTranslate.sourceLanguage(need.joined(separator: "\n")) else { return }
+        let target = Locale.Language(identifier: "ar")
+        guard await LanguageAvailability().status(from: src, to: target) != .unsupported else { return }
+        pending = need.filter { MachineTranslate.sourceLanguage($0) == src }
+        guard !pending.isEmpty else { return }
+        if config == nil || config?.source != src {
+            config = TranslationSession.Configuration(source: src, target: target)
+        } else {
+            config?.invalidate()
+        }
+    }
+}
+#endif

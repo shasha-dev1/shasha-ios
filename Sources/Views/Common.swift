@@ -228,20 +228,35 @@ struct EpisodeRow: View {
     let progress: Double?
     let current: Bool
     let watched: Bool
+    /// 1.4.2: TMDB name / overview / still for this episode, used when the provider sends none.
+    var tmdb: Tmdb.EpisodeText? = nil
+    /// Arabic machine translations (original → Arabic) for the season.
+    var translated: [String: String] = [:]
 
     private var title: String {
         let t = episode.title.trimmingCharacters(in: .whitespaces)
         let series = TmdbRule.split(showName).title
         if t.isEmpty || TmdbRule.key(t) == TmdbRule.key(series) || TmdbRule.key(t).hasPrefix(TmdbRule.key(series)) && t.count < series.count + 12 {
+            if let n = tmdb?.name, !n.isEmpty, TmdbRule.key(n) != TmdbRule.key("الحلقة \(episode.number)"),
+               TmdbRule.key(n) != TmdbRule.key("Episode \(episode.number)") {
+                return "\(episode.number). \(translated[n] ?? n)"
+            }
             return "الحلقة \(episode.number)"
         }
         return t
     }
 
+    /// Provider's plot first, TMDB's when the provider has none; the Arabic translation when there is one.
+    private var plot: (text: String, machine: Bool)? {
+        guard let p = episode.plot?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? tmdb?.overview else { return nil }
+        if let a = translated[p] { return (a, true) }
+        return (p, false)
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                if let img = episode.image, !img.isEmpty { Art(url: img, maxPixel: 400) } else { Theme.surface2 }
+                if let img = episode.image?.nilIfEmpty ?? tmdb?.still { Art(url: img, maxPixel: 400) } else { Theme.surface2 }
                 Text("\(episode.number)").font(.headline.monospacedDigit()).foregroundStyle(.white)
                     .padding(6).background(.black.opacity(0.45), in: Circle())
             }
@@ -253,7 +268,10 @@ struct EpisodeRow: View {
                     else if watched { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.teal).font(.caption) }
                 }
                 if let p = progress { ProgressView(value: p).tint(Theme.accent) }
-                if let plot = episode.plot, !plot.isEmpty { Text(plot).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+                if let p = plot {
+                    Text(p.text).font(.caption).foregroundStyle(.secondary).lineLimit(3).multilineTextAlignment(.leading)
+                    if p.machine { Text("ترجمة آلية").font(.caption2).foregroundStyle(.tertiary) }
+                }
             }
             Spacer(minLength: 0)
         }
