@@ -17,7 +17,8 @@ final class Perf: NSObject {
     private var context = "تصفح"
     private var contextAt = CACurrentMediaTime()
     private var link: CADisplayLink?
-    private var lastFrame: CFTimeInterval = 0
+    fileprivate var lastFrame: CFTimeInterval = 0
+    fileprivate var inactive = false
     private var nextFrame: [(name: String, t0: Double, detail: String)] = []
     private var launchRecorded = false, libraryRecorded = false, cacheRecorded = false
     private let file: URL? = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("perf.log")
@@ -111,6 +112,14 @@ final class Perf: NSObject {
         NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { _ in
             Perf.shared.memory("تحذير ذاكرة من النظام")
         }
+        // 1.1.1: frames stop while the app is inactive (Control Center, app switcher, lock): that gap is not a freeze.
+        // (1.1.0 logged a 9,956 ms "stall" that was most likely the app being inactive.)
+        NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { _ in
+            Perf.shared.inactive = true
+        }
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            Perf.shared.inactive = false; Perf.shared.lastFrame = 0
+        }
         let l = CADisplayLink(target: self, selector: #selector(frame(_:)))
         l.add(to: .main, forMode: .common)
         link = l
@@ -124,7 +133,7 @@ final class Perf: NSObject {
         lock.unlock()
         let now = CACurrentMediaTime()
         for p in pending { add(p.name, ms: (now - p.t0) * 1000, p.detail, span: true) }
-        guard lastFrame > 0 else { return }
+        guard lastFrame > 0, !inactive else { return }
         let gapMs = (t - lastFrame) * 1000
         guard gapMs < 10_000 else { return }   // >10 s = app was in the background
         lock.lock()

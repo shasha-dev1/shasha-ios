@@ -549,6 +549,11 @@ struct PlayerScreen: View {
             }
             start(); Orientation.landscape(); UIApplication.shared.isIdleTimerDisabled = true
             Perf.shared.memory("فتح المشغّل")
+            for sec in [30.0, 90.0] {
+                DispatchQueue.main.asyncAfter(deadline: .now() + sec) {
+                    if PlayerModel.alive > 0 { Perf.shared.memory("أثناء التشغيل بـ \(Int(sec)) ث") }
+                }
+            }
         }
         .onDisappear {
             // 1.0.7: this closure captures the screen, and the screen holds the model (@StateObject): a cycle that

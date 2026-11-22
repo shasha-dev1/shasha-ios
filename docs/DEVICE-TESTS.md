@@ -112,3 +112,16 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 6. Series page: seasons, current episode, progress, watched mark.
 7. Live: search from the groups screen; favourites.
 8. Settings → التخزين: sizes; «مسح الصور المؤقتة».
+
+## 1.1.0 (73) — owner's report, 2026-11-22 13:07
+- **Leak fixed (verified):** after every return «نماذج المشغّل الحية 0 · محركات mpv 0»; mpv destroy 1–5 ms → **mpv destroy is not the return stall**. Memory 3 s after closes: 330, 413, 358, 556 MB (no steady climb).
+- Return stall still 614–647 ms after the first frame, before the rotation completes; opening the player also stalls 438–538 ms.
+- Refresh: memory after each JSON freed 599 → 641 → 602 MB (1st refresh, with the saved copy still in memory), 293 → 364 → 376 MB (2nd). Peak rose 792 → 997 MB while the library was being SAVED (one JSON encode of everything). Peak 1,311 MB later, during playback (cause not measured).
+- 2,279 ms stall after the refreshed library was published. Found in code: the Movies/Series screens rebuilt a dictionary of ALL films / series on the main thread on every redraw (continue-watching helper), unmeasured until now.
+- Scrolling: movies 0.8 % slow frames (was 3.0 % in 1.0.6), series stalls ≤ 113 ms.
+- A 9,956 ms "stall" in browsing: most likely the app was inactive (frames stop) — not counted any more.
+
+## 1.1.1 (built only)
+- Continue-watching on Movies/Series from the index (no full dictionaries per redraw), measured.
+- Saved library written and read part by part (format 2; old file ignored → one refresh).
+- Frame gaps while the app is inactive are ignored; memory sampled 30 s and 90 s into playback.

@@ -132,25 +132,31 @@ struct FavButton: View {
 }
 
 /// Films with a resume point, most recently played first.
+/// 1.1.1: looked up in the index. Before, a dictionary of all 56,207 films was rebuilt on the main thread on EVERY
+/// redraw of the Movies screen (each page of posters while scrolling, each return from the player, each refresh).
 @MainActor func continueMovies(_ library: Library, _ ok: (String) -> Bool) -> [Movie] {
-    let byId = Dictionary(library.movies.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-    return Store.recent.compactMap { key -> Movie? in
-        guard key.hasPrefix("movie:"), Store.position(key) != nil, let m = byId[String(key.dropFirst(6))], ok(m.categoryId) else { return nil }
-        return m
-    }.prefix(20).map { $0 }
+    Perf.shared.measure("الأفلام: متابعة المشاهدة") {
+        let pos = library.index.moviePos, all = library.movies
+        return Store.recent.compactMap { key -> Movie? in
+            guard key.hasPrefix("movie:"), Store.position(key) != nil, let i = pos[String(key.dropFirst(6))], i < all.count, ok(all[i].categoryId) else { return nil }
+            return all[i]
+        }.prefix(20).map { $0 }
+    }
 }
 
 /// Series with a recently played episode (one entry per series), most recent first.
 @MainActor func continueShows(_ library: Library, _ ok: (String) -> Bool) -> [(show: Show, episodeKey: String)] {
-    let byId = Dictionary(library.shows.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-    var seen = Set<String>()
-    var out: [(show: Show, episodeKey: String)] = []
-    for key in Store.recent where key.hasPrefix("ep:") {
-        guard let sid = Store.show(forEpisode: key), let s = byId[sid], ok(s.categoryId), seen.insert(sid).inserted else { continue }
-        out.append((s, key))
-        if out.count >= 20 { break }
+    Perf.shared.measure("المسلسلات: متابعة المشاهدة") {
+        let pos = library.index.showPos, all = library.shows
+        var seen = Set<String>()
+        var out: [(show: Show, episodeKey: String)] = []
+        for key in Store.recent where key.hasPrefix("ep:") {
+            guard let sid = Store.show(forEpisode: key), let i = pos[sid], i < all.count, ok(all[i].categoryId), seen.insert(sid).inserted else { continue }
+            out.append((all[i], key))
+            if out.count >= 20 { break }
+        }
+        return out
     }
-    return out
 }
 
 /// Chip selection that asks for Face ID / passcode before opening a locked group.
