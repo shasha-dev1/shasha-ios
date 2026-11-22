@@ -179,7 +179,7 @@ Library this time: 52,989 channels, **56,207 movies** (1.0.2 got "[]" for get_vo
 - Owner's screenshots: link sheet «تم الربط ✓», Settings → accounts shows «مربوط بحساب Google», first sync «تمت المزامنة: لا جديد من الجهاز الآخر», last success 6:35 PM. Scope drive.file, project In production.
 - TV app 0.9.11 linking and a cross-device resume test are still owed.
 
-## 1.6.0 — branch `work/1.6` (built and logic-tested in CI; NOT tried on the device)
+## 1.6.0 — merged to main after CI #91–#96 passed (built and logic-tested; NOT tried on the device)
 Reference builds: player/colours/subtitles/PiP verified on **1.0.0 build 57** (`08868a7`); Drive linking verified on the
 iPhone with 1.5.x on 2026-11-22. Nothing in 1.6.0 is "stable" until tried.
 
@@ -188,8 +188,9 @@ iPhone with 1.5.x on 2026-11-22. Nothing in 1.6.0 is "stable" until tried.
 | One work identity + one Continue watching, long-press actions | `f688ffa` | #91 | built + tests passed |
 | Drive sync safety (refuse bad files, future clock, re-read on concurrent change, backup, `x`) | `bc38508` | #92 | built + tests passed |
 | Groups (named button, pins, recent, last group) + Home rows order/hide + TMDB rows | `79cff62` | #93 | built + tests passed |
-| Settings states + confirm source removal | `e1d83f2` | see Actions | — |
-| Search ranking + counts | `43f4b97` | see Actions | — |
+| Settings states + confirm source removal | `e1d83f2` | #94 | built + tests passed |
+| Search ranking + counts | `43f4b97` | #95 | built + tests passed |
+| CI: tests now fail the build; docs | `6bd368f` | #96 | built + tests passed |
 
 New tests: WorkRuleTests (6), CloudSyncSafetyTests (8). TV 0.9.12: CloudSyncCoreTest +2 (191 total, lint 0 errors).
 
