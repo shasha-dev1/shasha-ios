@@ -334,10 +334,10 @@ struct MatchFilesView: View {
                 }
                 .swipeActions { Button(role: .destructive) { store.removeFile(it.file) } label: { Label("حذف", systemImage: "trash") } }
             }
-            Section("الجلب التلقائي (Live-FootballOnTV و LiveSoccerTV)") {
+            Section {
                 Text(MatchFetch.shared.lastRun == nil ? "لم يُجلب بعد" : "آخر جلب: " + MatchFetch.shared.lastResult).font(.caption)
                 Button("جلب الآن") { store.fetchSchedules(force: true) }.disabled(!MatchFetch.shared.due(force: true))
-            } footer: { Text("يجلب تلقائيًا كل 6 ساعات على الأكثر عند فتح شاشة المباريات، أو عند «تحديث» (مرة كل 15 دقيقة).") }
+            } header: { Text("الجلب التلقائي (Live-FootballOnTV و LiveSoccerTV)") } footer: { Text("يجلب تلقائيًا كل 6 ساعات على الأكثر عند فتح شاشة المباريات، أو عند «تحديث» (مرة كل 15 دقيقة).") }
             Section { } footer: {
                 Text("الملفات محفوظة على هذا الجهاز فقط (حد \(MatchSourceFiles.maxFiles) ملفات، 5 MB لكل ملف). الصيغة في docs/MATCH-SOURCES.md. روابط التشغيل وبيانات اشتراكك لا تُرسل لأي مصدر.")
             }
