@@ -199,13 +199,14 @@ enum SubShare {
     }
 
     /// The subtitle kept for this film/episode: from this phone, or else from Drive (saved here for next time).
-    /// 1.8.0: `preferLocal` (playing a download): the copy on this phone is used without asking Drive first, so
+    /// 1.8.0: `preferLocal` (playing a download): only the copy on this phone is used — Drive isn't asked at all, so
     /// offline playback never waits for Google.
     static func saved(storeKey: String, source: Source?, preferLocal: Bool = false) async -> URL? {
         guard let k = key(storeKey: storeKey, source: source) else { return nil }
         let name = SubSyncRule.fileName(key: k, sha256: sha)
         let kept = [SubFileCheck.Format.srt, .ass].compactMap { local(name, $0) }.first { FileManager.default.fileExists(atPath: $0.path) }
-        guard DriveKeys.isLinked, !(preferLocal && kept != nil) else {
+        // 1.8.3: playing a download never asks Drive (offline or on a bad network it would wait up to 25 s).
+        guard DriveKeys.isLinked, !preferLocal else {
             if let kept { try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: kept.path) }
             return kept
         }
