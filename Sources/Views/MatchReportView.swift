@@ -6,16 +6,21 @@ import SwiftUI
 struct MatchReportView: View {
     @EnvironmentObject var library: Library
     @State private var text = ""
-    @State private var running = false
     @State private var status = ""
+    @State private var job: Task<Void, Never>?
+    @State private var cancel = MatchGuideReport.CancelFlag()
 
     var body: some View {
         List {
             Section {
-                Button(running ? "جارٍ…" : "إنشاء التقرير") { Task { await run() } }.disabled(running)
+                if job == nil {
+                    Button("إنشاء التقرير") { start() }
+                } else {
+                    Button("إلغاء", role: .destructive) { cancel.set(); job?.cancel() }
+                }
                 if !status.isEmpty { Text(status).font(.footnote).foregroundStyle(.secondary) }
             } footer: {
-                Text("ينزّل دليل البرامج الكامل من المزوّد مرة واحدة (قد يكون كبيرًا — يفضّل Wi‑Fi) ويقرأه على الجهاز. المصدر: دليل برامج المزوّد. التطابق ترجيح، ليس ضمانًا أن البث مباشر.")
+                Text("ينزّل دليل البرامج الكامل من المزوّد مرة واحدة (حد أقصى \(MatchGuideReport.maxBytes / 1_048_576) MB — يفضّل Wi‑Fi) ويقرأه على الجهاز خارج خيط الواجهة. المصدر: دليل برامج المزوّد. التطابق ترجيح، ليس ضمانًا أن البث مباشر.")
             }
             if !text.isEmpty {
                 Section {
@@ -25,41 +30,42 @@ struct MatchReportView: View {
             }
         }
         .navigationTitle("دليل المباريات")
+        .onDisappear { cancel.set(); job?.cancel() }
     }
 
-    private func run() async {
+    private func start() {
         guard let x = library.xtream, let url = x.xmltvURL else { status = "يحتاج مصدر Xtream"; return }
-        running = true; defer { running = false }
-        status = "تنزيل الدليل…"
-        let t0 = Perf.now()
-        let file: URL
-        do {
-            var r = URLRequest(url: url, timeoutInterval: 120)
-            r.setValue("gzip", forHTTPHeaderField: "Accept-Encoding")
-            let (tmp, resp) = try await URLSession.shared.download(for: r)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else {
-                status = "المزوّد ردّ \((resp as? HTTPURLResponse)?.statusCode ?? 0)"; return
-            }
-            file = FileManager.default.temporaryDirectory.appendingPathComponent("guide-\(UUID().uuidString).xml")
-            try FileManager.default.moveItem(at: tmp, to: file)
-        } catch {
-            status = "تعذّر تنزيل الدليل (\((error as NSError).code))"; return   // no link in the message
-        }
-        defer { try? FileManager.default.removeItem(at: file) }
-        let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? NSNumber)?.int64Value ?? 0
-        Perf.shared.record("دليل المباريات: تنزيل الدليل", since: t0, ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-        status = "قراءة الدليل…"
-        // What the report needs from the library, copied before leaving the main thread.
+        let flag = MatchGuideReport.CancelFlag(); cancel = flag
+        // What the report needs from the library, copied on the main thread; the rest runs off it.
         let groups = Dictionary(library.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
         let chans = library.channels.map { ReportChannel(name: $0.name, group: groups[$0.categoryId] ?? "", epg: $0.epgId) }
         let source = library.active?.name ?? "?"
-        let t1 = Perf.now()
-        let out = await Task.detached(priority: .userInitiated) {
-            MatchGuideReport.build(file: file, channels: chans, source: source, now: Date())
-        }.value
-        Perf.shared.record("دليل المباريات: القراءة والمطابقة", since: t1, "")
-        text = out
-        status = "الدليل \(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))"
+        text = ""; status = "تنزيل الدليل…"
+        job = Task {
+            Perf.shared.memory("دليل المباريات: قبل التنزيل")
+            let t0 = Perf.now()
+            let r = await MatchGuideReport.download(url, cancel: flag) { mb in Task { @MainActor in status = "تنزيل الدليل… \(mb) MB" } }
+            switch r {
+            case .failure(let why):
+                status = why.text; job = nil; return
+            case .success(let (file, size)):
+                defer { try? FileManager.default.removeItem(at: file) }
+                Perf.shared.record("دليل المباريات: تنزيل الدليل", since: t0, "\(size / 1_048_576) MB")
+                Perf.shared.memory("دليل المباريات: بعد التنزيل")
+                status = "قراءة الدليل…"
+                let t1 = Perf.now()
+                let out = await Task.detached(priority: .utility) {
+                    MatchGuideReport.build(file: file, size: size, channels: chans, source: source, now: Date(), cancel: flag)
+                }.value
+                Perf.shared.record("دليل المباريات: القراءة والمطابقة", since: t1, "")
+                Perf.shared.memory("دليل المباريات: بعد القراءة")
+                if flag.isSet { status = "أُلغي"; job = nil; return }
+                text = out + String(format: "\nالذاكرة: الآن %.0f MB · أعلى منذ فتح التطبيق %.0f MB (تفاصيل المراحل في قياسات الأداء)\n",
+                                    Perf.memoryMB ?? 0, Perf.peakMB ?? 0)
+                status = "تم — الدليل \(size / 1_048_576) MB"
+            }
+            job = nil
+        }
     }
 }
 
@@ -78,6 +84,10 @@ enum MatchGuideReport {
         var wantedNames: Set<String> = []        // name keys of sports channels
         var idOfName: [String: String] = [:]     // guide channel id → matched name key (via display-name)
         var programmes: [String: [(start: Int64, stop: Int64, title: String, desc: String?)]] = [:]
+        var cancel: CancelFlag?
+        /// Match titles on channels that are not sports channels (next 48 h): count + a few examples (guide id).
+        var otherMatches = 0; var otherExamples: [String] = []; var window: ClosedRange<Int64> = 0...0
+        private var otherCh: String?; private var otherStart: Int64 = 0; private var otherTitle = ""
         private var chId: String?; private var inName = false; private var text = ""
         private var prog: (ch: String, start: Int64, stop: Int64)?; private var title = ""; private var desc = ""; private var field = ""
 
@@ -100,16 +110,24 @@ enum MatchGuideReport {
             case "channel": chId = a["id"]
             case "display-name": inName = chId != nil; text = ""
             case "programme":
-                guard let ch = a["channel"], wantedIds.contains(ch.lowercased()) || idOfName[ch] != nil,
-                      let st = Self.time(a["start"]), let sp = Self.time(a["stop"]) else { prog = nil; return }
+                if cancel?.isSet == true { p.abortParsing(); return }
+                otherCh = nil
+                guard let ch = a["channel"] else { prog = nil; return }
+                guard wantedIds.contains(ch.lowercased()) || idOfName[ch] != nil,
+                      let st = Self.time(a["start"]), let sp = Self.time(a["stop"]) else {
+                    prog = nil
+                    if let st = Self.time(a["start"]), window.contains(st) { otherCh = ch; otherStart = st; otherTitle = "" }
+                    return
+                }
                 prog = (ch, st, sp); title = ""; desc = ""
-            case "title", "desc": field = prog != nil ? e : ""
+            case "title": field = prog != nil || otherCh != nil ? e : ""
+            case "desc": field = prog != nil ? e : ""
             default: break
             }
         }
         func parser(_ p: XMLParser, foundCharacters s: String) {
             if inName { text += s }
-            else if field == "title" { title += s } else if field == "desc" { desc += s }
+            else if field == "title" { if prog != nil { title += s } else { otherTitle += s } } else if field == "desc" { desc += s }
         }
         func parser(_ p: XMLParser, didEndElement e: String, namespaceURI: String?, qualifiedName: String?) {
             switch e {
@@ -120,20 +138,54 @@ enum MatchGuideReport {
             case "title", "desc": field = ""
             case "programme":
                 if let pr = prog { programmes[pr.ch, default: []].append((pr.start, pr.stop, title.trimmingCharacters(in: .whitespacesAndNewlines), desc.isEmpty ? nil : desc)) }
-                prog = nil
+                else if let ch = otherCh {
+                    let t = otherTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                    // quick filter before the full rule
+                    if [" v ", " vs ", " x ", " × ", " ضد "].contains(where: { t.lowercased().contains($0) }), MatchGuideRule.teams(t) != nil {
+                        otherMatches += 1; if otherExamples.count < 10 { otherExamples.append("\(ch) · «\(t)»") }
+                    }
+                }
+                prog = nil; otherCh = nil
             default: break
             }
         }
     }
 
-    static func build(file: URL, channels: [ReportChannel], source: String, now: Date) -> String {
+    /// Safe size for the whole guide (bigger files are refused, before or while downloading).
+    static let maxBytes: Int64 = 400 * 1_048_576
+
+    final class CancelFlag: @unchecked Sendable {
+        private let lock = NSLock(); private var on = false
+        func set() { lock.lock(); on = true; lock.unlock() }
+        var isSet: Bool { lock.lock(); defer { lock.unlock() }; return on }
+    }
+
+    /// Downloads to a file (never into memory), stopping at `maxBytes` or on cancel. No link in any message.
+    static func download(_ url: URL, cancel: CancelFlag, progress: @escaping @Sendable (Int64) -> Void) async -> Result<(URL, Int64), Failure> {
+        let d = GuideDownload(cancel, progress)
+        let s = URLSession(configuration: .ephemeral, delegate: d, delegateQueue: nil)
+        defer { s.finishTasksAndInvalidate() }
+        return await withCheckedContinuation { c in
+            d.done = { c.resume(returning: $0) }
+            var r = URLRequest(url: url, timeoutInterval: 120)
+            r.setValue("gzip", forHTTPHeaderField: "Accept-Encoding")
+            s.downloadTask(with: r).resume()
+        }
+    }
+    struct Failure: Error { let text: String; init(_ t: String) { text = t } }
+
+    static func build(file: URL, size: Int64, channels: [ReportChannel], source: String, now: Date, cancel: CancelFlag) -> String {
         let sports = channels.filter { MatchGuideRule.isSportsChannel(name: $0.name, group: $0.group) }
         let p = Parser()
+        p.cancel = cancel
+        let nowMs0 = Int64(now.timeIntervalSince1970 * 1000)
+        p.window = nowMs0...(nowMs0 + 2 * 86_400_000)
         p.wantedIds = Set(sports.compactMap { $0.epg?.lowercased() })
         p.wantedNames = Set(sports.map { nameKey($0.name) })
         guard let stream = InputStream(url: file) else { return "تعذّر فتح الدليل" }
         let xp = XMLParser(stream: stream); xp.delegate = p
-        _ = xp.parse()
+        let parsed = xp.parse()
+        let readError: String? = cancel.isSet ? "أُلغي" : parsed ? nil : "توقفت القراءة عند سطر \(xp.lineNumber): \(xp.parserError.map { ($0 as NSError).code } ?? 0)"
         // guide channel id (lower-cased) → programmes; channels find theirs by guide id, else by name.
         var byId: [String: [(start: Int64, stop: Int64, title: String, desc: String?)]] = [:]
         var byName: [String: [(start: Int64, stop: Int64, title: String, desc: String?)]] = [:]
@@ -144,10 +196,12 @@ enum MatchGuideReport {
         let nowMs = Int64(now.timeIntervalSince1970 * 1000), from = nowMs - 12 * 3_600_000
         var withGuide = 0, programmes = 0, minStart = Int64.max, maxStop: Int64 = 0
         var spans: [Int64] = [], entries: [MatchGuideRule.Entry] = [], missed: [String] = [], kinds: [MatchGuideRule.Kind: Int] = [:]
+        var channelsWithGuide = Set<String>()
         for ch in sports {
             let list = (ch.epg.flatMap { byId[$0.lowercased()] } ?? byName[nameKey(ch.name)] ?? []).filter { $0.stop > from }
             guard !list.isEmpty else { continue }
             withGuide += 1; programmes += list.count
+            channelsWithGuide.insert(MatchGuideRule.channelKey(ch.name))
             let first = list.map(\.start).min()!, last = list.map(\.stop).max()!
             minStart = min(minStart, first); maxStop = max(maxStop, last); spans.append(last - first)
             for pr in list {
@@ -161,27 +215,66 @@ enum MatchGuideReport {
         let f = DateFormatter(); f.locale = Locale(identifier: "ar"); f.dateFormat = "EEE d/M HH:mm"
         func d(_ ms: Int64) -> String { f.string(from: Date(timeIntervalSince1970: Double(ms) / 1000)) }
         let upcoming = MatchGuideRule.group(entries.filter { $0.stop > nowMs && $0.start < nowMs + 2 * 86_400_000 })
-        var s = "شاشة — تقرير دليل المباريات (المصدر: دليل برامج المزوّد)\n"
-        s += "التطابق بالفريقين والوقت ترجيح قوي، وليس ضمانًا أن البث مباشر. التغطية جزئية: ما لم يُكتشف قد يكون موجودًا.\n\n"
-        s += "القنوات: \(channels.count) · الرياضية (حسب الاسم/المجموعة): \(sports.count) · الرياضية التي لها دليل: \(withGuide)"
-        s += sports.isEmpty ? "\n" : " (\(withGuide * 100 / sports.count)٪)\n"
-        s += "قنوات رياضية بمعرّف دليل من المزوّد: \(sports.filter { $0.epg != nil }.count)\n"
+        let sportKeys = Set(sports.map { MatchGuideRule.channelKey($0.name) })
+        func pct(_ a: Int, _ b: Int) -> String { b > 0 ? " (\(a * 100 / b)٪)" : "" }
+        let tz = TimeZone.current
+        let ver = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        var s = "شاشة — تقرير دليل المباريات · الآيفون \(ver)\n"
+        s += "المصدر: دليل برامج المزوّد. التطابق بالفريقين والوقت ترجيح قوي، وليس ضمانًا أن البث مباشر.\n"
+        s += "وقت التقرير: \(d(nowMs)) · المنطقة الزمنية: \(tz.identifier) (UTC\(String(format: "%+.1f", Double(tz.secondsFromGMT()) / 3600)))\n"
+        s += "المصادر المشمولة: \(source) (المصدر النشط فقط) · \(channels.count) قناة · الدليل نُزّل الآن (\(size / 1_048_576) MB)\n"
+        if let e = readError { s += "خطأ قراءة الدليل: \(e) — الأرقام تشمل ما قُرئ قبله\n" }
+        s += "\nتحديد القنوات الرياضية: \(MatchGuideRule.sportsRule).\n"
+        s += "نسخ القنوات: الرياضية \(sports.count) · لها دليل \(withGuide)\(pct(withGuide, sports.count)) · بمعرّف دليل من المزوّد \(sports.filter { $0.epg != nil }.count)\n"
+        s += "القنوات بعد جمع النسخ (بدون HD/FHD/4K/HEVC/RAW): الرياضية \(sportKeys.count) · لها دليل \(channelsWithGuide.count)\(pct(channelsWithGuide.count, sportKeys.count))\n"
         if withGuide > 0 {
             let med = spans.sorted()[spans.count / 2]
             s += "مدى الدليل: من \(d(minStart)) إلى \(d(maxStop)) · وسيط القناة \(String(format: "%.1f", Double(med) / 86_400_000)) يوم\n"
         }
-        s += "برامج القنوات الرياضية: \(programmes) · فيها اسما فريقين: \(entries.count)\n"
+        s += "برامج القنوات الرياضية (من 12 ساعة مضت): \(programmes) · فيها اسما فريقين: \(entries.count)\n"
         s += "التصنيف: " + MatchGuideRule.Kind.allCases.map { "\($0.label) \(kinds[$0] ?? 0)" }.joined(separator: " · ") + "\n"
-        s += "مباريات (بطاقات) خلال 48 ساعة: \(upcoming.count) · منها مكتوب «مباشر» في دليل قناة واحدة على الأقل: \(upcoming.filter(\.live).count)\n\n"
+        s += "مباريات اكتشفناها من الدليل خلال 48 ساعة (بطاقات، بدون الاستوديو): \(upcoming.count) · مكتوب «مباشر» في قناة واحدة على الأقل: \(upcoming.filter(\.live).count) · إعادات: \(upcoming.filter(\.replay).count)\n"
+        s += "عناوين مباريات في قنوات غير مصنّفة رياضية (48 ساعة): \(p.otherMatches) — غير داخلة في البطاقات أعلاه\n"
+        s += "نسبة تغطية مباريات اليوم: لا يمكن حسابها من هذا التقرير — تحتاج جدول مباريات مستقلًا للمقارنة.\n\n"
         s += "— أمثلة (أول 25 بطاقة)\n"
         for g in upcoming.prefix(25) {
-            s += "\(d(g.start)) · \(g.home) × \(g.away) · \(g.entries.count) قناة" + (g.live ? " · مباشر" : "") + "\n"
+            s += "\(d(g.start)) · \(g.home) × \(g.away) · \(g.entries.count) نسخة قناة" + (g.live ? " · مباشر" : "") + (g.replay ? " · إعادة" : "")
+                + (g.entries.compactMap(\.competition).first.map { " · " + $0 } ?? "") + "\n"
             for e in g.entries.sorted(by: { (MatchGuideRule.version($0.channel).res, $0.channel) < (MatchGuideRule.version($1.channel).res, $1.channel) }).prefix(8) {
                 s += "   - \(e.channel) [\(MatchGuideRule.version(e.channel).label())] · \(e.kind.label) · \(e.source) · «\(e.title)»\n"
             }
         }
+        s += "\n— عناوين مباريات في قنوات غير رياضية (أمثلة، بمعرّف الدليل)\n"
+        for x in p.otherExamples { s += "   \(x)\n" }
         s += "\n— عناوين رياضية لم يُستخرج منها فريقان (لتحسين القواعد)\n"
         for m in missed { s += "   «\(m)»\n" }
         return s
     }
+}
+
+/// Guide download for the report: to a file, stopped at the size limit or on cancel.
+final class GuideDownload: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    var done: ((Result<(URL, Int64), MatchGuideReport.Failure>) -> Void)?
+    let cancel: MatchGuideReport.CancelFlag; let progress: @Sendable (Int64) -> Void
+    var lastMB: Int64 = -1
+    init(_ c: MatchGuideReport.CancelFlag, _ p: @escaping @Sendable (Int64) -> Void) { cancel = c; progress = p }
+    func urlSession(_ s: URLSession, downloadTask t: URLSessionDownloadTask, didWriteData w: Int64, totalBytesWritten n: Int64, totalBytesExpectedToWrite e: Int64) {
+        if cancel.isSet || n > MatchGuideReport.maxBytes || e > MatchGuideReport.maxBytes { t.cancel(); return }
+        if n / 1_048_576 != lastMB { lastMB = n / 1_048_576; progress(lastMB) }
+    }
+    func urlSession(_ s: URLSession, downloadTask t: URLSessionDownloadTask, didFinishDownloadingTo loc: URL) {
+        let code = (t.response as? HTTPURLResponse)?.statusCode ?? 0
+        guard code == 200 else { finish(.failure(MatchGuideReport.Failure("المزوّد ردّ \(code)"))); return }
+        let dest = FileManager.default.temporaryDirectory.appendingPathComponent("guide-\(UUID().uuidString).xml")
+        do { try FileManager.default.moveItem(at: loc, to: dest) } catch { finish(.failure(MatchGuideReport.Failure("تعذّر حفظ الدليل"))); return }
+        let size = (try? FileManager.default.attributesOfItem(atPath: dest.path)[.size] as? NSNumber)?.int64Value ?? 0
+        finish(.success((dest, size)))
+    }
+    func urlSession(_ s: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        guard let error else { return }
+        let big = task.countOfBytesReceived > MatchGuideReport.maxBytes || task.countOfBytesExpectedToReceive > MatchGuideReport.maxBytes
+        finish(.failure(MatchGuideReport.Failure(cancel.isSet ? "أُلغي" : big ? "الدليل أكبر من \(MatchGuideReport.maxBytes / 1_048_576) MB — أوقف للحماية"
+                                : "تعذّر تنزيل الدليل (\((error as NSError).code))")))
+    }
+    func finish(_ r: Result<(URL, Int64), MatchGuideReport.Failure>) { if let d = done { done = nil; d(r) } }
 }

@@ -897,6 +897,37 @@ final class MatchGuideRuleTests: XCTestCase {
         XCTAssertTrue(g.contains { $0.entries.count == 1 && $0.entries[0].kind == .replay && !$0.live })
     }
 
+    func testNoChainingAndCompetitionAndReplayApart() {
+        let m: Int64 = 60_000, t0: Int64 = 1_800_000_000_000
+        func e(_ ch: String, _ title: String, _ start: Int64, _ mins: Int64 = 120) -> MatchGuideRule.Entry {
+            MatchGuideRule.Entry(channel: ch, source: "S1", start: start, stop: start + mins * m, title: title,
+                                 teams: MatchGuideRule.teams(title)!, kind: MatchGuideRule.kind(title: title, description: nil, minutes: mins))
+        }
+        let chain = MatchGuideRule.group([e("A", "Alpha v Beta", t0), e("B", "Alpha v Beta", t0 + 40 * m), e("C", "Alpha v Beta", t0 + 80 * m)])
+        XCTAssertEqual(chain.map { $0.entries.count }, [2, 1])
+        let comp = MatchGuideRule.group([e("A", "Premier League: Arsenal v Chelsea", t0), e("B", "FA Cup: Arsenal v Chelsea", t0),
+                                         e("C", "Arsenal v Chelsea", t0)])
+        XCTAssertEqual(comp.count, 2)
+        let rep = MatchGuideRule.group([e("A", "LIVE: Arsenal v Chelsea", t0), e("B", "Arsenal v Chelsea (R)", t0 + 10 * m)])
+        XCTAssertEqual(rep.count, 2); XCTAssertTrue(rep.contains { $0.replay }); XCTAssertTrue(rep.contains { $0.live })
+        XCTAssertTrue(MatchGuideRule.group([e("A", "Pre-match: Arsenal v Chelsea", t0, 30)]).isEmpty)
+    }
+
+    func testCompetitionFromTitle() {
+        XCTAssertEqual(MatchGuideRule.competition("Premier League: Arsenal v Chelsea"), MatchGuideRule.teamKey("Premier League"))
+        XCTAssertEqual(MatchGuideRule.competition("Flamengo x Palmeiras (Brasileirão)"), MatchGuideRule.teamKey("Brasileirão"))
+        XCTAssertNil(MatchGuideRule.competition("Arsenal v Chelsea"))
+        XCTAssertNil(MatchGuideRule.competition("LIVE: Arsenal v Chelsea"))
+    }
+
+    func testChannelKeyIgnoresVersionOnly() {
+        XCTAssertEqual(MatchGuideRule.channelKey("beIN SPORTS 1 FHD"), MatchGuideRule.channelKey("beIN SPORTS 1 HD HEVC"))
+        XCTAssertEqual(MatchGuideRule.channelKey("beIN SPORTS 1"), MatchGuideRule.channelKey("beIN SPORTS 1 4K RAW"))
+        XCTAssertNotEqual(MatchGuideRule.channelKey("beIN SPORTS 1 HD"), MatchGuideRule.channelKey("beIN SPORTS 11 HD"))
+        XCTAssertNotEqual(MatchGuideRule.channelKey("AR| beIN SPORTS 1"), MatchGuideRule.channelKey("FR| beIN SPORTS 1"))
+        XCTAssertNotEqual(MatchGuideRule.channelKey("Sky Sports Football"), MatchGuideRule.channelKey("Sky Sports Main Event"))
+    }
+
     func testSportsChannels() {
         XCTAssertTrue(MatchGuideRule.isSportsChannel(name: "beIN SPORTS 1 HD", group: "AR | SPORTS"))
         XCTAssertTrue(MatchGuideRule.isSportsChannel(name: "SSC 1", group: "Saudi"))

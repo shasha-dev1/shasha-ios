@@ -25,3 +25,19 @@ Source name shown to the viewer: «دليل برامج المزوّد».
   live), 25 example cards with each channel's version, kind, source and title, and 15 sports titles where no teams
   were found (to improve the rules). No links, no account data.
 - Decision after the owner's reports: is the guide enough, or is another schedule source needed.
+
+## Step 1b (owner 21:23) — iPhone 1.7.11 / TV 0.9.27
+- Cards per airing: anchored to the card's first entry (±45 min, no chaining: 18:00 / 18:40 / 19:20 → 2 cards), same
+  live/unknown vs replay kind (replays apart), a different competition named in the title splits; studio shows are
+  not cards (counted). Women / age groups stay different teams.
+- Coverage reported twice: channel versions, and channels after merging versions (`channelKey`: version words only
+  removed — number, country prefix and other words kept).
+- The report says how sports channels are picked, and counts match titles on channels NOT picked as sports (general
+  channels can air matches), with examples by guide id.
+- Header: app version, report time, time zone, sources included (TV: every playlist with its last guide update and
+  read error; iPhone: the active source, guide downloaded now and its size; parse errors), so a difference between the
+  two devices can be told apart from a difference in data.
+- iPhone: download to a file with a 400 MB limit (refused before/while downloading), cancel button (also on leaving
+  the screen; the parser aborts), parse at utility priority off the main thread, memory measured before / after the
+  download / after reading (performance report + the report's last line).
+- «مباريات اكتشفناها من الدليل» is not «نسبة تغطية مباريات اليوم»: the latter needs an independent schedule.

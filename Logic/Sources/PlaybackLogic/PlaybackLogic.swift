@@ -890,6 +890,18 @@ enum MatchGuideRule {
         "qatar sport", "iraq sport", "sport tv", "ziggo sport", "sportdigital", "magenta sport", "ssport", "s sport",
         "tivibu spor", "beın", "spor", "sportitalia", "sportv", "premiere", "fanatiz", "win sports", "directv sports",
     ]
+    static var sportsRule: String {
+        "الاسم أو المجموعة يحتوي كلمة رياضية أو اسم شبكة رياضية (\(sportWords.count) كلمة، مثل sport / رياض / beIN / SSC / Al Kass / DAZN / ESPN)"
+    }
+    private static let versionTokens: Set<String> = ["hd", "fhd", "uhd", "sd", "4k", "8k", "hevc", "h265", "x265", "raw", "1080p", "720p",
+        "1080", "720", "2160p", "2160", "fullhd", "50fps", "60fps", "hdr", "hdr10", "dv", "backup", "multi", "low", "high"]
+    /// The channel without its version (same as the TV's channelKey).
+    static func channelKey(_ name: String) -> String {
+        name.lowercased().folding(options: .diacriticInsensitive, locale: nil)
+            .split(whereSeparator: { !($0.isLetter || $0.isNumber || $0 == "+") }).map(String.init)
+            .filter { !versionTokens.contains($0) }.joined(separator: " ")
+    }
+
     static func isSportsChannel(name: String, group: String) -> Bool {
         let s = (name + " | " + group).lowercased()
         return sportWords.contains { s.contains($0) }
@@ -992,22 +1004,51 @@ enum MatchGuideRule {
         return (core.joined(separator: " ") + markers.sorted().map { "#" + $0 }.joined()).trimmingCharacters(in: .whitespaces)
     }
 
-    struct Entry: Equatable { let channel: String; let source: String; let start: Int64; let stop: Int64; let title: String; let teams: Teams; let kind: Kind }
-    struct Group { let key: String; let home: String; let away: String; let start: Int64; let entries: [Entry]
-        var live: Bool { entries.contains { $0.kind == .live } } }
+    /// Competition named in the title ("Premier League: …", "… (Brasileirão)"), normalised; nil when none.
+    static func competition(_ title: String) -> String? {
+        let t = title.trimmingCharacters(in: .whitespaces)
+        var raw: String?
+        if let c = t.firstIndex(where: { $0 == ":" || $0 == "：" }), c > t.startIndex,
+           teams(String(t[t.index(after: c)...])) != nil, teams(String(t[..<c])) == nil {
+            raw = String(t[..<c])
+        } else if let r = t.range(of: #"\(([^)]{3,40})\)\s*$"#, options: .regularExpression) {
+            raw = String(t[r]).trimmingCharacters(in: CharacterSet(charactersIn: "() ")).trimmingCharacters(in: .whitespaces)
+        }
+        guard var x = raw else { return nil }
+        let lead = #"^\s*(?:\[[^\]]*\]|\([^)]*\)|(?:live|en vivo|en direct|ao vivo|direct|مباشر|مباشرة|canlı|dal vivo)\s*[:\-–|]?)\s*"#
+        if let r = x.range(of: lead, options: [.regularExpression, .caseInsensitive]) { x.removeSubrange(r) }
+        let k = teamKey(x)
+        return k.count >= 3 && !["live", "r", "l"].contains(k) ? k : nil
+    }
 
+    struct Entry: Equatable {
+        let channel: String; let source: String; let start: Int64; let stop: Int64; let title: String; let teams: Teams; let kind: Kind
+        let competition: String?
+        init(channel: String, source: String, start: Int64, stop: Int64, title: String, teams: Teams, kind: Kind) {
+            self.channel = channel; self.source = source; self.start = start; self.stop = stop; self.title = title
+            self.teams = teams; self.kind = kind; self.competition = MatchGuideRule.competition(title)
+        }
+    }
+    struct Group { let key: String; let home: String; let away: String; let start: Int64; let entries: [Entry]
+        var live: Bool { entries.contains { $0.kind == .live } }
+        var replay: Bool { entries.allSatisfy { $0.kind == .replay } } }
+
+    /// One card = one airing: same teams, same kind (replays apart), start within the window of the card's FIRST
+    /// entry (no chaining), no different competition named. Studio programmes are not cards. Same as the TV.
     static func group(_ entries: [Entry], windowMs: Int64 = 45 * 60_000) -> [Group] {
-        let byPair = Dictionary(grouping: entries) { e in [teamKey(e.teams.home), teamKey(e.teams.away)].sorted().joined(separator: " | ") }
+        let buckets = Dictionary(grouping: entries.filter { $0.kind != .studio }) { e in
+            [teamKey(e.teams.home), teamKey(e.teams.away)].sorted().joined(separator: " | ") + (e.kind == .replay ? " |R" : "")
+        }
         var out: [Group] = []
-        for (pair, list) in byPair {
-            var cur: [Entry] = []
+        for (key, list) in buckets {
+            var open: [[Entry]] = []
             for e in list.sorted(by: { $0.start < $1.start }) {
-                if let f = cur.first, e.start - f.start > windowMs {
-                    out.append(Group(key: pair, home: f.teams.home, away: f.teams.away, start: f.start, entries: cur)); cur = []
-                }
-                cur.append(e)
+                if let i = open.firstIndex(where: { g in
+                    let comps = Set(g.compactMap(\.competition))
+                    return abs(e.start - g[0].start) <= windowMs && (e.competition == nil || comps.isEmpty || comps.contains(e.competition!))
+                }) { open[i].append(e) } else { open.append([e]) }
             }
-            if let f = cur.first { out.append(Group(key: pair, home: f.teams.home, away: f.teams.away, start: f.start, entries: cur)) }
+            for g in open { out.append(Group(key: key, home: g[0].teams.home, away: g[0].teams.away, start: g[0].start, entries: g)) }
         }
         return out.sorted { $0.start < $1.start }
     }
