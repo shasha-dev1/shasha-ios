@@ -1088,3 +1088,178 @@ final class DownloadRuleTests: XCTestCase {
         XCTAssertNil(DownloadRule.resumeInfo(bad))
     }
 }
+
+/// 1.8.5: rules v2 — the TV's MatchGuideV2Test vectors (titles and channel names from the owner's two reports, 23/11).
+final class MatchGuideRuleV2Tests: XCTestCase {
+    typealias R = MatchGuideRule
+
+    func testDecoratedVersionNames() {
+        XCTAssertEqual(R.version("GOLD: beIN SP⚽RTS 5 ᴴᴰ").res, .hd)
+        XCTAssertEqual(R.version("GOLD: beIN SP⚽RTS 5 ʜᴅ").res, .hd)
+        let raw = R.version("SR: ARENA SPORT 7 ᴿᴬᵂ"); XCTAssertEqual(raw.res, .unknown); XCTAssertTrue(raw.raw)
+        XCTAssertTrue(R.version("8K: beIN SP⚽RTS 1 ENGLISH ʰᵉᵛᶜ").hevc)
+        XCTAssertEqual(R.version("4K: V SPORT ᵁᴴᴰ ³⁸⁴⁰ᴾ").res, .uhd)
+        XCTAssertEqual(R.version("8K: beIN SP⚽RTS 1 ENGLISH ᴴᴰ ◉").res, .hd)
+        XCTAssertEqual(R.version("8K: beIN SP⚽RTS 3 LQ").res, .sd)
+        XCTAssertEqual(R.version("8K: beIN SP⚽RTS 3 SD").res, .sd)
+        XCTAssertEqual(R.channelKey("GOLD: beIN SP⚽RTS 5 ᴴᴰ"), R.channelKey("GOLD: beIN SP⚽RTS 5 RAW"))
+        XCTAssertEqual(R.channelKey("GOLD: beIN SP⚽RTS 5 ʜᴅ"), R.channelKey("GOLD: beIN SPORTS 5 HD"))
+        XCTAssertTrue(R.isSportsChannel(name: "PL: FIGHTKLUB ᴴᴰ", group: "Polska | Sport"))
+    }
+
+    func testPrefixLabelOnlyWhereTheSourceShowsIt() {
+        let src = ["8K: beIN SP⚽RTS 3 SD", "8K: beIN SP⚽RTS 3 LQ", "8K: beIN SP⚽RTS 3 ᴴᴰ ◉", "8K: beIN SP⚽RTS 3 ᴿᴬᵂ",
+                   "8K: beIN SP⚽RTS 2 ʰᵉᵛᶜ", "4K: V SPORT ᵁᴴᴰ ³⁸⁴⁰ᴾ", "4K: V SPORT+ ᵁᴴᴰ ³⁸⁴⁰ᴾ", "4K: TV 2 SPORT UHD", "UK: SKY SPORTS ᴴᴰ"]
+        let labels = R.prefixLabels(src)
+        XCTAssertEqual(labels, ["8K"])
+        XCTAssertEqual(R.version("8K: beIN SP⚽RTS 3 ᴿᴬᵂ", labelPrefixes: labels).res, .unknown)
+        XCTAssertEqual(R.version("8K: beIN SP⚽RTS 3 ᴿᴬᵂ").res, .uhd)
+        XCTAssertEqual(R.version("4K: beIN SPORTS 1", labelPrefixes: labels).res, .uhd)
+        XCTAssertTrue(R.prefixLabels(["8K: A SD", "8K: B HD"]).isEmpty)
+    }
+
+    func testSportFromCompetitionDescriptionAndCategory() {
+        func s(_ t: String, d: String? = nil, c: String? = nil, ch: String? = nil) -> R.SportGuess { R.sport(title: t, description: d, category: c, channel: ch) }
+        XCTAssertEqual(s("Barcelona vs Villarreal - Spanish LaLiga 2026/2027 - Week 13").sport, .football)
+        XCTAssertEqual(s("Neftchi vs Al Hilal - AFC Champions League Elite 2026/2027 - MD 5").sport, .football)
+        XCTAssertEqual(s("Saint-Etienne vs Reims - Ligue 2 - J13 - FOOTBALL 2026-2027").sport, .football)
+        XCTAssertEqual(s("Piłka nożna: Betclic 1. Liga - mecz: Podbeskidzie Bielsko-Biała - Bruk-Bet Termalica Nieciecza").sport, .football)
+        XCTAssertEqual(s("Ποδόσφαιρο: Αταλάντα - Ίντερ").sport, .football)
+        XCTAssertEqual(s("Fudbal - Poljska liga: Wieczysta - Motor").sport, .football)
+        XCTAssertEqual(s("Nogomet – Francuska liga: Lorient – Rennes").sport, .football)
+        let bsl = s("BSL (26-27) 09.Hafta Beşiktaş - Fenerbahçe Tarfin / Bant")
+        XCTAssertEqual(bsl.sport, .other); XCTAssertEqual(bsl.name, "كرة سلة")
+        XCTAssertEqual(s("Trendyol Süper Lig: Beşiktaş - Fenerbahçe").sport, .football)
+        XCTAssertEqual(s("Μπάσκετ: Ατλάντα Χοκς - Ντιτρόιτ Πίστονς").name, "كرة سلة")
+        XCTAssertEqual(s("Koszykówka mężczyzn: PGE Basket Liga - mecz: King Szczecin - Anwil Włocławek").name, "كرة سلة")
+        XCTAssertEqual(s("Košarka - Španska liga: Valencia - Breogan").name, "كرة سلة")
+        XCTAssertEqual(s("Siatkówka kobiet: TAURON Liga Kobiet - mecz: LOTTO Chemik Police - ITA Tools Stal Mielec").name, "كرة طائرة")
+        XCTAssertEqual(s("UFC Fight Night: Prochazka vs. Stirling").name, "قتال")
+        XCTAssertEqual(s("Boxe : Zuffa Boxing Zuffa Boxing 13. Poids super-moyens : Bruno Surace - Kamil Bednarek").name, "قتال")
+        XCTAssertEqual(s("Formel 1: Race: Las Vegas GP - Race").name, "سيارات ودراجات نارية")
+        XCTAssertEqual(s("Mundial F1 - GP de Países Bajos").name, "سيارات ودراجات نارية")
+        XCTAssertEqual(s("La Vuelta 2026: Stage 21: Carrefour Granada - Granada").name, "دراجات")
+        XCTAssertEqual(s("Billie Jean King Cup by Gainbridge Play-Offs 2026 Day 1: Slovenia vs Indonesia").name, "تنس")
+        XCTAssertEqual(s("Zenit - Enisey").sport, .unknown)
+        XCTAssertEqual(s("Shakhtar - Sporting").sport, .unknown)
+        XCTAssertEqual(s("Pittsburgh Steelers vs. Philadelphia Eagles").sport, .unknown)
+        XCTAssertEqual(s("Zenit - Enisey", d: "Russian Premier League, round 15").sport, .football)
+        XCTAssertEqual(s("Zenit - Enisey", c: "Football").sport, .football)
+        XCTAssertEqual(s("Real Madrid v Barcelona", d: "LaLiga", c: "Basketball").name, "كرة سلة")
+        XCTAssertEqual(s("Boxing Day: Arsenal v Chelsea", c: "Soccer").sport, .football)
+        XCTAssertEqual(s("Real Madrid v Getafe", ch: "LaLiga TV HD").sport, .football)
+        XCTAssertEqual(s("Mundial F1 - GP de Países Bajos", ch: "ES: DAZN F1 ᴴᴰ").name, "سيارات ودراجات نارية")
+        XCTAssertEqual(s("Garside - Taylor", ch: "PL: FIGHTKLUB ᴴᴰ").name, "قتال")
+        XCTAssertEqual(s("Real Madrid v Getafe", ch: "beIN SPORTS 1").sport, .unknown)
+    }
+
+    func testCleaningKeepsIdentity() {
+        let t = R.teams("BSL (26-27) 09.Hafta Beşiktaş - Fenerbahçe Tarfin / Bant")!
+        XCTAssertEqual(t.home, "Beşiktaş"); XCTAssertEqual(t.away, "Fenerbahçe Tarfin"); XCTAssertEqual(t.lead, "BSL (26-27) 09.Hafta")
+        XCTAssertEqual(R.kind(title: "BSL (26-27) 09.Hafta Beşiktaş - Fenerbahçe Tarfin / Bant", description: nil, minutes: 120), .replay)
+        let w = R.teams("Arsenal (W) v Chelsea (W)")!
+        XCTAssertEqual(w.home, "Arsenal (W)")
+        XCTAssertNotEqual(R.teamKey(w.home), R.teamKey("Arsenal"))
+        XCTAssertEqual(R.teams("KRASAVA Ε.Ν.Υ - ΑΝΟΡΘΩΣΗ (Z)")?.home, "KRASAVA Ε.Ν.Υ")
+        XCTAssertEqual(R.teams("KRASAVA Ε.Ν.Υ - ΑΝΟΡΘΩΣΗ (Z)")?.away, "ΑΝΟΡΘΩΣΗ")
+        XCTAssertEqual(R.teams("FIFA U-17 World Cup: Spain U17 vs Fiji U17")?.home, "Spain U17")
+        XCTAssertEqual(R.teams("Liga włoska - mecz: Bologna FC - Udinese Calcio")?.home, "Bologna FC")
+        XCTAssertEqual(R.teams("Energie Cottbus vs. Hertha Berlín")?.away, "Hertha Berlín")
+        XCTAssertEqual(R.audience("Siatkówka kobiet: TAURON Liga Kobiet - mecz: LOTTO Chemik Police - ITA Tools Stal Mielec"), ["women"])
+        XCTAssertEqual(R.audience("UEFA U21 Euro Qualifiers: England U21 v Wales U21"), ["u21"])
+        XCTAssertTrue(R.audience("Arsenal v Chelsea").isEmpty)
+        XCTAssertEqual(R.competition("BSL (26-27) 09.Hafta Beşiktaş - Fenerbahçe Tarfin / Bant"), "bsl 09 hafta")
+        XCTAssertNil(R.competition("Arsenal (W) v Chelsea (W)"))
+    }
+
+    func testNotMatches() {
+        XCTAssertNil(R.teams("Expedition X - Dem Unheimlichen auf der Spur"))
+        for title in ["Godzilla x Kong: The New Empire", "On Thin Ice: Putin v Greenpeace", "Patrice Baumel - Audio Obscura x Revere Series - Rotterdam (Netherlands)"] {
+            guard let tm = R.teams(title) else { continue }
+            let e = R.Entry(channel: "Cinemax", source: "S1", start: 0, stop: 1, title: title, teams: tm,
+                            kind: R.kind(title: title, description: nil, minutes: 120), general: true)
+            XCTAssertFalse(R.generalOk(e), title)
+        }
+        let good = "Premier League: Arsenal v Chelsea"
+        XCTAssertTrue(R.generalOk(R.Entry(channel: "BBC One", source: "S1", start: 0, stop: 1, title: good, teams: R.teams(good)!, kind: .unknown, general: true)))
+        let bare = R.Entry(channel: "Football Weekly TV", source: "S1", start: 0, stop: 1, title: "Arsenal v Chelsea", teams: R.teams("Arsenal v Chelsea")!, kind: .unknown, general: true)
+        XCTAssertFalse(R.generalOk(bare))
+    }
+
+    func testKindsAreWordsNotLetters() {
+        XCTAssertEqual(R.kind(title: "Liverpool v Chelsea", description: nil, minutes: 120), .unknown)
+        XCTAssertEqual(R.kind(title: "Clasico: Real Madrid v Barcelona", description: nil, minutes: 120), .unknown)
+        XCTAssertEqual(R.kind(title: "Liverpool v Chelsea (L)", description: nil, minutes: 120), .live)
+        XCTAssertEqual(R.kind(title: "EN DIRECTO: Sevilla - Betis", description: nil, minutes: 120), .live)
+        XCTAssertEqual(R.kind(title: "Canlı: Galatasaray - Göztepe", description: nil, minutes: 120), .live)
+        XCTAssertEqual(R.kind(title: "Powtórka: Legia - Lech", description: nil, minutes: 120), .replay)
+        XCTAssertEqual(R.kind(title: "Barcelona vs Villarreal - Spanish LaLiga 2026/2027 - Week 13", description: nil, minutes: 120), .unknown)
+    }
+
+    private let m: Int64 = 60_000, t0: Int64 = 1_800_000_000_000
+    private func e(_ ch: String, _ title: String, _ start: Int64, _ id: String) -> R.Entry {
+        R.Entry(channel: ch, source: "S1", start: start, stop: start + 120 * m, title: title, teams: R.teams(title)!,
+                kind: R.kind(title: title, description: nil, minutes: 120), channelId: id)
+    }
+
+    func testGroupsKeepEveryVersionAndSplitBySport() {
+        let dup = R.group([e("GOLD: beIN SP⚽RTS 5 RAW", "Alpha v Beta", t0, "1"), e("GOLD: beIN SP⚽RTS 5 RAW", "Alpha v Beta", t0, "2")])
+        XCTAssertEqual(dup.count, 1); XCTAssertEqual(dup[0].entries.map(\.channelId), ["1", "2"])
+        let v = R.group([e("SR: ARENA PREMIUM 2", "Valencia - Breogan", t0, "3"), e("SR: ARENA PREMIUM 2", "Košarka - Španska liga: Valencia - Breogan", t0, "4")])
+        XCTAssertEqual(v.count, 1); XCTAssertEqual(v[0].sport.name, "كرة سلة")
+        XCTAssertEqual(R.group([e("A", "Trendyol Süper Lig: Beşiktaş - Fenerbahçe", t0, "5"), e("B", "Basketbol Süper Ligi: Beşiktaş - Fenerbahçe", t0, "6")]).count, 2)
+        XCTAssertEqual(R.group([e("A", "Liga: Chemik - Stal", t0, "7"), e("B", "Siatkówka kobiet: Chemik - Stal", t0, "8")]).count, 2)
+        XCTAssertTrue(v[0].airingAt(t0 + 10 * m)); XCTAssertFalse(v[0].airingAt(t0 + 130 * m))
+    }
+
+    func testNetworksAndPrefixes() {
+        XCTAssertEqual(R.network("8K: beIN SP⚽RTS 3 SD"), "beIN")
+        XCTAssertEqual(R.network("SG: HUB beIN SPORTS 3 ᴿᴬᵂ"), "beIN")
+        XCTAssertEqual(R.network("SR: ARENA PREMIUM 2 ᴿᴬᵂ"), "Arena Sport")
+        XCTAssertEqual(R.network("FR: CANAL+ SPORT 360 HD"), "Canal+")
+        XCTAssertEqual(R.network("UK: SKY SPORTS PREMIER LEAGUE ᴴᴰ"), "Sky")
+        XCTAssertEqual(R.network("CL: TNT SPORT ᴿᴬᵂ"), "TNT")
+        XCTAssertEqual(R.network("AR: SSC 1 HD"), "SSC")
+        XCTAssertEqual(R.network("AR: Al Kass One"), "الكأس")
+        XCTAssertEqual(R.network("AR: AD SPORTS 1"), "أبوظبي الرياضية")
+        XCTAssertEqual(R.network("AR: SHAHID VIP SPORT 1"), "شاهد (منصة)")
+        XCTAssertEqual(R.network("ES: DAZN F1 ᴴᴰ"), "DAZN")
+        XCTAssertEqual(R.network("ZZ: Channel 9"), "أخرى")
+        XCTAssertEqual(R.country("UK: SKY SPORTS"), "بريطانيا")
+        XCTAssertEqual(R.country("ARG: FOX SPORTS 3 ᴿᴬᵂ"), "الأرجنتين")
+        XCTAssertEqual(R.country("GOLD: beIN SP⚽RTS 5 RAW"), "تسمية: GOLD")
+        XCTAssertEqual(R.country("8K: beIN SP⚽RTS 3 SD"), "تسمية: 8K")
+        XCTAssertEqual(R.country("beIN SPORTS 1"), "بدون بادئة")
+    }
+
+    func testScreenVersionsBestFirstAndHiddenByChoice() {
+        let t = "Barcelona vs Villarreal - Spanish LaLiga"
+        let g = R.group([e("8K: beIN SP⚽RTS 3 SD", t, t0, "1"), e("8K: beIN SP⚽RTS 3 ᴴᴰ ◉", t, t0, "2"), e("◉: beIN Sp⚽rts 3 4K", t, t0, "3"),
+                         e("8K: beIN SP⚽RTS 3 ᴿᴬᵂ", t, t0, "4"), e("8K: beIN SP⚽RTS 3 ᴿᴬᵂ", t, t0, "5")])
+        XCTAssertEqual(g.count, 1)
+        let labels: Set<String> = ["8K"]
+        let all = MatchScreenRule.versions(g[0], versionOf: { R.version($0.channel, labelPrefixes: labels) }, hideHd: false, hideSd: false)
+        XCTAssertEqual(all.rows.map(\.entry.channelId), ["3", "2", "1", "4", "5"])
+        XCTAssertEqual(all.hidden, 0)
+        XCTAssertEqual(all.rows.map(\.copy), [0, 0, 0, 1, 2])
+        let some = MatchScreenRule.versions(g[0], versionOf: { R.version($0.channel, labelPrefixes: labels) }, hideHd: true, hideSd: true)
+        XCTAssertEqual(some.rows.map(\.entry.channelId), ["3", "4", "5"]); XCTAssertEqual(some.hidden, 2)
+        XCTAssertEqual(MatchScreenRule.subtitle(g[0]), "Spanish LaLiga")
+    }
+
+    func testScreenDaysNowAndSport() {
+        let day: Int64 = 86_400_000
+        let start = t0, tomorrow = t0 + day, end = t0 + 2 * day
+        let gs = R.group([e("A", "Spanish LaLiga: Alpha v Beta", start - 60 * m, "1"), e("B", "Spanish LaLiga: Gamma v Delta", start + 600 * m, "2"),
+                          e("C", "Spanish LaLiga: Eps v Zeta", tomorrow + 60 * m, "3"), e("D", "Basketball: Eta v Theta", start + 600 * m, "4"),
+                          e("E", "Iota v Kappa", start + 600 * m, "5")])
+        func names(_ l: [R.Group]) -> [String] { l.map(\.home) }
+        XCTAssertEqual(names(MatchScreenRule.cards(gs, now: start, dayStart: start, tomorrow: tomorrow, end: end, day: 0, nowOnly: false, sport: .football)), ["Alpha", "Gamma"])
+        XCTAssertEqual(names(MatchScreenRule.cards(gs, now: start, dayStart: start, tomorrow: tomorrow, end: end, day: 1, nowOnly: false, sport: .football)), ["Eps"])
+        XCTAssertEqual(names(MatchScreenRule.cards(gs, now: start + 30 * m, dayStart: start, tomorrow: tomorrow, end: end, day: 0, nowOnly: true, sport: .football)), ["Alpha"])
+        XCTAssertEqual(names(MatchScreenRule.cards(gs, now: start, dayStart: start, tomorrow: tomorrow, end: end, day: 0, nowOnly: false, sport: .other)), ["Eta"])
+        XCTAssertEqual(names(MatchScreenRule.cards(gs, now: start, dayStart: start, tomorrow: tomorrow, end: end, day: 0, nowOnly: false, sport: .unknown)), ["Iota"])
+        XCTAssertEqual(MatchScreenRule.state(gs.first { $0.home == "Alpha" }!, now: start), "يُعرض الآن حسب الدليل · نوع العرض غير محدد")
+        XCTAssertEqual(MatchScreenRule.state(gs.first { $0.home == "Eps" }!, now: start), R.Kind.unknown.label)
+    }
+}

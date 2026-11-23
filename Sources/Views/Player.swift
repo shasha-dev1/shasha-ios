@@ -482,6 +482,8 @@ struct PlayerScreen: View {
     let close: () -> Void
     /// The overlay is hidden while the video is in the floating window.
     @Binding var minimized: Bool
+    /// 1.8.5: plays another list (a match's versions chosen in the matches sheet) in place of this one.
+    var replace: ((PlayItem) -> Void)? = nil
     @EnvironmentObject var library: Library
     @EnvironmentObject var epg: EPG
     @StateObject private var model = PlayerModel()
@@ -524,7 +526,7 @@ struct PlayerScreen: View {
     @Environment(\.scenePhase) private var scenePhase
 
     enum GestureKind { case seek, brightness, volume }
-    enum Sheet: String, Identifiable { case subs, channels, episodes; var id: String { rawValue } }
+    enum Sheet: String, Identifiable { case subs, channels, episodes, matches; var id: String { rawValue } }
 
     private var isLive: Bool { if case .live = item { return true } else { return false } }
     private var channels: [Channel] { if case .live(let l, _) = item { return l } else { return [] } }
@@ -608,6 +610,13 @@ struct PlayerScreen: View {
                     .environmentObject(library).environmentObject(epg)
             case .episodes:
                 EpisodePickerSheet(queue: queue, current: index) { i in sheet = nil; playEpisode(i) }
+            case .matches:
+                // 1.8.5: today's matches over the playing video; a version chosen here replaces this list.
+                NavigationStack {
+                    MatchesView { list, i in sheet = nil; replace?(.live(list: list, index: i)) }
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إغلاق") { sheet = nil } } }
+                }
+                .environmentObject(library).environmentObject(epg)
             }
         }
         .onReceive(model.clock.$timeMs) { t in
@@ -866,6 +875,7 @@ struct PlayerScreen: View {
             }
             Spacer()
             Text("\(index + 1) / \(channels.count)").font(.caption.monospacedDigit()).opacity(0.8)
+            if replace != nil { pill("المباريات", "sportscourt") { sheet = .matches } }
             pill("القنوات", "list.bullet.rectangle") { sheet = .channels }
         }
         .padding(.horizontal, 16).padding(.bottom, 12)

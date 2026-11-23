@@ -28,6 +28,10 @@ struct LiveView: View {
                 } else {
                 let _ = library.groupsTick
                 let ok = library.allowedFilter(.live)
+                // 1.8.5: today's matches from the provider's guide → the channel versions → the player.
+                NavigationLink { MatchesView { list, i in play = .live(list: list, index: i) } } label: {
+                    Label("مباريات اليوم", systemImage: "sportscourt").foregroundStyle(Theme.teal)
+                }
                 NavigationLink { ChannelList(title: "المفضلة", filter: { ok($0.categoryId) }, favoritesOnly: true, play: $play) } label: {
                     Label("المفضلة", systemImage: "star.fill").foregroundStyle(Theme.accent)
                 }

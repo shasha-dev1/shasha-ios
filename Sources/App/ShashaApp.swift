@@ -64,7 +64,7 @@ struct RootView: View {
                     Perf.shared.untilNextFrame("رجوع من المشغّل"); minimized = false; play = nil
                     Downloads.shared.playing(network: nil)    // 1.8.0: a paused download goes on
                     Task { try? await Task.sleep(nanoseconds: 1_500_000_000); await CloudSync.sync(library, force: true) }
-                }, minimized: $minimized)
+                }, minimized: $minimized, replace: { play = $0 })
                     .id(item.id)
                     .environmentObject(library).environmentObject(epg)
                     .opacity(minimized ? 0 : 1)

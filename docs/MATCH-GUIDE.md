@@ -41,3 +41,34 @@ Source name shown to the viewer: «دليل برامج المزوّد».
   the screen; the parser aborts), parse at utility priority off the main thread, memory measured before / after the
   download / after reading (performance report + the report's last line).
 - «مباريات اكتشفناها من الدليل» is not «نسبة تغطية مباريات اليوم»: the latter needs an independent schedule.
+
+## Rules v2 + screen (owner 22:04) — iPhone 1.8.5 / TV 0.9.29
+
+From the first two reports (23/11, ~1,800–2,100 cards): versions mostly "unknown" (decorated letters), other sports
+mixed in, round/sponsor text in names, movie titles on general channels, same-name versions, a 63k vs 88k gap.
+
+- **Folding**: NFKC + small capitals + ⚽→o before any check (ᴴᴰ = HD, ʰᵉᵛᶜ = HEVC, ᵁᴴᴰ ³⁸⁴⁰ᴾ = 4K, SP⚽RTS = SPORTS).
+- **Resolution**: the part after the provider prefix decides; the prefix counts only when the rest says nothing, and
+  not at all when it is a *label in that source* — `prefixLabels`: a resolution-looking prefix with ≥ 3 channels
+  whose bodies name another resolution ≥ 30 % of the time (8K: on the owner's source; 4K: stays). LQ = SD.
+- **Sport**: another sport named in the category / title / description wins (BSL → basketball even for Beşiktaş),
+  then football words or a football-only competition, then the channel's own name; else **unknown, kept apart**.
+- **Cleaning** (titles are never changed): a round marker before the home team becomes `lead` ("BSL (26-27)
+  09.Hafta"); after a slash only known markers go (Bant, Canlı…); women/age brackets stay; women/age named in the
+  competition part ("Siatkówka kobiet:") are carried by both teams.
+- **Kinds by words** ("Liverpool" ≠ live); Bant / différé / powtórka / tekrar = replay; "not stated" ≠ live.
+- **General channels**: an entry counts only with football named in the guide entry itself (not the channel name).
+- **Versions**: every channel version is its own entry and its own selectable row (same name = "نسخة 1/2").
+- **Index**: today + tomorrow (local), each version apart. TV: one SQL pass over the imported guide (titles with a
+  separator), `files/match-index.json`; guide `<category>` now stored (DB v12, filled at the next guide refresh).
+  iPhone: the guide file streamed once, `Caches/match-index.json`; rebuilt on Wi‑Fi when older than 6 h or another day,
+  over mobile data only on request.
+- **Report v2** (both): guide totals and links (by id / by name / none), programmes per guide id and the old
+  per-version count (TV: also with its 400 cap — the 63k vs 88k question is answered by these lines, not guessed),
+  football / other / unknown cards, kinds, general channels, qualities, prefix labels, per network and per prefix,
+  a varied sample with original titles, rejected titles, time and memory per stage.
+- **Screen**: today / tomorrow / on now by the guide, sport filter, quality filter (hide HD / SD; 4K, 1080p and
+  unknown always stay; nothing lower is played instead), match → versions → player (zapping between that match's
+  versions). TV: nav bar + side menu, and over the live player (Menu → options); iPhone: Channels tab + a sheet in
+  the live player. The video keeps playing behind the in-player panel/sheet; the list keeps its place.
+- Coverage of "today's matches" is still not computed: it needs an independent fixtures list.
