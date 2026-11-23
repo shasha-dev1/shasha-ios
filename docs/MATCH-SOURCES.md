@@ -23,7 +23,8 @@ Sample 24/11 (two files in `docs/samples/`, read by hand, sources named):
 - LiveSoccerTV: 23 matches, 285 distinct names — 176 channels, 102 platforms (TOD, beIN CONNECT, HBO Max, DAZN <country>,
   myCANAL, Sky Go…), 7 whole networks (Canal+, Movistar+…). Kickoffs converted from America/New_York (UTC−5).
   International coverage: Man City–Napoli 254 entries, Real Madrid–PSV 269, Wolves–Derby, Rangers–Aberdeen in full.
-  **No 4K channel named anywhere.**
+  No 4K channel named **in this sample** (result of these 23 matches only — beIN 4K Arabia was seen on another
+  LiveSoccerTV match earlier, so this is not a property of the site).
 - Live-FootballOnTV: 30 matches (24/11 + Stoke–Millwall 25/11), 13 channels + 8 platforms; 4K: «Sky Sports Ultra HDR»
   (Wolves–Derby, Rangers–Aberdeen, Stoke–Millwall), «TNT Sports Ultimate» (Man City–Napoli).
 - Same matches in both: **20** (18 by name + «Wolves» = Wolverhampton Wanderers + «QPR» = Queens Park Rangers, read
@@ -41,6 +42,41 @@ only. Commentary language only when the name says it (English / French…). A na
 «TNT Sports Ultimate») matches the library's 4K versions of the channels listed with it for that match as **possible**,
 and a library channel with the same 4K name as confirmed; an HD channel alone never brings a 4K one.
 
+## Status (owner 00:38): import and merge of fixed files — not an automatic integration
+
+What exists is **importing and merging schedule files**; neither site is fetched by the app, and a file goes out of date
+(the 24/11 samples end that night). Neither source is called "integrated" until an updating source is chosen and built.
+
+Rules added in 0.9.35 / 1.8.7 (tests: MatchSourcesUpdateTest / MatchSourcesUpdateTests, same vectors):
+1. **Updates.** Each source shows its coverage (first–last kickoff), when its data was taken, and a warning when it no
+   longer covers today («انتهت تغطيته») or is over a day old. Importing the same source (same `source.name`) again
+   replaces it whole: no match twice, manual links kept. The file and the 6-source limit are checked before anything
+   is written: a damaged file, an unsupported `version`, a bad time or type, or a 7th source change nothing.
+2. **Match identity.** Keys read short club names as the full ones (Wolves, QPR, Man City…). A manual choice keeps the
+   match's time; when a later file moves the match to another day it finds it again (same teams, the nearest row within
+   3 days, **one row only** — never the team's other matches). Changing it on the moved match replaces the older choice.
+   Choices saved by 0.9.32–0.9.34 / 1.8.6 (no time) use their day. Optional `id` per match/channel is read and kept.
+3. **4K.** A named 4K channel («Sky Sports Ultra HDR») matches the same name in the library directly (confirmed). The
+   4K feeds of the other channels listed with it («4K: SKY SPORTS UHD (EVENT)» for «Sky Sports Main Event») are a
+   separate section, «بدائل 4K محتملة — قد لا تكون نفس البث»: never confirmed, never zapped to, played only when chosen.
+   Zapping is between confirmed channels only; possible / alternative / suggested ones play alone.
+4. **Types.** The file may state `"type": "channel" | "network" | "platform"` per channel (wins). Otherwise by name,
+   except that a platform- or network-looking name («Canal+», «DAZN») is a channel when the library has that very name
+   in the **stated** country (Canal+ France ↔ FR: CANAL+ HD); with no country it is never assumed.
+5. **Filters.** Country and commentary language per match, «all» by default; «دولة غير معروفة» / «لغة غير معروفة»
+   options; a chosen country or language **keeps** the unknown ones. Language only from names, never guessed.
+6. **Import tests:** damaged JSON, version 2, bad time, bad type, same file twice, an update with a short name and a
+   moved kickoff, a 7th source, and a file carrying stream URLs: links only ever point to library channels; a file
+   cannot add playback links (unknown fields such as `url`/`stream` on a channel are ignored).
+   `docs/samples/shasha-matches-livesoccertv-2026-11-24-UPDATE-TEST.json` is an **edited copy** for the second-import test
+   on the device (Man City +30 min, Rangers–Aberdeen next day, one match removed) — not real data.
+
+Opening the matches screen (owner 00:40, TV ~5 min): the kept list was dropped at midnight (tied to the day) and the
+screen waited for the full merge, which read and indexed every library channel even with no imported file. Now:
+yesterday's kept list is shown after midnight (it covers today) while today's is built; the first paint has no library
+index; the index is not built at all without imports. The TV report lists every opening step with its time
+(«فتح شاشة المباريات…») to find what still takes long.
+
 ## Our tools vs the app
 
 The blocks above are of two kinds and are kept apart:
@@ -51,6 +87,10 @@ The blocks above are of two kinds and are kept apart:
   attribution; its day loader is disallowed in robots.txt), TheSportsDB (free caps per endpoint).
 
 ## Import file — "shasha-matches" v1 (both apps)
+
+Optional since 0.9.35 / 1.8.7: `matches[].id`, `channels[].id` (the source's own ids), `channels[].type`
+(`channel` / `network` / `platform`). Any other field is ignored; stream URLs are never read.
+
 
 ```json
 {"format": "shasha-matches", "version": 1,

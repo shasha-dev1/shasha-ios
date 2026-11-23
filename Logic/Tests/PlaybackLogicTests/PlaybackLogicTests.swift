@@ -1608,4 +1608,21 @@ final class MatchSourcesUpdateTests: XCTestCase {
         XCTAssertTrue(S.coverage(s, now: ko + 30 * h).old)
         XCTAssertTrue(S.coverage(s, now: ko + 4 * h).text { _ in "t" }.contains("انتهت"))
     }
+
+    func testTheUpdateTestFileReplacesTheSampleAndKeepsTheLinks() throws {
+        let dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples").standardizedFileURL
+        let v1 = try S.parse(Data(contentsOf: dir.appendingPathComponent("shasha-matches-livesoccertv-2026-11-24.json")), now: 1)
+        let v2 = try S.parse(Data(contentsOf: dir.appendingPathComponent("shasha-matches-livesoccertv-2026-11-24-UPDATE-TEST.json")), now: 2)
+        let before = rows([v1], [])
+        var manual: [S.Manual] = []
+        for r in before where r.home == "Manchester City" || r.home == "Rangers" {
+            manual = S.manualSetFor(manual, row: r, channelId: "6", name: "AR: beIN SPORTS 1 ᴴᴰ", add: true, at: 5)
+        }
+        XCTAssertEqual(manual.count, 2)
+        let after = rows(try S.planImport([v1], v2), manual)
+        XCTAssertEqual(after.count, before.count - 1)
+        for home in ["Man City", "Rangers"] {
+            XCTAssertEqual(after.first { $0.home == home }?.links.first { $0.channelId == "6" }?.best, .manual, home)
+        }
+    }
 }
