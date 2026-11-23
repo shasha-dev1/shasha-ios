@@ -644,9 +644,13 @@ struct PlayerScreen: View {
             start(); Orientation.landscape(); UIApplication.shared.isIdleTimerDisabled = true
             Perf.shared.memory("فتح المشغّل")
             Perf.shared.add("A/B: تجميد الشاشات خلف المشغّل", ms: 0, UserDefaults.standard.bool(forKey: FreezeBehindPlayer.key) ? "مفعّل" : "متوقف")
+            // 1.8.4: the samples hold the model only weakly. They held it (and its mpv engine) for 90 s after the
+            // player closed: the owner's 1.8.1 report shows 3 engines alive at once and a 1,643 MB peak after opening
+            // downloads three times in a row, all released together right after each «بـ 90 ث» sample.
+            weak var weakModel = model
             for sec in [30.0, 90.0] {
                 DispatchQueue.main.asyncAfter(deadline: .now() + sec) {
-                    guard PlayerModel.alive > 0 else { return }
+                    guard PlayerModel.alive > 0, let model = weakModel else { return }
                     Perf.shared.memory("أثناء التشغيل بـ \(Int(sec)) ث")
                     // 1.7.1: what part of it is mpv's network cache (set to 150 MiB ahead), to tell it apart from the
                     // library and pictures. Read once at 30 s and 90 s only.
