@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-15
+    # 1.7.9: macos-14 was retired (2 Nov 2026) and macos-15 (arm64) jobs were not picked up for capacity; the Intel
+    # image of the same macOS 15 / Xcode builds the same iOS arm64 app (only the build machine differs).
+    runs-on: macos-15-intel
     timeout-minutes: 100
     env:
       SHASHA_CREDIT: ${{ secrets.SHASHA_CREDIT }}
