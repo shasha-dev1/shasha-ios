@@ -1765,12 +1765,20 @@ enum MatchSourcesRule {
         func airingAt(_ now: Int64) -> Bool { group?.airingAt(now) == true || (kickoff.map { now >= $0 && now < $0 + 2 * 3_600_000 } ?? false) }
     }
 
+    /// Short names schedules use for the same club (Live-FootballOnTV «Wolves», «QPR»). Same as the TV.
+    private static let shortNames: [String: String] = ["wolves": "wolverhampton wanderers", "qpr": "queens park rangers", "spurs": "tottenham hotspur",
+        "psg": "paris saint germain", "man utd": "manchester united", "man united": "manchester united", "man city": "manchester city",
+        "inter": "internazionale", "inter milan": "internazionale", "bayern munich": "bayern munchen", "west brom": "west bromwich albion",
+        "sheff utd": "sheffield united", "sheff wed": "sheffield wednesday", "nottm forest": "nottingham forest", "brighton": "brighton hove albion",
+        "brighton and hove albion": "brighton hove albion", "mk dons": "milton keynes dons", "atletico madrid": "atletico de madrid"]
+
     private static func teamsMatch(_ a: String, _ b: String) -> Bool {
         let ka = MatchGuideRule.teamKey(a), kb = MatchGuideRule.teamKey(b)
         if ka == kb { return true }
         func split(_ k: String) -> (String, String) {
-            guard let i = k.firstIndex(of: "#") else { return (k, "") }
-            return (String(k[..<i]), String(k[k.index(after: i)...]))
+            guard let i = k.firstIndex(of: "#") else { return (shortNames[k] ?? k, "") }
+            let w = String(k[..<i])
+            return (shortNames[w] ?? w, String(k[k.index(after: i)...]))
         }
         let (wa, ma) = split(ka), (wb, mb) = split(kb)
         if ma != mb { return false }

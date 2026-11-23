@@ -188,7 +188,43 @@ struct MatchesView: View {
                                         day: store.day, nowOnly: store.nowOnly, sport: store.sport)
     }
 
+    private var footerText: String {
+        var t = "التغطية جزئية: دليل برامج المزوّد"
+        if !store.files.isEmpty { t += " + \(store.files.count) جدول مستورد" }
+        t += ". الأوقات بتوقيت هذا الجهاز (\(TimeZone.current.identifier))."
+        if let r = store.result { t += " آخر تحديث للدليل " + MatchIndexBuilder.fmt(r.built) + "." }
+        return t
+    }
+
+    private var emptyNote: Bool { (store.result != nil || !store.files.isEmpty) && shown.isEmpty }
+
     var body: some View {
+        list
+            .navigationTitle("مباريات اليوم")
+            .toolbar { toolbar }
+            .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .item], allowsMultipleSelection: false) { r in
+                if case .success(let urls) = r, let u = urls.first { store.importFile(u) }
+            }
+            .sheet(isPresented: $showFiles) { NavigationStack { MatchFilesView() } }
+    }
+
+    @ToolbarContentBuilder private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            Menu {
+                Toggle("إخفاء HD (720p)", isOn: $hideHd)
+                Toggle("إخفاء SD", isOn: $hideSd)
+                Text("4K و1080p والنسخ مجهولة الجودة تبقى دائمًا. الجودة مأخوذة من اسم القناة.")
+                Divider()
+                Button { importing = true } label: { Label("استيراد جدول مباريات…", systemImage: "square.and.arrow.down") }
+                Button { showFiles = true } label: { Label("الجداول المستوردة (\(store.files.count))", systemImage: "doc.text") }
+            } label: { Image(systemName: hideHd || hideSd ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle") }
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button { store.refresh(library) } label: { Image(systemName: "arrow.clockwise") }.disabled(store.busy)
+        }
+    }
+
+    private var list: some View {
         ScrollViewReader { proxy in
             List {
                 Section {
@@ -198,15 +234,11 @@ struct MatchesView: View {
                     Picker("الرياضة", selection: $store.sport) {
                         ForEach(MatchScreenRule.SportFilter.allCases, id: \.self) { Text($0.label).tag($0) }
                     }
-                } footer: {
-                    Text("التغطية جزئية: دليل برامج المزوّد" + (store.files.isEmpty ? "" : " + \(store.files.count) جدول مستورد")
-                         + ". الأوقات بتوقيت هذا الجهاز (\(TimeZone.current.identifier))."
-                         + (store.result.map { " آخر تحديث للدليل " + MatchIndexBuilder.fmt($0.built) + "." } ?? ""))
-                }
+                } footer: { Text(footerText) }
                 if store.busy || !store.status.isEmpty {
                     Section { HStack { if store.busy { ProgressView() }; Text(store.status).font(.footnote).foregroundStyle(.secondary) } }
                 }
-                if (store.result != nil || !store.files.isEmpty) && shown.isEmpty {
+                if emptyNote {
                     Text("ما وجدنا مباريات لهذا الاختيار.").foregroundStyle(.secondary)
                 }
                 ForEach(Array(shown.enumerated()), id: \.offset) { _, r in
@@ -222,26 +254,6 @@ struct MatchesView: View {
             }
             .onChange(of: library.channels.count) { _ in store.remerge(library) }
         }
-        .navigationTitle("مباريات اليوم")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Toggle("إخفاء HD (720p)", isOn: $hideHd)
-                    Toggle("إخفاء SD", isOn: $hideSd)
-                    Text("4K و1080p والنسخ مجهولة الجودة تبقى دائمًا. الجودة مأخوذة من اسم القناة.")
-                    Divider()
-                    Button { importing = true } label: { Label("استيراد جدول مباريات…", systemImage: "square.and.arrow.down") }
-                    Button { showFiles = true } label: { Label("الجداول المستوردة (\(store.files.count))", systemImage: "doc.text") }
-                } label: { Image(systemName: hideHd || hideSd ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle") }
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button { store.refresh(library) } label: { Image(systemName: "arrow.clockwise") }.disabled(store.busy)
-            }
-        }
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .item], allowsMultipleSelection: false) { r in
-            if case .success(let urls) = r, let u = urls.first { store.importFile(u) }
-        }
-        .sheet(isPresented: $showFiles) { NavigationStack { MatchFilesView() } }
     }
 
     private func rowLabel(_ r: MatchSourcesRule.Row) -> some View {
@@ -250,12 +262,18 @@ struct MatchesView: View {
         let time = f.string(from: Date(timeIntervalSince1970: Double(r.start) / 1000))
         let confirmed = r.links.filter(\.confirmed).count
         let state: String? = r.group.map { MatchScreenRule.state($0, now: now) } ?? (r.airingAt(now) ? "بدأت حسب الجدول" : nil)
-        let parts: [String?] = [r.group.flatMap(MatchScreenRule.subtitle) ?? r.competition, r.sport.sport == .unknown ? nil : r.sport.name, state,
-                                "\(confirmed) قناة مؤكدة" + (r.links.count > confirmed ? " · \(r.links.count - confirmed) أخرى" : ""),
-                                r.group == nil ? "من الجدول فقط (ليست في EPG)" : nil, r.timeConflict ? "⚠︎ تعارض في الموعد" : nil]
+        var parts: [String] = []
+        if let t = r.group.flatMap(MatchScreenRule.subtitle) ?? r.competition { parts.append(t) }
+        if r.sport.sport != .unknown, let n = r.sport.name { parts.append(n) }
+        if let state { parts.append(state) }
+        var c = "\(confirmed) قناة مؤكدة"
+        if r.links.count > confirmed { c += " · \(r.links.count - confirmed) أخرى" }
+        parts.append(c)
+        if r.group == nil { parts.append("من الجدول فقط (ليست في EPG)") }
+        if r.timeConflict { parts.append("⚠︎ تعارض في الموعد") }
         return VStack(alignment: .leading, spacing: 3) {
             Text("\(time) · \(r.home) × \(r.away)").lineLimit(1)
-            Text(parts.compactMap { $0 }.joined(separator: " · "))
+            Text(parts.joined(separator: " · "))
                 .font(.caption).foregroundStyle(r.group?.live == true ? Theme.teal : .secondary).lineLimit(3)
         }
     }
@@ -356,17 +374,24 @@ struct MatchRowView: View {
 
     @ViewBuilder private func info(_ r: MatchSourcesRule.Row) -> some View {
         let tz = TimeZone.current
-        let zone = "\(tz.identifier) (UTC\(String(format: "%+.1f", Double(tz.secondsFromGMT()) / 3600)))"
+        let off: String = String(format: "%+.1f", Double(tz.secondsFromGMT()) / 3600)
+        let zone: String = tz.identifier + " (UTC" + off + ")"
         VStack(alignment: .leading, spacing: 4) {
             if let c = r.competition { Text(c).font(.subheadline) }
             if let k = r.kickoff { Text("موعد الانطلاق: \(MatchIndexBuilder.fmt(k)) — من \(r.kickoffFrom ?? "")").font(.caption) }
-            if let g = r.group {
-                Text("برامج EPG: " + g.entries.prefix(4).map { "\(MatchIndexBuilder.fmt($0.start))–\(MatchIndexBuilder.fmt($0.stop).suffix(5))" }
-                        .reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }.joined(separator: " / ")).font(.caption)
-            }
+            if let g = r.group { Text("برامج EPG: " + epgTimes(g)).font(.caption) }
             if r.timeConflict { Text("⚠︎ موعد الجدول لا يطابق وقت برنامج EPG (أو جدولان مختلفان) — الاثنان معروضان كما هما.").font(.caption).foregroundStyle(.orange) }
             Text("الأوقات بتوقيت الجهاز: \(zone) · المصادر: \(r.sources.joined(separator: "، "))").font(.caption2).foregroundStyle(.secondary)
         }
+    }
+
+    private func epgTimes(_ g: MatchGuideRule.Group) -> String {
+        var out: [String] = []
+        for e in g.entries.prefix(6) {
+            let x = MatchIndexBuilder.fmt(e.start) + "–" + String(MatchIndexBuilder.fmt(e.stop).suffix(5))
+            if !out.contains(x) { out.append(x) }
+        }
+        return out.joined(separator: " / ")
     }
 
     @ViewBuilder private func linkSection(_ title: String, _ links: [MatchSourcesRule.Link], _ playable: [MatchSourcesRule.Link],
@@ -397,10 +422,12 @@ struct MatchRowView: View {
         let v = versionOf(l.name)
         let country = MatchGuideRule.country(l.name)
         let lang = MatchSourcesRule.language(l.name) ?? l.proofs.lazy.compactMap { MatchSourcesRule.language($0.detail ?? "") }.first
-        let meta: [String?] = [v.label(), country == "بدون بادئة" ? nil : country, lang.map { "تعليق " + $0 }]
+        var meta: [String] = [v.label()]
+        if country != "بدون بادئة" { meta.append(country) }
+        if let lang { meta.append("تعليق " + lang) }
         return VStack(alignment: .leading, spacing: 3) {
             Text(l.name).lineLimit(1).foregroundStyle(.primary)
-            Text(meta.compactMap { $0 }.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary)
+            Text(meta.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary)
             Text(MatchSourcesRule.proofText(l, fmt: MatchIndexBuilder.fmt)).font(.caption2).foregroundStyle(.secondary).lineLimit(4)
         }
     }

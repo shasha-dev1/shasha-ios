@@ -1457,4 +1457,19 @@ final class MatchSourcesTypesTests: XCTestCase {
         XCTAssertTrue(hits("Canal+", "Poland").isEmpty)
         XCTAssertEqual(hits("TVP Sport", "Poland"), ["5:true"])
     }
+
+    func testTheTwoSamplesMergeIntoOneRowPerMatch() throws {
+        let dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples").standardizedFileURL
+        let a = try S.parse(Data(contentsOf: dir.appendingPathComponent("shasha-matches-livesoccertv-2026-11-24.json")), now: 0)
+        let b = try S.parse(Data(contentsOf: dir.appendingPathComponent("shasha-matches-live-footballontv-2026-11-24.json")), now: 0)
+        let from: Int64 = 1_795_467_600_000      // 2026-11-24 00:00 Bahrain (21:00Z)
+        let rows = S.merge([], sources: [a, b], idx: S.LibIndex([]), pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0,
+                           from: from, to: from + 2 * 86_400_000)
+        XCTAssertEqual(rows.filter { $0.away == "Derby County" }.count, 1)          // «Wolves» = «Wolverhampton Wanderers»
+        XCTAssertEqual(rows.first { $0.away == "Derby County" }?.sources.count, 2)
+        XCTAssertEqual(rows.filter { $0.home == "Norwich City" }.count, 1)          // «QPR»
+        XCTAssertEqual(rows.filter { $0.home.hasPrefix("Arsenal") }.count, 2)       // Arsenal ≠ Arsenal U19
+        XCTAssertEqual(rows.filter { $0.sources.count == 2 }.count, 20)
+        XCTAssertTrue(rows.allSatisfy { !$0.timeConflict })
+    }
 }
