@@ -1626,3 +1626,55 @@ final class MatchSourcesUpdateTests: XCTestCase {
         }
     }
 }
+
+/// 1.8.8: both sites' pages as read on 24/11 (docs/samples/pages). Same vectors as the TV's MatchFetchCoreTest.
+final class MatchFetchRuleTests: XCTestCase {
+    typealias F = MatchFetchRule
+    typealias S = MatchSourcesRule
+    let from: Int64 = 1_795_467_600_000
+    var to: Int64 { from + 2 * 86_400_000 }
+    private func page(_ n: String) throws -> String {
+        let dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples/pages").standardizedFileURL
+        return try String(contentsOf: dir.appendingPathComponent(n), encoding: .utf8)
+    }
+
+    func testLiveFootballOnTvListingsWithUkTimesAndThe4kChannels() throws {
+        let s = F.parseLfotv(try page("lfotv-2026-11-24.html"), fetchedAt: 5, from: from, to: to)
+        XCTAssertEqual(s.name, F.lfotv)
+        XCTAssertGreaterThanOrEqual(s.matches.count, 20)
+        let w = try XCTUnwrap(s.matches.first { $0.home == "Wolves" })
+        XCTAssertEqual(w.away, "Derby County")
+        XCTAssertEqual(w.kickoff, 1_795_550_400_000)
+        XCTAssertEqual(w.channels.map(\.name), ["Sky Sports Main Event", "Sky Sports Ultra HDR"])
+        XCTAssertEqual(w.competition, "Championship")
+        let back = try S.parse(F.toJSON(s), now: 9)
+        XCTAssertEqual(back.matches.count, s.matches.count)
+    }
+
+    func testUkSummerTimeIsRead() {
+        let html = #"<div class="fixture-date">Saturday 1st August 2026</div><div class="fixture"><div class="fixture__time">15:00</div><div class="fixture__teams">A v B</div><div class="fixture__competition">X</div><div class="fixture__channel"><div class="span3 channels"><span class="channel-pill">Sky Sports Main Event</span></div></div></div>"#
+        let m = F.parseLfotv(html, fetchedAt: 0, from: 0, to: .max).matches
+        XCTAssertEqual(m.count, 1)
+        XCTAssertEqual(m.first?.kickoff, Int64(ISO8601DateFormatter().date(from: "2026-08-01T14:00:00Z")!.timeIntervalSince1970 * 1000))
+    }
+
+    func testLiveSoccerTvDayPageAndMatchPage() throws {
+        let days = F.parseLstvDay(try page("lstv-day-2026-11-24.html"))
+        XCTAssertEqual(days.count, 60)
+        XCTAssertTrue(days.contains { $0.competition == "Major League Soccer" })
+        let p = F.parseLstvMatch(try page("lstv-match-manchester-city-vs-napoli.html"))
+        XCTAssertEqual(p.home, "Manchester City"); XCTAssertEqual(p.away, "Napoli")
+        XCTAssertEqual(p.start, 1_795_550_400_000)
+        XCTAssertGreaterThan(p.coverage.count, 400)
+        XCTAssertTrue(p.coverage.contains { $0.country == "Great Britain" && $0.name == "TNT Sports 1" && $0.slug == "bt-sport-1-uk" })
+        let url = "https://www.livesoccertv.com/match/manchester-city-vs-napoli/1k084"
+        let day = F.DayMatch(id: "5774630", url: url, home: "Manchester City", away: "Napoli", kickoff: 1_795_550_400_000, competition: "UEFA Champions League", channels: ["TNT Sports 1"])
+        let s = F.lstvSource([day], pages: [url: p], fetchedAt: 7, from: from, to: to)
+        let idx = S.LibIndex([.init(id: "1", name: "UK: TNT SPORTS 1 ᴴᴰ"), .init(id: "2", name: "AR: beIN SPORTS 3 ᴴᴰ")])
+        let r = S.merge([], sources: [try S.parse(F.toJSON(s), now: 8)], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [],
+                        guideSource: "EPG", guideAt: 0, from: from, to: to, tz: TimeZone(identifier: "Asia/Bahrain")!)
+        XCTAssertEqual(Set(r[0].links.filter(\.confirmed).map(\.channelId)), ["1", "2"])
+        XCTAssertTrue(r[0].platforms.contains { $0.0 == "HBO Max" })
+        XCTAssertTrue(F.lstvDayURLs(today: Date(timeIntervalSince1970: 1_795_550_400), days: 2, tz: TimeZone(identifier: "Asia/Bahrain")!).first!.hasSuffix("/schedules/2026-11-23/"))
+    }
+}

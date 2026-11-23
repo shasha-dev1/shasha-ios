@@ -62,6 +62,7 @@ final class MatchStore: ObservableObject {
             else { result = nil; groups = [] }
         }
         remerge(library)
+        fetchSchedules(force: false)
         guard isStale, !busy else { return }
         if PathCost.shared.isExpensive {
             status = result == nil ? "الدليل يُنزَّل من المزوّد (قرابة \(result?.guideMB ?? 80) MB). أنت على بيانات الجوال: اضغط «تحديث» للتنزيل."
@@ -69,7 +70,19 @@ final class MatchStore: ObservableObject {
         } else { refresh(library) }
     }
 
+    /// 1.8.8: the schedule sites in the background (when due, or on Refresh); the rows are merged again when one changed.
+    func fetchSchedules(force: Bool) {
+        guard MatchFetch.shared.due(force: force) else { return }
+        Task {
+            let changed = await MatchFetch.shared.run(force: force) { msg in Task { @MainActor in MatchStore.shared.fetchStatus = msg } }
+            fetchStatus = ""
+            if changed { files = MatchSourceFiles.list(); remerge() }
+        }
+    }
+    @Published var fetchStatus = ""
+
     func refresh(_ library: Library) {
+        fetchSchedules(force: true)
         guard !busy else { return }
         guard let x = library.xtream, let url = x.xmltvURL else { status = "يحتاج مصدر Xtream (دليل البرامج يأتي منه)"; return }
         let chans = Self.channels(library), src = library.active?.name ?? "?"
@@ -260,6 +273,9 @@ struct MatchesView: View {
                 if store.busy || !store.status.isEmpty {
                     Section { HStack { if store.busy { ProgressView() }; Text(store.status).font(.footnote).foregroundStyle(.secondary) } }
                 }
+                if !store.fetchStatus.isEmpty {
+                    Section { HStack { ProgressView(); Text(store.fetchStatus).font(.footnote).foregroundStyle(.secondary) } }
+                }
                 if emptyNote {
                     Text("ما وجدنا مباريات لهذا الاختيار.").foregroundStyle(.secondary)
                 }
@@ -318,6 +334,10 @@ struct MatchFilesView: View {
                 }
                 .swipeActions { Button(role: .destructive) { store.removeFile(it.file) } label: { Label("حذف", systemImage: "trash") } }
             }
+            Section("الجلب التلقائي (Live-FootballOnTV و LiveSoccerTV)") {
+                Text(MatchFetch.shared.lastRun == nil ? "لم يُجلب بعد" : "آخر جلب: " + MatchFetch.shared.lastResult).font(.caption)
+                Button("جلب الآن") { store.fetchSchedules(force: true) }.disabled(!MatchFetch.shared.due(force: true))
+            } footer: { Text("يجلب تلقائيًا كل 6 ساعات على الأكثر عند فتح شاشة المباريات، أو عند «تحديث» (مرة كل 15 دقيقة).") }
             Section { } footer: {
                 Text("الملفات محفوظة على هذا الجهاز فقط (حد \(MatchSourceFiles.maxFiles) ملفات، 5 MB لكل ملف). الصيغة في docs/MATCH-SOURCES.md. روابط التشغيل وبيانات اشتراكك لا تُرسل لأي مصدر.")
             }

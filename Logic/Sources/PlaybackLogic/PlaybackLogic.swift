@@ -2256,3 +2256,168 @@ enum DownloadRule {
         return (n, b)
     }
 }
+
+/// 1.8.8: Live-FootballOnTV and LiveSoccerTV read automatically (owner: personal use). Same parsing as the TV's MatchFetchCore.
+enum MatchFetchRule {
+    static let lstv = "LiveSoccerTV (تلقائي)"
+    static let lfotv = "Live-FootballOnTV (تلقائي)"
+    static let lfotvURL = "https://www.live-footballontv.com/"
+    static let lstvBase = "https://www.livesoccertv.com"
+
+    private static func re(_ p: String, dot: Bool = true) -> NSRegularExpression {
+        try! NSRegularExpression(pattern: p, options: dot ? [.dotMatchesLineSeparators] : [])
+    }
+    private static func groups(_ r: NSRegularExpression, _ s: String) -> [[String?]] {
+        let ns = s as NSString
+        return r.matches(in: s, range: NSRange(location: 0, length: ns.length)).map { m in
+            (0..<m.numberOfRanges).map { i in m.range(at: i).location == NSNotFound ? nil : ns.substring(with: m.range(at: i)) }
+        }
+    }
+    private static func first(_ p: String, _ s: String) -> [String?]? { groups(re(p), s).first }
+
+    static func decode(_ s: String) -> String {
+        var t = re("<[^>]+>").stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ")
+        for (a, b) in [("&nbsp;", " "), ("&amp;", "&"), ("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'"), ("&lt;", "<"), ("&gt;", ">")] {
+            t = t.replacingOccurrences(of: a, with: b)
+        }
+        for g in groups(re("&#(\\d+);"), t) {
+            if let n = g[1].flatMap({ UInt32($0) }), let u = Unicode.Scalar(n) { t = t.replacingOccurrences(of: g[0]!, with: String(Character(u))) }
+        }
+        return t.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+    }
+
+    private static let months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+
+    static func lfotvDate(_ s: String) -> DateComponents? {
+        guard let m = first("(\\d{1,2})(?:st|nd|rd|th)?\\s+([A-Za-z]+)\\s+(\\d{4})", s),
+              let d = Int(m[1] ?? ""), let y = Int(m[3] ?? ""), let mon = months.firstIndex(of: (m[2] ?? "").lowercased()) else { return nil }
+        return DateComponents(year: y, month: mon + 1, day: d)
+    }
+
+    static func parseLfotv(_ html: String, fetchedAt: Int64, from: Int64, to: Int64) -> MatchSourcesRule.ExtSource {
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = TimeZone(identifier: "Europe/London")!
+        var out: [MatchSourcesRule.ExtMatch] = []
+        var day: DateComponents?
+        for g in groups(re("<div class=\"fixture-date\">(.*?)</div>|<div class=\"fixture\">(.*?)</div></div></div>"), html) {
+            if let h = g[1] { day = lfotvDate(decode(h)); continue }
+            guard var d = day, let f = g[2] else { continue }
+            func cls(_ c: String) -> String? { first("<div class=\"\(c)\">(.*?)</div>", f)?[1].map(decode) }
+            guard let tm = cls("fixture__time").flatMap({ first("(\\d{1,2}):(\\d{2})", $0) }), let hh = Int(tm[1] ?? ""), let mm = Int(tm[2] ?? ""),
+                  let teams = cls("fixture__teams") else { continue }
+            let parts = teams.components(separatedBy: " v ")
+            guard parts.count >= 2 else { continue }
+            let home = parts[0].trimmingCharacters(in: .whitespaces), away = parts[1...].joined(separator: " v ").trimmingCharacters(in: .whitespaces)
+            if home.isEmpty || away.isEmpty { continue }
+            d.hour = hh; d.minute = mm
+            guard let date = cal.date(from: d) else { continue }
+            let ko = Int64(date.timeIntervalSince1970 * 1000)
+            if ko < from || ko >= to { continue }
+            var names: [String] = []
+            for c in groups(re("<span class=\"channel-pill\"[^>]*>(.*?)</span>"), f) { let n = decode(c[1] ?? ""); if !n.isEmpty && !names.contains(n) { names.append(n) } }
+            out.append(MatchSourcesRule.ExtMatch(home: home, away: away, kickoff: ko, competition: cls("fixture__competition"), sport: "football",
+                                                 channels: names.map { MatchSourcesRule.ExtChannel(name: $0, country: "GB", programmeStart: nil) }))
+        }
+        return MatchSourcesRule.ExtSource(name: lfotv, kind: .guide, url: lfotvURL, fetchedAt: fetchedAt, importedAt: fetchedAt, matches: out)
+    }
+
+    struct DayMatch: Equatable { let id: String; let url: String; let home: String; let away: String; let kickoff: Int64; let competition: String?; let channels: [String] }
+
+    static func parseLstvDay(_ html: String) -> [DayMatch] {
+        var out: [DayMatch] = []
+        var comp: String?
+        for g in groups(re("class=\"r_complink\"><span class=\"[^\"]*\">(.*?)</span>|<tr id=\"(\\d+)\" class=\"matchrow\"(.*?)</tr>"), html) {
+            if let c = g[1] {
+                let t = decode(c)
+                comp = t.components(separatedBy: " - ").dropFirst().joined(separator: " - ")
+                if comp?.isEmpty == true { comp = nil }
+                continue
+            }
+            guard let id = g[2], let row = g[3],
+                  let ko = first("id=\"ko\(id)\" class=\"ts\" dv=\"(\\d+)\"", row)?[1].flatMap({ Int64($0) }),
+                  let a = first("<a href=\"(https://www\\.livesoccertv\\.com/match/[^\"#]+)[^\"]*\" title=\"([^\"]*)\"", row),
+                  let url = a[1] else { continue }
+            let title = decode(a[2] ?? "").components(separatedBy: " vs ")
+            guard title.count >= 2 else { continue }
+            let chs = groups(re("<a href=\"https://www\\.livesoccertv\\.com/channels/[^\"]+\" title=\"[^\"]*\" class=\"[^\"]*\">(.*?)</a>"), row).compactMap { $0[1].map(decode) }.filter { !$0.isEmpty }
+            out.append(DayMatch(id: id, url: url, home: title[0].trimmingCharacters(in: .whitespaces),
+                                away: title[1...].joined(separator: " vs ").trimmingCharacters(in: .whitespaces), kickoff: ko, competition: comp, channels: chs))
+        }
+        return out
+    }
+
+    struct Coverage: Equatable { let country: String; let name: String; let slug: String }
+    struct MatchPage: Equatable { var home: String?; var away: String?; var start: Int64?; var coverage: [Coverage] }
+
+    static func parseLstvMatch(_ html: String) -> MatchPage {
+        var p = MatchPage(home: nil, away: nil, start: nil, coverage: [])
+        let iso = ISO8601DateFormatter()
+        for b in groups(re("<script type=\"application/ld\\+json\">(.*?)</script>"), html) {
+            guard let txt = b[1], let obj = try? JSONSerialization.jsonObject(with: Data(txt.utf8)) as? [String: Any] else { continue }
+            let graph = (obj["@graph"] as? [[String: Any]]) ?? [obj]
+            for o in graph where (o["@type"] as? String) == "SportsEvent" {
+                if let n = (o["homeTeam"] as? [String: Any])?["name"] as? String, !n.isEmpty { p.home = n }
+                if let n = (o["awayTeam"] as? [String: Any])?["name"] as? String, !n.isEmpty { p.away = n }
+                if let s = o["startDate"] as? String, let d = iso.date(from: s) { p.start = Int64(d.timeIntervalSince1970 * 1000) }
+            }
+        }
+        if let r = html.range(of: "class=\"data aleft ichannels\"") {
+            let rest = html[r.lowerBound...]
+            let table = String(rest[..<(rest.range(of: "</table>")?.lowerBound ?? rest.endIndex)])
+            for row in groups(re("<tr>(.*?)</tr>"), table) {
+                guard let cells = row[1], let country = first("<span class=\"flag[^\"]*\">(.*?)</span>", cells)?[1].map(decode) else { continue }
+                for a in groups(re("<a href=\"https://www\\.livesoccertv\\.com/channels/([^/\"]+)/?\"[^>]*>(.*?)</a>"), cells) {
+                    let n = decode(a[2] ?? ""); if !n.isEmpty, let slug = a[1] { p.coverage.append(Coverage(country: country, name: n, slug: slug)) }
+                }
+            }
+        }
+        return p
+    }
+
+    static func lstvSource(_ days: [DayMatch], pages: [String: MatchPage], fetchedAt: Int64, from: Int64, to: Int64) -> MatchSourcesRule.ExtSource {
+        var seen = Set<String>(); var out: [MatchSourcesRule.ExtMatch] = []
+        for d in days where seen.insert(d.id).inserted {
+            let p = pages[d.url]
+            let ko = p?.start ?? d.kickoff
+            if ko < from || ko >= to { continue }
+            var chs: [MatchSourcesRule.ExtChannel] = []
+            if let p, !p.coverage.isEmpty {
+                var k = Set<String>()
+                for c in p.coverage where k.insert(c.slug + "|" + c.country).inserted { chs.append(.init(name: c.name, country: c.country, programmeStart: nil, id: c.slug)) }
+            } else {
+                var k = Set<String>()
+                for n in d.channels where k.insert(n).inserted { chs.append(.init(name: n, country: nil, programmeStart: nil)) }
+            }
+            out.append(.init(home: p?.home ?? d.home, away: p?.away ?? d.away, kickoff: ko, competition: d.competition, sport: "football", channels: chs, id: d.id))
+        }
+        return MatchSourcesRule.ExtSource(name: lstv, kind: .guide, url: lstvBase + "/schedules/", fetchedAt: fetchedAt, importedAt: fetchedAt, matches: out)
+    }
+
+    /// Day pages around the window (the site's day is not ours): yesterday … today + days − 1, as yyyy-MM-dd.
+    static func lstvDayURLs(today: Date, days: Int, tz: TimeZone = .current) -> [String] {
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = tz
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = tz; f.dateFormat = "yyyy-MM-dd"
+        return (-1..<days).compactMap { cal.date(byAdding: .day, value: $0, to: today) }.map { lstvBase + "/schedules/" + f.string(from: $0) + "/" }
+    }
+
+    /// The "shasha-matches" v1 file, so a fetched schedule goes through the same checks and merge as an import.
+    static func toJSON(_ s: MatchSourcesRule.ExtSource) -> Data {
+        let f = ISO8601DateFormatter()
+        func iso(_ ms: Int64) -> String { f.string(from: Date(timeIntervalSince1970: Double(ms) / 1000)) }
+        let ms: [[String: Any]] = s.matches.map { m in
+            var o: [String: Any] = ["home": m.home, "away": m.away, "kickoff": iso(m.kickoff)]
+            if let c = m.competition { o["competition"] = c }; if let sp = m.sport { o["sport"] = sp }; if let id = m.id { o["id"] = id }
+            o["channels"] = m.channels.map { c -> [String: Any] in
+                var x: [String: Any] = ["name": c.name]
+                if let v = c.country { x["country"] = v }; if let v = c.id { x["id"] = v }
+                if let v = c.programmeStart { x["programmeStart"] = iso(v) }; if let v = c.type { x["type"] = "\(v)" }
+                return x
+            }
+            return o
+        }
+        var src: [String: Any] = ["name": s.name, "kind": s.kind == .broadcaster ? "broadcaster" : "guide", "fetchedAt": iso(s.fetchedAt)]
+        if let u = s.url { src["url"] = u }
+        let root: [String: Any] = ["format": "shasha-matches", "version": 1, "source": src, "matches": ms,
+                                   "note": "Read automatically by Shasha for the owner's personal use; source: \(s.name)."]
+        return (try? JSONSerialization.data(withJSONObject: root)) ?? Data()
+    }
+}

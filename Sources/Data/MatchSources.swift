@@ -48,6 +48,11 @@ enum MatchSourceFiles {
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
         guard size <= maxBytes else { return .failure(.tooBig) }
         guard let data = try? Data(contentsOf: url), data.count <= maxBytes else { return .failure(.io("تعذّرت قراءة الملف")) }
+        return store(data)
+    }
+
+    /// Checks a schedule file (and the limit) before writing anything, then keeps it under its source name.
+    static func store(_ data: Data) -> Result<(new: MatchSourcesRule.ExtSource, replaced: MatchSourcesRule.ExtSource?), Failure> {
         let src: MatchSourcesRule.ExtSource
         do { src = try MatchSourcesRule.parse(data, now: Int64(Date().timeIntervalSince1970 * 1000)) }
         catch let e as MatchSourcesRule.BadFile { return .failure(.bad(e.reason)) }
