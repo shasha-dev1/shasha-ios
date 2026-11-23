@@ -924,6 +924,51 @@ final class DownloadRuleTests: XCTestCase {
         XCTAssertTrue(DownloadRule.fileName(source: "S", key: "k", ext: "", sha256: sha).hasSuffix(".mkv"))
     }
 
+    func testPiecesCoverTheRestExactly() {
+        let p = DownloadRule.pieces(have: 50, total: 1_000, size: 300)
+        XCTAssertEqual(p.map { $0.start }, [50, 350, 650, 950])
+        XCTAssertEqual(p.map { $0.end }, [349, 649, 949, 999])
+        XCTAssertEqual(p.reduce(Int64(0)) { $0 + $1.end - $1.start + 1 }, 950)
+        XCTAssertTrue(DownloadRule.pieces(have: 1_000, total: 1_000).isEmpty)
+        let real = DownloadRule.pieces(have: 314_200_000, total: 2_620_000_000)
+        XCTAssertEqual(real.first?.start, 314_200_000); XCTAssertEqual(real.last?.end, 2_619_999_999)
+    }
+
+    func testPieceTag() {
+        let t = DownloadRule.pieceTag("dl-abc.mkv", 100, 199)
+        XCTAssertEqual(DownloadRule.parsePieceTag(t)?.id, "dl-abc.mkv")
+        XCTAssertEqual(DownloadRule.parsePieceTag(t)?.start, 100)
+        XCTAssertNil(DownloadRule.parsePieceTag("dl-abc.mkv"))
+        XCTAssertNil(DownloadRule.parsePieceTag(nil))
+    }
+
+    func testPieceChecks() {
+        XCTAssertTrue(DownloadRule.pieceOK(status: 206, contentRange: "bytes 100-199/1000", start: 100, end: 199, size: 100, knownTotal: 1000))
+        XCTAssertFalse(DownloadRule.pieceOK(status: 200, contentRange: nil, start: 100, end: 199, size: 1000, knownTotal: 1000))
+        XCTAssertFalse(DownloadRule.pieceOK(status: 206, contentRange: "bytes 100-199/1000", start: 100, end: 199, size: 99, knownTotal: 1000))
+        XCTAssertFalse(DownloadRule.pieceOK(status: 206, contentRange: "bytes 0-99/1000", start: 100, end: 199, size: 100, knownTotal: 1000))
+        XCTAssertFalse(DownloadRule.pieceOK(status: 206, contentRange: "bytes 100-199/1200", start: 100, end: 199, size: 100, knownTotal: 1000))
+    }
+
+    /// Pieces finishing out of order are added only as an unbroken run from the kept size; the file equals the source.
+    func testPiecesAddedInOrderOnly() {
+        let source = Data((0..<1_000).map { UInt8($0 % 239) })
+        var kept = Data(source.prefix(50))
+        var done: [Int64: Data] = [:]
+        let plan = DownloadRule.pieces(have: 50, total: 1_000, size: 300)
+        for i in [1, 0, 3] {                           // piece 2 not finished yet (stopped)
+            let p = plan[i]; done[p.start] = source[Int(p.start)...Int(p.end)]
+        }
+        let order = DownloadRule.mergeOrder(have: Int64(kept.count), pieces: done.mapValues { Int64($0.count) })
+        XCTAssertEqual(order, [50, 350])               // 950 waits behind the missing piece
+        for a in order { kept.append(done[a]!) }
+        XCTAssertEqual(kept, source.prefix(650))
+        // the missing piece comes later (from the kept size), then the waiting one
+        done = [650: source[650...949], 950: done[950]!]
+        for a in DownloadRule.mergeOrder(have: Int64(kept.count), pieces: done.mapValues { Int64($0.count) }) { kept.append(done[a]!) }
+        XCTAssertEqual(kept, source)
+    }
+
     func testResumeInfo() throws {
         let plist: [String: Any] = ["NSURLSessionResumeInfoTempFileName": "CFNetworkDownload_ab12.tmp", "NSURLSessionResumeBytesReceived": 12345]
         let d = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)

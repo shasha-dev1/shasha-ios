@@ -61,7 +61,8 @@ final class Downloads: NSObject, ObservableObject {
     var backgroundCompletion: (() -> Void)?
     private var session: URLSession!
     private let fg = FgLoader()
-    private enum Running { case fg(URLSessionDataTask), bg(URLSessionDownloadTask) }
+    /// fg: the open request (app on screen). bg: background downloads — 1.8.2: pieces of 100 MB queued together.
+    private enum Running { case fg(URLSessionDataTask), bg([URLSessionDownloadTask]) }
     private var current: (id: String, run: Running)?
     /// The item whose resume check is running (no download runs meanwhile).
     private var probing: String?
@@ -151,21 +152,37 @@ final class Downloads: NSObject, ObservableObject {
             Task { @MainActor in Downloads.shared.wentToBackground() }
         }
         nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-            Task { @MainActor in Downloads.shared.active = true; Downloads.shared.startNext() }
+            Task { @MainActor in Downloads.shared.becameActive() }
         }
     }
 
     private func reattach(_ tasks: [URLSessionDownloadTask]) {
+        // Pieces that finished while the app wasn't running are added first.
+        for it in items where it.state != .done { mergePieces(it.id) }
+        func owner(_ t: URLSessionDownloadTask) -> String? { DownloadRule.parsePieceTag(t.taskDescription)?.id ?? t.taskDescription }
+        let first = tasks.compactMap(owner).first { id in index(id).map { items[$0].state != .done } ?? false }
+        var mine: [URLSessionDownloadTask] = []
         for t in tasks {
-            if current == nil, let id = t.taskDescription, let i = index(id), items[i].state != .done {
-                current = (id, .bg(t)); items[i].state = .downloading
-                items[i].note = "يكمل في الخلفية (iOS)"
-            } else {
-                stopping.insert(t.taskIdentifier); t.cancel()     // an old transfer nobody follows any more
-            }
+            if let f = first, owner(t) == f { mine.append(t) } else { stopping.insert(t.taskIdentifier); t.cancel() }
+        }
+        if let f = first, let i = index(f), !mine.isEmpty {
+            current = (f, .bg(mine)); items[i].state = .downloading; items[i].note = "يكمل في الخلفية (iOS)"
         }
         save()
-        startNext()
+        if active { becameActive() } else { startNext() }
+    }
+
+    /// Back on screen: background pieces stop (the finished ones are already added; at most the piece in flight is
+    /// fetched again) and the open request, which loses nothing, takes over.
+    private func becameActive() {
+        active = true
+        if let c = current, case .bg = c.run {
+            let id = c.id
+            stopCurrent(if: id, then: {
+                if let i = self.index(id), self.items[i].state == .downloading { self.items[i].state = .queued; self.items[i].note = nil }
+                self.startNext()
+            })
+        } else { startNext() }
     }
 
     private func index(_ id: String) -> Int? { items.firstIndex { $0.id == id } }
@@ -226,10 +243,11 @@ final class Downloads: NSObject, ObservableObject {
         if let c = current, c.id == id {
             switch c.run {
             case .fg(let t): stopping.insert(t.taskIdentifier); t.cancel()
-            case .bg(let t): stopping.insert(t.taskIdentifier); t.cancel()
+            case .bg(let ts): for t in ts { stopping.insert(t.taskIdentifier); t.cancel() }
             }
             current = nil
         }
+        for (_, u) in pieceFiles(id) { try? FileManager.default.removeItem(at: u) }
         try? FileManager.default.removeItem(at: Self.partURL(id))
         try? FileManager.default.removeItem(at: doneURL(id))
         items.remove(at: i); liveHave[id] = nil
@@ -327,10 +345,24 @@ final class Downloads: NSObject, ObservableObject {
             // App open: bytes are written as they arrive (nothing lost on any stop).
             let t = fg.start(id: it.id, have: it.have, total: it.total, request: r)
             current = (it.id, .fg(t)); it.note = nil
+        } else if let total = it.total {
+            // 1.8.2: the rest as pieces of 100 MB, all queued now (tasks made later in the background may be delayed
+            // by iOS); one connection, so they run one after another. Each finished piece is added at once.
+            var tasks: [URLSessionDownloadTask] = []
+            for p in DownloadRule.pieces(have: it.have, total: total) {
+                var q = URLRequest(url: url)
+                q.setValue("bytes=\(p.start)-\(p.end)", forHTTPHeaderField: "Range")
+                q.allowsCellularAccess = it.cellular
+                let t = session.downloadTask(with: q)
+                t.taskDescription = DownloadRule.pieceTag(it.id, p.start, p.end)
+                tasks.append(t)
+            }
+            current = (it.id, .bg(tasks)); it.note = "يكمل في الخلفية (iOS) — \(tasks.count) قطعة"
+            for t in tasks { t.resume() }
         } else {
             let t = session.downloadTask(with: r)
             t.taskDescription = it.id
-            current = (it.id, .bg(t)); it.note = "يكمل في الخلفية (iOS)"
+            current = (it.id, .bg([t])); it.note = "يكمل في الخلفية (iOS)"
             t.resume()
         }
         items[i] = it
@@ -363,17 +395,32 @@ final class Downloads: NSObject, ObservableObject {
             stopping.insert(t.taskIdentifier)
             if let then { afterStop[t.taskIdentifier] = then }
             t.cancel()
-        case .bg(let task):
-            stopping.insert(task.taskIdentifier)
-            let response = task.response as? HTTPURLResponse
-            let gotten = task.countOfBytesReceived
-            task.cancel(byProducingResumeData: { data in
-                Task { @MainActor in
-                    Downloads.shared.salvage(id: id, resumeData: data, response: response, received: gotten)
-                    then?()
-                    Downloads.shared.startNext()
+        case .bg(let tasks):
+            if tasks.count == 1, tasks[0].taskDescription == id {
+                // one open-ended background download (size unknown)
+                let task = tasks[0]
+                stopping.insert(task.taskIdentifier)
+                let response = task.response as? HTTPURLResponse
+                let gotten = task.countOfBytesReceived
+                task.cancel(byProducingResumeData: { data in
+                    Task { @MainActor in
+                        Downloads.shared.salvage(id: id, resumeData: data, response: response, received: gotten)
+                        then?()
+                        Downloads.shared.startNext()
+                    }
+                })
+            } else {
+                let lost = tasks.reduce(Int64(0)) { $0 + ($1.state == .running ? $1.countOfBytesReceived : 0) }
+                for t in tasks { stopping.insert(t.taskIdentifier); t.cancel() }
+                mergePieces(id, dropRest: true)
+                if let i = index(id) {
+                    Perf.shared.add("تنزيل: إيقاف قطع الخلفية", ms: 0,
+                                    "المحفوظ \(items[i].have / 1_048_576) MB · يُعاد ≤ \(lost / 1_048_576) MB")
                 }
-            })
+                save()
+                then?()
+                startNext()
+            }
         }
     }
 
@@ -493,6 +540,63 @@ final class Downloads: NSObject, ObservableObject {
         } catch { return false }
     }
 
+    /// Finished pieces waiting to be added: start → file.
+    private func pieceFiles(_ id: String) -> [(Int64, URL)] {
+        let prefix = id + ".got-"
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: Self.folder.path)) ?? []
+        return names.compactMap { n in
+            guard n.hasPrefix(prefix), let a = Int64(n.dropFirst(prefix.count)) else { return nil }
+            return (a, Self.folder.appendingPathComponent(n))
+        }
+    }
+
+    /// Adds the finished pieces that continue the kept bytes without a gap, in order. `dropRest`: pieces after a gap
+    /// are deleted (they would be fetched again anyway).
+    private func mergePieces(_ id: String, dropRest: Bool = false) {
+        guard let i = index(id) else { return }
+        let files = Dictionary(pieceFiles(id), uniquingKeysWith: { a, _ in a })
+        guard !files.isEmpty else { return }
+        var have = fileSize(Self.partURL(id))
+        let sizes = files.mapValues { fileSize($0) }
+        for a in DownloadRule.mergeOrder(have: have, pieces: sizes) {
+            guard let u = files[a], let n = sizes[a] else { break }
+            let take = DownloadRule.salvage(received: n, have: have, total: items[i].total)
+            if take <= 0 || !Self.append(from: u, count: take, to: Self.partURL(id), truncateTo: have) { break }
+            have += take
+            try? FileManager.default.removeItem(at: u)
+        }
+        items[i].have = have
+        if dropRest { for (a, u) in files where a >= have || a < have { if FileManager.default.fileExists(atPath: u.path) { try? FileManager.default.removeItem(at: u) } } }
+        if finishIfComplete(i) { current = nil }
+    }
+
+    /// A background piece finished: checked (206, exactly its range, all its bytes), kept, and added in order.
+    private func pieceDone(id: String, start: Int64, end: Int64, taskId: Int, file: URL, status: Int, contentRange: String?) {
+        guard let i = index(id) else { try? FileManager.default.removeItem(at: file); return }
+        if let c = current, c.id == id, case .bg(let ts) = c.run {
+            let left = ts.filter { $0.taskIdentifier != taskId }
+            current = left.isEmpty ? nil : (id, .bg(left))
+        }
+        if DownloadRule.pieceOK(status: status, contentRange: contentRange, start: start, end: end, size: fileSize(file), knownTotal: items[i].total) {
+            let dest = Self.folder.appendingPathComponent(id + ".got-\(start)")
+            try? FileManager.default.removeItem(at: dest)
+            do { try FileManager.default.moveItem(at: file, to: dest) } catch { try? FileManager.default.removeItem(at: file) }
+            mergePieces(id)
+        } else {
+            try? FileManager.default.removeItem(at: file)
+            Perf.shared.add("تنزيل: قطعة خلفية لم تطابق", ms: 0, "ردّ \(status)")
+            // A refusal stops the download with its reason; any other mismatch: the remaining pieces would leave a
+            // gap, so they stop and it goes on from the kept size.
+            if status == 200 || status >= 400 { stopped(i, status == 200 ? .wrongStart : .http(status)) }
+            if let c = current, c.id == id { stopCurrent(if: id) }
+        }
+        if let j = index(id), items[j].state == .downloading, current == nil {
+            items[j].state = .queued; items[j].note = nil
+        }
+        save()
+        if current == nil { startNext() }
+    }
+
     /// A background download finished (moved out of URLSession's folder before this runs).
     private func bgDone(id: String, file: URL, status: Int, contentRange: String?, length: Int64?) {
         defer { try? FileManager.default.removeItem(at: file) }
@@ -521,6 +625,17 @@ final class Downloads: NSObject, ObservableObject {
 
     private func bgFailed(id: String, taskId: Int, error: Error, response: HTTPURLResponse?, received: Int64) {
         if stopping.remove(taskId) != nil { return }    // stopped by this app (pause / playback / Wi‑Fi)
+        if let c = current, c.id == id, case .bg(let ts) = c.run, ts.count > 1 || ts.first?.taskDescription != id {
+            // a piece failed (swiped away / network): stop the rest, keep what finished in order
+            for t in ts where t.taskIdentifier != taskId { stopping.insert(t.taskIdentifier); t.cancel() }
+            current = nil
+            mergePieces(id, dropRest: true)
+            if let i = index(id), items[i].state != .done {
+                items[i].state = .queued
+                items[i].note = "توقف تنزيل الخلفية (\((error as NSError).code)) — يكمل من المحفوظ \(Self.size(items[i].have))"
+            }
+            save(); startNext(); return
+        }
         if let c = current, c.id == id, case .bg = c.run { current = nil }
         let ns = error as NSError
         salvage(id: id, resumeData: ns.userInfo[NSURLSessionDownloadTaskResumeData] as? Data, response: response, received: received)
@@ -730,15 +845,19 @@ final class FgLoader: NSObject, URLSessionDataDelegate, @unchecked Sendable {
 extension Downloads: URLSessionDownloadDelegate {
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
                                 totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        guard let id = downloadTask.taskDescription else { return }
+        guard let tag = downloadTask.taskDescription else { return }
+        let piece = DownloadRule.parsePieceTag(tag)
+        let id = piece?.id ?? tag
         Task { @MainActor in
             guard let it = Downloads.shared.items.first(where: { $0.id == id }) else { return }
-            Downloads.shared.liveHave[id] = it.have + totalBytesWritten
+            Downloads.shared.liveHave[id] = max(it.have, (piece?.start ?? it.have) + totalBytesWritten)
         }
     }
 
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        guard let id = downloadTask.taskDescription else { return }
+        guard let tag = downloadTask.taskDescription else { return }
+        let piece = DownloadRule.parsePieceTag(tag)
+        let id = piece?.id ?? tag
         // The file must leave URLSession's folder before this returns.
         let hold = Downloads.folder.appendingPathComponent(id + ".piece-" + UUID().uuidString)
         do { try FileManager.default.moveItem(at: location, to: hold) } catch { return }
@@ -746,11 +865,19 @@ extension Downloads: URLSessionDownloadDelegate {
         let status = h?.statusCode ?? 0
         let cr = h?.value(forHTTPHeaderField: "Content-Range")
         let len = (h?.expectedContentLength ?? -1) > 0 ? h?.expectedContentLength : nil
-        Task { @MainActor in Downloads.shared.bgDone(id: id, file: hold, status: status, contentRange: cr, length: len) }
+        let taskId = downloadTask.taskIdentifier
+        Task { @MainActor in
+            if let p = piece {
+                Downloads.shared.pieceDone(id: id, start: p.start, end: p.end, taskId: taskId, file: hold, status: status, contentRange: cr)
+            } else {
+                Downloads.shared.bgDone(id: id, file: hold, status: status, contentRange: cr, length: len)
+            }
+        }
     }
 
     nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        guard let error, let id = task.taskDescription else { return }
+        guard let error, let tag = task.taskDescription else { return }
+        let id = DownloadRule.parsePieceTag(tag)?.id ?? tag
         let taskId = task.taskIdentifier
         let resp = task.response as? HTTPURLResponse
         let got = task.countOfBytesReceived

@@ -54,3 +54,12 @@ provider's policy is known.
   it finishes. Stopped before finishing → what it fetched in the background is re-downloaded unless iOS hands it
   back (logged: «إيقاف تنزيل الخلفية — لم يُسترجع … resumeData=لا/نعم»).
 - Sizes show "0 KB" (not "Zero KB"); "not enough space" says what is needed and what is free.
+
+## 1.8.2 — background in pieces (owner's test 20:33: 788 MB fetched in the background were lost on playback)
+- The device confirmed iOS gives no resume data for this provider («لم يُسترجع»).
+- Going to the background now queues the rest as 100 MB pieces at once (one connection → one after another). Each
+  finished piece is checked (206, exactly its range, all its bytes — `DownloadRule.pieceOK`), kept as `<id>.got-<start>`
+  and added to the file in order (`mergeOrder`: only an unbroken run from the kept size). A stop (playback, pause,
+  Wi‑Fi, swipe) loses at most the piece in flight (≤ 100 MB); logged «إيقاف قطع الخلفية … يُعاد ≤ N MB».
+- Back on screen: the background pieces stop (finished ones already added) and the open request, which loses nothing,
+  takes over.

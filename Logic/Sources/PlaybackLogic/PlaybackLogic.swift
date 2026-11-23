@@ -965,6 +965,39 @@ enum DownloadRule {
         return "dl-" + String(sha256(source + "|" + key).prefix(24)) + "." + (e.isEmpty || e.count > 5 ? "mkv" : e)
     }
 
+    /// 1.8.2: in the background the rest is fetched as pieces of `size` bytes (queued together, one connection), so a
+    /// stop loses at most the piece in flight. Inclusive byte ranges, in order, covering have…total-1 exactly.
+    static let pieceBytes: Int64 = 100 * 1_048_576
+    static func pieces(have: Int64, total: Int64, size: Int64 = pieceBytes) -> [(start: Int64, end: Int64)] {
+        guard size > 0, have < total else { return [] }
+        var out: [(Int64, Int64)] = []
+        var a = have
+        while a < total { let b = min(a + size, total) - 1; out.append((a, b)); a = b + 1 }
+        return out
+    }
+
+    /// Tag of a background piece task: "<item>|<start>|<end>" (no names, no links).
+    static func pieceTag(_ id: String, _ start: Int64, _ end: Int64) -> String { "\(id)|\(start)|\(end)" }
+    static func parsePieceTag(_ s: String?) -> (id: String, start: Int64, end: Int64)? {
+        guard let p = s?.split(separator: "|"), p.count == 3, let a = Int64(p[1]), let b = Int64(p[2]), b >= a else { return nil }
+        return (String(p[0]), a, b)
+    }
+
+    /// A finished piece is accepted only if the server answered 206 for exactly that range and all its bytes arrived.
+    static func pieceOK(status: Int, contentRange: String?, start: Int64, end: Int64, size: Int64, knownTotal: Int64?) -> Bool {
+        guard status == 206, let cr = parseContentRange(contentRange), cr.start == start, cr.end == end else { return false }
+        if let k = knownTotal, let t = cr.total, k != t { return false }
+        return size == end - start + 1
+    }
+
+    /// Finished pieces (start → size) that can be added now, in order, from the kept size: only an unbroken run.
+    static func mergeOrder(have: Int64, pieces: [Int64: Int64]) -> [Int64] {
+        var out: [Int64] = []
+        var at = have
+        while let n = pieces[at], n > 0 { out.append(at); at += n }
+        return out
+    }
+
     /// The part of an interrupted URLSession piece that URLSession kept, from its resume data (a property list):
     /// temporary file name and bytes received. nil when the format isn't the expected one.
     static func resumeInfo(_ data: Data) -> (file: String, bytes: Int64)? {
