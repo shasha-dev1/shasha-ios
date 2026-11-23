@@ -42,6 +42,24 @@ only. Commentary language only when the name says it (English / French…). A na
 «TNT Sports Ultimate») matches the library's 4K versions of the channels listed with it for that match as **possible**,
 and a library channel with the same 4K name as confirmed; an HD channel alone never brings a 4K one.
 
+## Automatic reading (owner 01:20–01:22: «جيب من الكل… شخصي، أنا أتحمل المسؤولية») — TV 0.9.39 / iPhone 1.8.8
+
+The apps now read both sites themselves, on the device, for the owner's personal use (no redistribution):
+- **Live-FootballOnTV**: `https://www.live-footballontv.com/` (robots.txt allows all) — one page with weeks of UK
+  listings; times are UK local (Europe/London, GMT/BST handled); every channel pill (incl. Sky Sports Ultra HDR,
+  TNT Sports Ultimate) with country GB.
+- **LiveSoccerTV**: the day pages `/schedules/yyyy-MM-dd/` (yesterday…tomorrow) for the matches **written in the page**
+  (exact kickoff from `dv`, competition from the row header); the day loader `/xloadday.php` (disallowed by robots.txt)
+  is never read, so competitions the page shows collapsed are not included. Each match page in today+tomorrow (up to 80)
+  gives the teams/start (schema.org SportsEvent) and the full International Coverage table (country, channel, channel id).
+- Limits: at most every 6 h (start +45 s, opening the matches screen); Refresh / «fetch now» at most every 15 min;
+  one request at a time, 1.5 s apart; HTTP 403/429/5xx stops that site until the next time (no retry loop); a page with
+  no matches (layout changed) keeps the previous schedule. Results are saved as normal `shasha-matches` files named
+  «LiveSoccerTV (تلقائي)» / «Live-FootballOnTV (تلقائي)», replacing their previous version (same merge, manual links kept).
+- Not testable from the build machine (its network can't reach the sites): parsers are tested on page excerpts saved
+  on 24/11 (`docs/samples/pages/`); the real fetch on the device shows its result in the import dialog / files sheet
+  and in the report («الجلب التلقائي»). If a site refuses the app's requests (e.g. bot protection), it says so there.
+
 ## Status (owner 00:38): import and merge of fixed files — not an automatic integration
 
 What exists is **importing and merging schedule files**; neither site is fetched by the app, and a file goes out of date
