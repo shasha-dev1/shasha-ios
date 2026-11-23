@@ -16,7 +16,9 @@ struct LibraryCache: Codable {
     var moviesReceived = true, showsReceived = true
 
     struct C: Codable { let id: String; let name: String }
-    struct Ch: Codable { let id: String; let name: String; let logo: String?; let cat: String; let url: String?; let arch: Int }
+    struct Ch: Codable { let id: String; let name: String; let logo: String?; let cat: String; let url: String?; let arch: Int
+        /// match-guide: guide id (absent in files written before; decodes as nil)
+        var epg: String? = nil }
     struct M: Codable { let id: String; let name: String; let poster: String?; let cat: String; let rating: String?; let ext: String; let added: Int; let url: String? }
     struct S: Codable { let id: String; let name: String; let poster: String?; let cat: String; let rating: String?; let plot: String?; let updated: Int }
 
@@ -113,7 +115,7 @@ struct LibraryCache: Codable {
         self.liveCats = liveCats.map { C(id: $0.id, name: $0.name) }
         self.vodCats = vodCats.map { C(id: $0.id, name: $0.name) }
         self.seriesCats = seriesCats.map { C(id: $0.id, name: $0.name) }
-        self.channels = channels.map { Ch(id: $0.id, name: $0.name, logo: $0.logo, cat: $0.categoryId, url: xtream ? nil : $0.url, arch: $0.archiveDays) }
+        self.channels = channels.map { Ch(id: $0.id, name: $0.name, logo: $0.logo, cat: $0.categoryId, url: xtream ? nil : $0.url, arch: $0.archiveDays, epg: $0.epgId) }
         self.movies = movies.map { M(id: $0.id, name: $0.name, poster: $0.poster, cat: $0.categoryId, rating: $0.rating, ext: $0.ext, added: $0.added, url: xtream ? nil : $0.url) }
         self.shows = shows.map { S(id: $0.id, name: $0.name, poster: $0.poster, cat: $0.categoryId, rating: $0.rating, plot: $0.plot, updated: $0.updated) }
         self.moviesReceived = moviesReceived; self.showsReceived = showsReceived
@@ -123,7 +125,7 @@ struct LibraryCache: Codable {
     func restore(_ x: Xtream?) -> (lc: [Category], vc: [Category], sc: [Category], ch: [Channel], mv: [Movie], sh: [Show]) {
         let cat = { (c: C) in Category(id: c.id, name: c.name) }
         let ch = channels.map { c in
-            Channel(id: c.id, name: c.name, logo: c.logo, categoryId: c.cat, url: x?.liveURL(c.id) ?? c.url ?? "", archiveDays: c.arch)
+            Channel(id: c.id, name: c.name, logo: c.logo, categoryId: c.cat, url: x?.liveURL(c.id) ?? c.url ?? "", archiveDays: c.arch, epgId: c.epg)
         }
         let mv = movies.map { m in
             Movie(id: m.id, name: m.name, poster: m.poster, categoryId: m.cat, rating: m.rating, ext: m.ext, added: m.added,

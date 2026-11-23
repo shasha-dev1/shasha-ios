@@ -259,6 +259,7 @@ struct DiagnosticsPage: View {
         List {
             Section {
                 NavigationLink { PerfView() } label: { Label("قياسات الأداء", systemImage: "speedometer") }
+                NavigationLink { MatchReportView() } label: { Label("تقرير دليل المباريات (تجريبي)", systemImage: "sportscourt") }
             } footer: {
                 Text("تسجّل مدة فتح التطبيق وتحميل المكتبة والبحث وفتح المسلسل والرجوع من المشغّل، بدون أي روابط أو بيانات دخول.")
             }

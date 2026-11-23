@@ -827,3 +827,81 @@ final class SubDelayRuleTests: XCTestCase {
     }
 }
 
+
+/// Same vectors as the TV's MatchGuideCoreTest (docs/MATCH-GUIDE.md).
+final class MatchGuideRuleTests: XCTestCase {
+    func t(_ s: String) -> String? { MatchGuideRule.teams(s).map { $0.home + " | " + $0.away } }
+
+    func testTeamsFromTitles() {
+        XCTAssertEqual(t("Premier League: Arsenal v Chelsea"), "Arsenal | Chelsea")
+        XCTAssertEqual(t("LIVE: Real Madrid vs Barcelona"), "Real Madrid | Barcelona")
+        XCTAssertEqual(t("مباشر: الهلال ضد النصر"), "الهلال | النصر")
+        XCTAssertEqual(t("Flamengo x Palmeiras (Brasileirão)"), "Flamengo | Palmeiras")
+        XCTAssertEqual(t("Brentford v Everton - Round 12"), "Brentford | Everton")
+        XCTAssertEqual(t("FIFA U-17 World Cup: Spain U17 vs Fiji U17"), "Spain U17 | Fiji U17")
+        XCTAssertNil(t("SportsCenter"))
+        XCTAssertNil(t("Premier League Highlights"))
+        XCTAssertNil(t("News - Evening Edition 2026"))
+    }
+
+    func testKinds() {
+        XCTAssertEqual(MatchGuideRule.kind(title: "LIVE: Arsenal v Chelsea", description: nil, minutes: 120), .live)
+        XCTAssertEqual(MatchGuideRule.kind(title: "مباشر: الهلال ضد النصر", description: nil, minutes: 120), .live)
+        XCTAssertEqual(MatchGuideRule.kind(title: "Arsenal v Chelsea (R)", description: nil, minutes: 120), .replay)
+        XCTAssertEqual(MatchGuideRule.kind(title: "إعادة: الهلال ضد النصر", description: nil, minutes: 120), .replay)
+        XCTAssertEqual(MatchGuideRule.kind(title: "Highlights: Arsenal v Chelsea", description: nil, minutes: 30), .replay)
+        XCTAssertEqual(MatchGuideRule.kind(title: "Pre-match: Arsenal v Chelsea", description: nil, minutes: 30), .studio)
+        XCTAssertEqual(MatchGuideRule.kind(title: "استوديو التحليل: الهلال ضد النصر", description: nil, minutes: 45), .studio)
+        XCTAssertEqual(MatchGuideRule.kind(title: "Arsenal v Chelsea", description: nil, minutes: 120), .unknown)
+        XCTAssertEqual(MatchGuideRule.kind(title: "Arsenal v Chelsea", description: "Live coverage of the match", minutes: 120), .live)
+        XCTAssertEqual(MatchGuideRule.kind(title: "Arsenal v Chelsea", description: "Live coverage of the match", minutes: 25), .unknown)
+    }
+
+    func testVersionsFromNamesOnly() {
+        XCTAssertEqual(MatchGuideRule.version("beIN Sports 1 4K").res, .uhd)
+        XCTAssertEqual(MatchGuideRule.version("SKY SPORTS MAIN EVENT UHD").res, .uhd)
+        XCTAssertEqual(MatchGuideRule.version("AR| beIN SPORTS 1 FHD").res, .fhd)
+        XCTAssertEqual(MatchGuideRule.version("SSC 1 HD").res, .hd)
+        XCTAssertEqual(MatchGuideRule.version("Al Kass 1 SD").res, .sd)
+        XCTAssertEqual(MatchGuideRule.version("beIN SPORTS 1").res, .unknown)
+        let h = MatchGuideRule.version("beIN 1 HEVC"); XCTAssertEqual(h.res, .unknown); XCTAssertTrue(h.hevc)
+        let r = MatchGuideRule.version("beIN 1 FHD RAW"); XCTAssertEqual(r.res, .fhd); XCTAssertTrue(r.raw)
+        XCTAssertEqual(MatchGuideRule.version("DAZN 1 4K HEVC").label(), "4K · HEVC (من الاسم)")
+        XCTAssertNotEqual(MatchGuideRule.version("beIN SPORTS 11 HD").res, .unknown)
+    }
+
+    func testTeamKeysKeepWomenAndAgeGroups() {
+        XCTAssertEqual(MatchGuideRule.teamKey("Arsenal FC"), MatchGuideRule.teamKey("arsenal"))
+        XCTAssertEqual(MatchGuideRule.teamKey("Atlético Madrid"), MatchGuideRule.teamKey("Atletico Madrid"))
+        XCTAssertNotEqual(MatchGuideRule.teamKey("Arsenal"), MatchGuideRule.teamKey("Arsenal Women"))
+        XCTAssertNotEqual(MatchGuideRule.teamKey("Spain"), MatchGuideRule.teamKey("Spain U17"))
+        XCTAssertEqual(MatchGuideRule.teamKey("Spain U-17"), MatchGuideRule.teamKey("Spain U17"))
+        XCTAssertNotEqual(MatchGuideRule.teamKey("Spain U17"), MatchGuideRule.teamKey("Spain U21"))
+        XCTAssertNotEqual(MatchGuideRule.teamKey("الأهلي"), MatchGuideRule.teamKey("الأهلي للسيدات"))
+    }
+
+    func testSameMatchOnSeveralChannelsIsOneCard() {
+        let h: Int64 = 3_600_000, t0: Int64 = 1_800_000_000_000
+        func e(_ ch: String, _ title: String, _ start: Int64) -> MatchGuideRule.Entry {
+            MatchGuideRule.Entry(channel: ch, source: "S1", start: start, stop: start + 2 * h, title: title,
+                                 teams: MatchGuideRule.teams(title)!, kind: MatchGuideRule.kind(title: title, description: nil, minutes: 120))
+        }
+        let g = MatchGuideRule.group([
+            e("beIN SPORTS 1 FHD", "LIVE: Arsenal v Chelsea", t0),
+            e("Sky Sports Main Event", "Arsenal FC vs Chelsea FC", t0 + 15 * 60_000),
+            e("beIN SPORTS 1 FHD", "Arsenal v Chelsea (R)", t0 + 6 * h),
+            e("BBC Three", "Arsenal Women v Chelsea Women", t0),
+        ])
+        XCTAssertEqual(g.count, 3)
+        XCTAssertTrue(g.first { $0.entries.count == 2 }!.live)
+        XCTAssertTrue(g.contains { $0.entries.count == 1 && $0.entries[0].kind == .replay && !$0.live })
+    }
+
+    func testSportsChannels() {
+        XCTAssertTrue(MatchGuideRule.isSportsChannel(name: "beIN SPORTS 1 HD", group: "AR | SPORTS"))
+        XCTAssertTrue(MatchGuideRule.isSportsChannel(name: "SSC 1", group: "Saudi"))
+        XCTAssertTrue(MatchGuideRule.isSportsChannel(name: "Al Kass 1", group: "Qatar"))
+        XCTAssertTrue(MatchGuideRule.isSportsChannel(name: "Channel 5", group: "UK | Sports"))
+        XCTAssertFalse(MatchGuideRule.isSportsChannel(name: "MBC 1", group: "AR | General"))
+    }
+}

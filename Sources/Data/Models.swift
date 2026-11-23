@@ -25,6 +25,8 @@ struct Channel: Identifiable, Hashable {
     let url: String
     /// Catch-up days kept by the provider (0 = none).
     var archiveDays: Int = 0
+    /// Guide id of the channel (Xtream epg_channel_id), for the match-guide report. nil when the provider sends none.
+    var epgId: String? = nil
 }
 
 /// One programme of a channel's guide.

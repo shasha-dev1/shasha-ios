@@ -103,6 +103,13 @@ struct Xtream {
         }
     }
 
+    /// Full guide (XMLTV) of the account — match-guide report only.
+    var xmltvURL: URL? {
+        var c = URLComponents(string: server + "/xmltv.php")
+        c?.queryItems = [URLQueryItem(name: "username", value: user), URLQueryItem(name: "password", value: pass)]
+        return c?.url
+    }
+
     func liveURL(_ id: String) -> String { "\(server)/live/\(esc(user))/\(esc(pass))/\(id).ts" }
     func movieURL(_ id: String, _ ext: String) -> String { "\(server)/movie/\(esc(user))/\(esc(pass))/\(id).\(ext)" }
     func episodeURL(_ id: String, _ ext: String) -> String { "\(server)/series/\(esc(user))/\(esc(pass))/\(id).\(ext)" }
@@ -113,7 +120,7 @@ struct Xtream {
             guard let id = J.s(d["stream_id"]) else { return nil }
             let days = J.i(d["tv_archive"]) == 1 ? max(1, J.i(d["tv_archive_duration"])) : 0
             return Channel(id: id, name: J.s(d["name"]) ?? "—", logo: J.s(d["stream_icon"]), categoryId: J.s(d["category_id"]) ?? "", url: me.liveURL(id),
-                           archiveDays: days)
+                           archiveDays: days, epgId: J.s(d["epg_channel_id"]).flatMap { $0.isEmpty || $0 == "null" ? nil : $0 })
         }
     }
 

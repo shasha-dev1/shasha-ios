@@ -873,3 +873,142 @@ enum SubDelayRule {
         return d.sorted { $0.value.usedMs < $1.value.usedMs }.prefix(d.count - max).map(\.key)
     }
 }
+
+/// Match-guide report (iPhone side of the TV's MatchGuideCore — same rules and test vectors, docs/MATCH-GUIDE.md).
+/// Football matches found in the provider's programme guide («دليل برامج المزوّد»). Teams + time is a strong hint,
+/// not proof the channel shows the match live; each programme is classified from its own words and length.
+/// Versions are ranked from the NAME only (4K → 1080p → 720p/HD → SD → unknown); HEVC is a codec badge, RAW a
+/// provider label. A UHD channel is never assumed to show what its HD sibling shows (each counts by its own guide).
+enum MatchGuideRule {
+    private static let sportWords = [
+        "sport", "sports", "رياض", "bein", "ssc", "alkass", "al kass", "الكاس", "ad sport", "abu dhabi sport", "dubai sport",
+        "sharjah sport", "dazn", "espn", "eurosport", "sky sport", "tnt sport", "bt sport", "arena sport", "sportklub",
+        "sport klub", "supersport", "star sports", "sony ten", "setanta", "movistar", "laliga", "canal+ sport", "rmc sport",
+        "fox sports", "tudn", "tyc", "premier sports", "nova sport", "cosmote", "digi sport", "polsat sport", "match!",
+        "viaplay", "football", "futbol", "fútbol", "futebol", "calcio", "kora", "كورة", "on time sports",
+        "thmanyah", "ثمانية", "shahid sport", "mbc action", "ksa sport", "kss", "oman sport", "bahrain sport", "kuwait sport",
+        "qatar sport", "iraq sport", "sport tv", "ziggo sport", "sportdigital", "magenta sport", "ssport", "s sport",
+        "tivibu spor", "beın", "spor", "sportitalia", "sportv", "premiere", "fanatiz", "win sports", "directv sports",
+    ]
+    static func isSportsChannel(name: String, group: String) -> Bool {
+        let s = (name + " | " + group).lowercased()
+        return sportWords.contains { s.contains($0) }
+    }
+
+    enum Res: Int, Comparable {
+        case uhd = 0, fhd, hd, sd, unknown
+        static func < (a: Res, b: Res) -> Bool { a.rawValue < b.rawValue }
+        var label: String { ["4K", "1080p", "720p/HD", "SD", "غير معروفة"][rawValue] }
+    }
+    struct Version: Equatable {
+        let res: Res; let hevc: Bool; let raw: Bool
+        func label() -> String {
+            [res.label, hevc ? "HEVC" : nil, raw ? "RAW" : nil].compactMap { $0 }.joined(separator: " · ") + (res != .unknown ? " (من الاسم)" : "")
+        }
+    }
+    static func version(_ name: String) -> Version {
+        let up = name.uppercased()
+        let t = Set(up.split(whereSeparator: { !($0.isLetter || $0.isNumber || $0 == "+") }).map(String.init))
+        let res: Res
+        if t.contains("4K") || t.contains("UHD") || t.contains("2160P") || t.contains("2160") { res = .uhd }
+        else if t.contains("FHD") || t.contains("1080P") || t.contains("1080") || t.contains("FULLHD") { res = .fhd }
+        else if t.contains("HD") || t.contains("720P") || t.contains("720") { res = .hd }
+        else if t.contains("SD") || t.contains("576P") || t.contains("480P") { res = .sd }
+        else { res = .unknown }
+        return Version(res: res, hevc: t.contains("HEVC") || t.contains("H265") || t.contains("X265") || up.contains("H.265"), raw: t.contains("RAW"))
+    }
+
+    struct Teams: Equatable { let home: String; let away: String }
+    private static let separators = [" vs. ", " vs ", " v ", " v. ", " x ", " × ", " ضد ", " – ", " — ", " - "]
+    private static let nonTeamWords: Set<String> = ["news", "edition", "episode", "ep", "part", "season", "show", "live", "highlights",
+        "magazine", "weekly", "daily", "special", "documentary", "نشرة", "حلقة", "برنامج", "الجزء", "موسم", "أخبار", "اخبار"]
+
+    static func teams(_ title: String) -> Teams? {
+        var s = title.trimmingCharacters(in: .whitespaces)
+        let lead = #"^\s*(?:\[[^\]]*\]|\([^)]*\)|(?:live|en vivo|en direct|ao vivo|direct|مباشر|مباشرة|canlı|dal vivo)\s*[:\-–|]?)\s*"#
+        for _ in 0..<3 { if let r = s.range(of: lead, options: [.regularExpression, .caseInsensitive]) { s.removeSubrange(r) } }
+        let parts = s.split(whereSeparator: { $0 == ":" || $0 == "：" }).map(String.init)
+        guard let seg = parts.last(where: { p in separators.contains { p.range(of: $0, options: .caseInsensitive) != nil } }) else { return nil }
+        s = seg.trimmingCharacters(in: .whitespaces)
+        guard let sep = separators.first(where: { s.range(of: $0, options: .caseInsensitive) != nil }),
+              let r = s.range(of: sep, options: .caseInsensitive) else { return nil }
+        var a = String(s[..<r.lowerBound]).trimmingCharacters(in: .whitespaces)
+        var b = String(s[r.upperBound...]).trimmingCharacters(in: .whitespaces)
+        if sep != " - " {
+            for d in [" - ", " – ", " — "] { if let x = b.range(of: d) { b = String(b[..<x.lowerBound]) } }
+            b = b.trimmingCharacters(in: .whitespaces)
+        }
+        let tail = #"\s*(?:\([^)]*\)|\[[^\]]*\]|\|.*)$"#
+        if let x = a.range(of: tail, options: .regularExpression) { a.removeSubrange(x) }
+        if let x = b.range(of: tail, options: .regularExpression) { b.removeSubrange(x) }
+        a = a.trimmingCharacters(in: .whitespaces); b = b.trimmingCharacters(in: .whitespaces)
+        func ok(_ x: String) -> Bool { (2...40).contains(x.count) && x.contains { $0.isLetter } && x.split(separator: " ").count <= 6 }
+        let weak = ["-", "–", "—"].contains(sep.trimmingCharacters(in: .whitespaces))
+        func showLike(_ x: String) -> Bool {
+            x.range(of: #"\b(19|20)\d{2}\b"#, options: .regularExpression) != nil ||
+            x.lowercased().split(whereSeparator: { !($0.isLetter || $0.isNumber) }).contains { nonTeamWords.contains(String($0)) }
+        }
+        if weak && (showLike(a) || showLike(b)) { return nil }
+        return ok(a) && ok(b) && a.lowercased() != b.lowercased() ? Teams(home: a, away: b) : nil
+    }
+
+    enum Kind: Int, CaseIterable {
+        case live, replay, studio, unknown
+        var label: String { ["مباشر", "إعادة/ملخص", "استوديو", "غير محدد"][rawValue] }
+    }
+    private static let liveWords = ["live", "en vivo", "en direct", "ao vivo", "مباشر", "canlı", "dal vivo", "(l)", "[l]", "live:"]
+    private static let replayWords = ["replay", "rerun", "re-run", "repeat", "re-air", "delayed", "highlights", "إعادة", "اعادة", "ملخص",
+        "أهداف", "(r)", "[r]", "rediffusion", "repetición", "reprise", "tekrar", "classic", "كلاسيكو قديم", "best of"]
+    private static let studioWords = ["studio", "استوديو", "ستوديو", "preview", "pre-match", "prematch", "post-match", "build-up", "buildup",
+        "magazine", "countdown", "تحليل", "قبل المباراة", "بعد المباراة", "review", "debate", "talk show"]
+
+    static func kind(title: String, description: String?, minutes: Int64) -> Kind {
+        let t = (" " + title + " ").lowercased()
+        let d = (description ?? "").lowercased()
+        if replayWords.contains(where: { t.contains($0) }) { return .replay }
+        if studioWords.contains(where: { t.contains(" " + $0) || (t.contains($0) && $0.unicodeScalars.contains { $0.value > 127 }) }) { return .studio }
+        if liveWords.contains(where: { t.contains($0) }) { return .live }
+        if replayWords.contains(where: { d.contains($0) }) { return .replay }
+        if liveWords.contains(where: { d.contains($0) }) && minutes >= 80 { return .live }
+        return .unknown
+    }
+
+    private static let clubWords: Set<String> = ["fc", "cf", "sc", "afc", "ac", "cd", "ud", "sd", "club", "sk", "fk", "nk", "bk", "if", "the"]
+    private static let womenWords: Set<String> = ["women", "womens", "w", "ladies", "femenino", "feminine", "féminine", "frauen", "سيدات", "للسيدات", "نساء", "wfc"]
+
+    static func teamKey(_ name: String) -> String {
+        var n = name.lowercased().folding(options: .diacriticInsensitive, locale: nil)
+        n = n.replacingOccurrences(of: #"u-(\d{2})"#, with: "u$1", options: .regularExpression)
+        n = n.replacingOccurrences(of: #"تحت\s*(\d{2})"#, with: "u$1", options: .regularExpression)
+        let words = n.split(whereSeparator: { !($0.isLetter || $0.isNumber) }).map(String.init)
+        var markers = Set<String>(); var core: [String] = []
+        for w in words {
+            if womenWords.contains(w) { markers.insert("women") }
+            else if let m = w.range(of: #"^(?:u|sub|under|تحت)-?(\d{2})$"#, options: .regularExpression) {
+                markers.insert("u" + w[m].filter(\.isNumber))
+            } else if clubWords.contains(w) { continue }
+            else { core.append(w) }
+        }
+        return (core.joined(separator: " ") + markers.sorted().map { "#" + $0 }.joined()).trimmingCharacters(in: .whitespaces)
+    }
+
+    struct Entry: Equatable { let channel: String; let source: String; let start: Int64; let stop: Int64; let title: String; let teams: Teams; let kind: Kind }
+    struct Group { let key: String; let home: String; let away: String; let start: Int64; let entries: [Entry]
+        var live: Bool { entries.contains { $0.kind == .live } } }
+
+    static func group(_ entries: [Entry], windowMs: Int64 = 45 * 60_000) -> [Group] {
+        let byPair = Dictionary(grouping: entries) { e in [teamKey(e.teams.home), teamKey(e.teams.away)].sorted().joined(separator: " | ") }
+        var out: [Group] = []
+        for (pair, list) in byPair {
+            var cur: [Entry] = []
+            for e in list.sorted(by: { $0.start < $1.start }) {
+                if let f = cur.first, e.start - f.start > windowMs {
+                    out.append(Group(key: pair, home: f.teams.home, away: f.teams.away, start: f.start, entries: cur)); cur = []
+                }
+                cur.append(e)
+            }
+            if let f = cur.first { out.append(Group(key: pair, home: f.teams.home, away: f.teams.away, start: f.start, entries: cur)) }
+        }
+        return out.sorted { $0.start < $1.start }
+    }
+}
