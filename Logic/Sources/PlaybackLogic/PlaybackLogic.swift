@@ -680,6 +680,115 @@ enum SubSyncRule {
     }
 }
 
+/// 1.7.9: subtitle identity v2 = film/episode copy (sync key: work/episode + provider id = video version) + language
+/// + SHA-256 of the UTF-8 content. Compatible with v1:
+/// - The v1 file (`SubSyncRule.fileName`) stays "the selected subtitle for this item": the TV app (0.9.22) and older
+///   iPhone builds read and write only that one, unchanged.
+/// - Each kept language also gets its own v2 file `shasha-sub-v2-<h>-<lang>.<fmt>` (h = same 24 hex as v1), marked
+///   appProperties shashaSub=2 (so the TV's clean-up, which lists shashaSub=1, never sees or deletes them), item=h,
+///   lang, fmt, sha. A download/import in one language never removes another language.
+/// - Same content (Drive's md5Checksum = md5 of our bytes) → nothing uploaded.
+/// - Replacing the selected v1 file with a different content: its old content is first kept as the v2 file of its
+///   language when that copy is missing or differs (server-side copy), and the viewer is told which language was
+///   replaced. A v1 file without `lang` counts as "und".
+enum SubIdentityRule {
+    static let prefix = "shasha-sub-v2-"
+    /// 24 hex of SHA-256(sync key) — the same part as in the v1 name, so both point at the same item.
+    static func itemHash(key: String, sha256: (String) -> String) -> String { String(sha256(key).prefix(24)) }
+
+    /// A language tag safe for a file name: "ar", "en", "pt-br", "zh-cn"…; anything else (empty, "?", names,
+    /// symbols) → "und".
+    static func lang(_ raw: String) -> String {
+        let s = raw.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: "_", with: "-")
+        let parts = s.split(separator: "-", omittingEmptySubsequences: false)
+        guard let first = parts.first, (2...3).contains(first.count), first.allSatisfy({ $0 >= "a" && $0 <= "z" }),
+              parts.count <= 2 else { return "und" }
+        if parts.count == 2 {
+            let r = parts[1]
+            guard (2...8).contains(r.count), r.allSatisfy({ ($0 >= "a" && $0 <= "z") || ($0 >= "0" && $0 <= "9") }) else { return String(first) }
+        }
+        return s
+    }
+
+    static func fileName(key: String, lang: String, format: String, sha256: (String) -> String) -> String {
+        prefix + itemHash(key: key, sha256: sha256) + "-" + self.lang(lang) + "." + (format == "ass" ? "ass" : "srt")
+    }
+
+    /// (item hash, lang, format) of a v2 name; nil for anything else (v1 names included).
+    static func parse(_ name: String) -> (item: String, lang: String, format: String)? {
+        guard name.hasPrefix(prefix) else { return nil }
+        let rest = name.dropFirst(prefix.count)
+        guard let dot = rest.lastIndex(of: "."), let dash = rest.firstIndex(of: "-"), dash < dot else { return nil }
+        let item = String(rest[..<dash]), lang = String(rest[rest.index(after: dash)..<dot]), fmt = String(rest[rest.index(after: dot)...])
+        guard item.count == 24, item.allSatisfy({ $0.isHexDigit }), self.lang(lang) == lang, fmt == "srt" || fmt == "ass" else { return nil }
+        return (item, lang, fmt)
+    }
+
+    /// What is on Drive for one item before keeping a new subtitle.
+    struct Remote: Equatable { let lang: String; let md5: String? }
+
+    /// What to do on Drive to keep a new subtitle (`lang`, content `md5`) for one item.
+    struct Plan: Equatable {
+        /// Copy the current v1 content to the v2 file of this language first (it would be lost otherwise).
+        var preserveOldAs: String?
+        var putV2 = false
+        var putV1 = false
+        /// Language of the selected subtitle that is being replaced by one in another language (told to the viewer).
+        var replacedLang: String?
+        /// A different subtitle in the same language is replaced (one copy per language and item).
+        var replacedSameLang = false
+    }
+
+    static func plan(lang rawLang: String, md5: String, v1: Remote?, v2: [String: String?]) -> Plan {
+        let lang = self.lang(rawLang)
+        var p = Plan()
+        // v2 copy of this language: missing or different content → upload. Unknown md5 on Drive → upload (safe).
+        let mine = v2[lang] ?? nil
+        p.putV2 = mine == nil || mine! != md5
+        if let old = mine, old != md5 { p.replacedSameLang = true }
+        guard let v1 else { p.putV1 = true; return p }
+        let oldLang = self.lang(v1.lang)
+        if let m = v1.md5, m == md5 { return p }          // already the selected one
+        p.putV1 = true
+        if oldLang == lang {
+            p.replacedSameLang = true
+            return p                                     // same slot: the new choice replaces it
+        }
+        p.replacedLang = oldLang
+        let kept = v2[oldLang] ?? nil
+        if v1.md5 == nil || kept == nil || kept! != v1.md5! { p.preserveOldAs = oldLang }
+        return p
+    }
+
+    /// Drive clean-up for v2 files (`shashaSub=2`), separate from v1 (whose rule the TV shares): a v2 file counts as
+    /// used whenever the v1 file of its item holds the same content (the selected one is used through v1 only).
+    /// Same 30 days; up to twice as many files as v1.
+    struct Listed: Equatable { let id: String; let name: String; let stampMs: Int64; let md5: String? }
+    static let maxCount = SubSyncRule.maxCount * 2
+    static func prune(v2: [Listed], v1: [Listed], nowMs: Int64, v1Name: (String) -> String = { SubSyncRule.prefix + $0 + ".srt" }) -> [String] {
+        let byName = Dictionary(v1.map { ($0.name, $0) }, uniquingKeysWith: { a, b in a.stampMs >= b.stampMs ? a : b })
+        let stamped = v2.map { f -> SubSyncRule.Stored in
+            var st = f.stampMs
+            if let p = parse(f.name), let sel = byName[v1Name(p.item)], let m = f.md5, m == sel.md5 { st = max(st, sel.stampMs) }
+            return SubSyncRule.Stored(id: f.id, modifiedMs: st)
+        }
+        let fresh = stamped.filter { $0.modifiedMs > 0 && nowMs - $0.modifiedMs <= SubSyncRule.maxAgeMs }.sorted { $0.modifiedMs > $1.modifiedMs }
+        let old = stamped.filter { !($0.modifiedMs > 0 && nowMs - $0.modifiedMs <= SubSyncRule.maxAgeMs) }.map(\.id)
+        return old + fresh.dropFirst(maxCount).map(\.id)
+    }
+
+    /// Readable language for the viewer.
+    static func display(_ lang: String) -> String {
+        switch self.lang(lang) {
+        case "ar": return "العربية"
+        case "en": return "الإنجليزية"
+        case "fr": return "الفرنسية"
+        case "und": return "لغة غير معروفة"
+        case let l: return l
+        }
+    }
+}
+
 /// 1.7.6: checks a subtitle file before it is used, kept or shared — imported by the viewer or downloaded.
 /// Content first (not the file name): SRT (timestamps with -->) or ASS/SSA ([Script Info] + [Events] + Dialogue).
 /// Text is decoded (UTF-8 / UTF-16 with BOM, else Windows-1256 for older Arabic files) and kept as UTF-8, so ASS

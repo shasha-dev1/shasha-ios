@@ -692,6 +692,89 @@ final class SubSyncRuleTests: XCTestCase {
     }
 }
 
+/// 1.7.9: identity v2 (language + content), compatible with v1.
+final class SubIdentityRuleTests: XCTestCase {
+    let sha: (String) -> String = { SHA256.hash(data: Data($0.utf8)).map { String(format: "%02x", $0) }.joined() }
+    let day: Int64 = 24 * 3600 * 1000
+    let now: Int64 = 1_800_000_000_000
+
+    func testNamesShareTheV1ItemHash() {
+        let k = "0123456789abcdef|movie|12345"
+        XCTAssertEqual(SubIdentityRule.fileName(key: k, lang: "ar", format: "srt", sha256: sha), "shasha-sub-v2-200a02eb8884dc7d433f9fe5-ar.srt")
+        XCTAssertEqual(SubIdentityRule.fileName(key: "0123456789abcdef|ep|987654", lang: "EN", format: "ass", sha256: sha),
+                       "shasha-sub-v2-b89e90fd6ac239417f88da25-en.ass")
+        XCTAssertEqual(SubSyncRule.fileName(key: k, sha256: sha), "shasha-sub-v1-" + SubIdentityRule.itemHash(key: k, sha256: sha) + ".srt")
+    }
+    func testLanguageTags() {
+        XCTAssertEqual(SubIdentityRule.lang("ar"), "ar")
+        XCTAssertEqual(SubIdentityRule.lang("pt_BR"), "pt-br")
+        XCTAssertEqual(SubIdentityRule.lang("zh-CN"), "zh-cn")
+        XCTAssertEqual(SubIdentityRule.lang(""), "und")
+        XCTAssertEqual(SubIdentityRule.lang("?"), "und")
+        XCTAssertEqual(SubIdentityRule.lang("Arabic"), "und")
+        XCTAssertEqual(SubIdentityRule.lang("../x"), "und")
+        XCTAssertEqual(SubIdentityRule.lang("en-!!"), "en")
+    }
+    func testParse() {
+        let p = SubIdentityRule.parse("shasha-sub-v2-200a02eb8884dc7d433f9fe5-pt-br.ass")
+        XCTAssertEqual(p?.item, "200a02eb8884dc7d433f9fe5"); XCTAssertEqual(p?.lang, "pt-br"); XCTAssertEqual(p?.format, "ass")
+        XCTAssertNil(SubIdentityRule.parse("shasha-sub-v1-200a02eb8884dc7d433f9fe5.srt"))
+        XCTAssertNil(SubIdentityRule.parse("shasha-sub-v2-short-ar.srt"))
+        XCTAssertNil(SubIdentityRule.parse("shasha-sub-v2-200a02eb8884dc7d433f9fe5-ar.zip"))
+    }
+    func testFirstSubtitleForAnItem() {
+        XCTAssertEqual(SubIdentityRule.plan(lang: "ar", md5: "a", v1: nil, v2: [:]), .init(putV2: true, putV1: true))
+    }
+    func testSameContentUploadsNothing() {
+        let p = SubIdentityRule.plan(lang: "ar", md5: "a", v1: .init(lang: "ar", md5: "a"), v2: ["ar": "a"])
+        XCTAssertEqual(p, .init())
+    }
+    func testOldV1WithoutV2CopyIsKeptBeforeReplacingWithAnotherLanguage() {
+        // v1 written by the TV / an older iPhone (no v2 copy), in English; the viewer now adds Arabic.
+        let p = SubIdentityRule.plan(lang: "ar", md5: "new", v1: .init(lang: "en", md5: "old"), v2: [:])
+        XCTAssertEqual(p, .init(preserveOldAs: "en", putV2: true, putV1: true, replacedLang: "en"))
+    }
+    func testOldV1AlreadyCopiedIsNotCopiedAgain() {
+        let p = SubIdentityRule.plan(lang: "ar", md5: "new", v1: .init(lang: "en", md5: "old"), v2: ["en": "old"])
+        XCTAssertEqual(p, .init(putV2: true, putV1: true, replacedLang: "en"))
+    }
+    func testOldV1NewerThanItsV2CopyIsCopiedOverIt() {
+        // the TV replaced the English v1 after the iPhone kept another English one: the v1 content is the newer.
+        let p = SubIdentityRule.plan(lang: "ar", md5: "new", v1: .init(lang: "en", md5: "tv"), v2: ["en": "phone"])
+        XCTAssertEqual(p.preserveOldAs, "en")
+    }
+    func testV1WithoutLanguageCountsAsUnknown() {
+        let p = SubIdentityRule.plan(lang: "ar", md5: "new", v1: .init(lang: "", md5: "old"), v2: [:])
+        XCTAssertEqual(p.preserveOldAs, "und"); XCTAssertEqual(p.replacedLang, "und")
+    }
+    func testUnknownMd5IsTreatedAsDifferent() {
+        let p = SubIdentityRule.plan(lang: "ar", md5: "new", v1: .init(lang: "en", md5: nil), v2: ["en": "x", "ar": nil])
+        XCTAssertEqual(p, .init(preserveOldAs: "en", putV2: true, putV1: true, replacedLang: "en"))
+    }
+    func testSameLanguageReplacesItsSlotOnly() {
+        let p = SubIdentityRule.plan(lang: "ar", md5: "new", v1: .init(lang: "ar", md5: "old"), v2: ["ar": "old", "en": "e"])
+        XCTAssertEqual(p, .init(putV2: true, putV1: true, replacedSameLang: true))
+    }
+    func testChoosingAKeptLanguageAgainOnlyMovesTheSelection() {
+        let p = SubIdentityRule.plan(lang: "en", md5: "e", v1: .init(lang: "ar", md5: "a"), v2: ["ar": "a", "en": "e"])
+        XCTAssertEqual(p, .init(putV1: true, replacedLang: "ar"))
+    }
+    func testV2CleanUpCountsUseOfTheSelectedV1() {
+        let h = "200a02eb8884dc7d433f9fe5"
+        let v1 = [SubIdentityRule.Listed(id: "v1", name: "shasha-sub-v1-\(h).srt", stampMs: now - day, md5: "a")]
+        let v2 = [SubIdentityRule.Listed(id: "sel", name: "shasha-sub-v2-\(h)-ar.srt", stampMs: now - 60 * day, md5: "a"),
+                  SubIdentityRule.Listed(id: "other", name: "shasha-sub-v2-\(h)-en.srt", stampMs: now - 60 * day, md5: "b"),
+                  SubIdentityRule.Listed(id: "recent", name: "shasha-sub-v2-\(h)-fr.srt", stampMs: now - 2 * day, md5: "c")]
+        XCTAssertEqual(SubIdentityRule.prune(v2: v2, v1: v1, nowMs: now), ["other"])
+    }
+    func testV2CleanUpLimit() {
+        let v2 = (0..<(SubIdentityRule.maxCount + 5)).map {
+            SubIdentityRule.Listed(id: "f\($0)", name: "x\($0)", stampMs: now - Int64($0) * 60_000, md5: nil)
+        }
+        XCTAssertEqual(Set(SubIdentityRule.prune(v2: v2, v1: [], nowMs: now)), Set((SubIdentityRule.maxCount..<(SubIdentityRule.maxCount + 5)).map { "f\($0)" }))
+    }
+}
+
 /// 1.7.6: imported / downloaded subtitle files are checked by content before use.
 final class SubFileCheckTests: XCTestCase {
     let srt = "1\n00:00:01,000 --> 00:00:02,500\nمرحبا بك\n\n2\n00:00:03,000 --> 00:00:04,000\nكيف حالك\n"

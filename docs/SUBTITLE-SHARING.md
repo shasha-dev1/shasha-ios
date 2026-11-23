@@ -116,3 +116,35 @@ for that series); old files must not pile up.
   content, an embedded track by its number and language (`SubDelayRule`). Stored on the phone (`subs.delay`), at most
   500 entries (oldest use dropped). Applied when that subtitle is selected/added or first selected after loading.
 - «الأصلي» resets to 0 and removes the kept value. Not shared with the TV.
+
+## 1.7.9 (iPhone) — subtitle identity v2: language + content, compatible with v1 (not device-tested; TV unchanged)
+- Identity = film/episode copy (sync key: work/episode + provider id = video version) + language + SHA-256 of the
+  UTF-8 content (`SubIdentityRule`). Drive's `md5Checksum` is compared with the md5 of our bytes: same content →
+  nothing uploaded.
+- v1 `shasha-sub-v1-<h>.srt` is unchanged and stays **the selected subtitle of the item** — the TV (0.9.22) and older
+  iPhone builds keep reading/writing it exactly as before.
+- New: one file per kept language `shasha-sub-v2-<h>-<lang>.<fmt>` (same `h`), appProperties `shashaSub=2` (the TV's
+  clean-up lists `shashaSub=1` only, so it never sees or deletes them), `item=<h>`, `lang`, `fmt`, `sha`.
+  Test vectors: `0123456789abcdef|movie|12345` + ar/srt → `shasha-sub-v2-200a02eb8884dc7d433f9fe5-ar.srt`;
+  `0123456789abcdef|ep|987654` + en/ass → `shasha-sub-v2-b89e90fd6ac239417f88da25-en.ass`.
+- Keeping a subtitle (download, import, or choosing a kept one = an explicit choice), in this order:
+  1. if the selected v1 file has other content in another language and no matching v2 copy (written by the TV or an
+     older build), it is first copied server-side to the v2 file of its language (no lang → `und`); if that copy
+     fails, v1 is **not** replaced;
+  2. this language's v2 file is created/updated (skipped when the content is the same);
+  3. v1 is replaced (skipped when the same; then only `off` is cleared).
+  The viewer is told: «بدّلت الترجمة المختارة من X إلى Y — ترجمة X باقية في المحفوظة», or that an earlier subtitle
+  in the same language was replaced (one copy per language and item).
+- Player › الترجمة › «ترجمات محفوظة لهذا العمل»: one row per kept language (this phone + Drive), the selected one
+  marked; a selected v1 with no copy of its own is listed too. Choosing one goes through the same check → add →
+  confirm → keep path.
+- Clean-up: v1 by the same rule as the TV (30 days / 150). v2 apart (30 days / 300); a v2 file whose content equals
+  its item's selected v1 counts as used whenever v1 is used (touches go to v1 only). Re-read before delete as before.
+  On the phone the same split, by file date.
+- Language: from the source (OpenSubtitles `language`), else guessed from the text (`ar` / `und`). Tags are cleaned
+  for file names (`pt_BR` → `pt-br`; anything else → `und`).
+- Still open: TV does not read v2 (it gets the selected one through v1, as before); no management screen/export yet;
+  "off" is still a flag on the v1 file (item 3).
+- Device test: film → download Arabic → then English → message names Arabic → list shows both, English selected →
+  choose Arabic → TV opens the film with Arabic. Same content again → perf report «نفس الملف موجود في Drive».
+  Old v1 from the TV (any language) → add another language on the iPhone → the TV's one appears in the list.

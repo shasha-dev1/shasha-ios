@@ -37,26 +37,164 @@ enum SubShare {
         do { try Data(c.text.utf8).write(to: u, options: .atomic); return u } catch { return nil }
     }
 
-    /// After a subtitle was downloaded or imported, checked, and confirmed added in the player: keep it for this
-    /// film/episode and send it to Drive (in the background). Replaces the one kept before for the same item.
-    static func keep(_ c: SubFileCheck.Checked, storeKey: String, source: Source?, label: String) {
+    private static func hex<D: Sequence>(_ d: D) -> String where D.Element == UInt8 { d.map { String(format: "%02x", $0) }.joined() }
+    static func md5(_ data: Data) -> String { hex(Insecure.MD5.hash(data: data)) }
+    static func sha256(_ data: Data) -> String { hex(SHA256.hash(data: data)) }
+
+    /// 1.7.9: language of a kept subtitle: what the source says (OpenSubtitles "ar"/"en"…), else the guess from
+    /// the text ("ar" or "und").
+    static func language(_ hint: String?, _ c: SubFileCheck.Checked) -> String {
+        let h = SubIdentityRule.lang(hint ?? "")
+        return h != "und" ? h : SubIdentityRule.lang(c.lang)
+    }
+
+    /// After a subtitle was downloaded, imported or chosen from the kept ones, checked, and confirmed added in the
+    /// player: it becomes the selected one for this film/episode (v1, shared with the TV) and is kept as the copy of
+    /// its language (v2). 1.7.9: other languages are never removed; the one it replaces is kept first when needed,
+    /// and `note` tells the viewer which language was replaced. Same content on Drive → nothing uploaded.
+    static func keep(_ c: SubFileCheck.Checked, storeKey: String, source: Source?, label: String, lang hint: String? = nil,
+                     note: @escaping (String) -> Void = { _ in }) {
         guard let k = key(storeKey: storeKey, source: source) else { return }
         let name = SubSyncRule.fileName(key: k, sha256: sha)
+        let lang = language(hint, c)
+        let nameV2 = SubIdentityRule.fileName(key: k, lang: lang, format: c.format.rawValue, sha256: sha)
+        let item = SubIdentityRule.itemHash(key: k, sha256: sha)
         let data = Data(c.text.utf8)
-        for f in [SubFileCheck.Format.srt, .ass] { if let u = local(name, f) { try? FileManager.default.removeItem(at: u) } }
-        if let dest = local(name, c.format) { try? data.write(to: dest, options: .atomic) }
-        let lang = c.lang
+        let digest = md5(data), contentSha = sha256(data)
+        keepLocal(data, name: name, nameV2: nameV2, item: item, format: c.format)
         pruneLocal()
         guard DriveKeys.isLinked else { return }
         let t0 = Perf.now()
         Task {
             do {
-                try await GoogleDrive.shared.putSub(data, name: name, lang: lang, label: label, format: c.format.rawValue)
-                Perf.shared.record("ترجمة: رفع إلى Drive", since: t0, "\(data.count / 1024) KB")
+                async let v1Find = GoogleDrive.shared.findSub(name)
+                async let v2Find = GoogleDrive.shared.findSubsV2(item: item)
+                let v1 = try await v1Find, v2s = try await v2Find
+                var have: [String: String?] = [:]
+                for f in v2s { let l = SubIdentityRule.parse(f.name)?.lang ?? SubIdentityRule.lang(f.lang); if have[l] == nil { have[l] = .some(f.md5) } }
+                let plan = SubIdentityRule.plan(lang: lang, md5: digest, v1: v1.map { SubIdentityRule.Remote(lang: $0.lang, md5: $0.md5) }, v2: have)
+                let now = String(CloudSyncRule.ms(Date().timeIntervalSince1970))
+                // 1) The selected subtitle being replaced is kept as its language's copy first; if that fails, the
+                //    selection is not replaced (nothing is lost).
+                var canReplace = true
+                if let old = plan.preserveOldAs, let v1 {
+                    let target = SubIdentityRule.fileName(key: k, lang: old, format: v1.fmt == "ass" ? "ass" : "srt", sha256: sha)
+                    do {
+                        try await GoogleDrive.shared.copySub(v1.id, name: target, props: [
+                            "shashaSub": "2", "item": item, "lang": old, "fmt": v1.fmt == "ass" ? "ass" : "srt",
+                            "label": SubSyncRule.clip(v1.label), "off": "0", "used": now])
+                        for dup in v2s where dup.name == target { try? await GoogleDrive.shared.delete(dup.id) }
+                        Perf.shared.add("ترجمة: حُفظت المختارة السابقة كنسخة لغتها", ms: 0, old)
+                    } catch {
+                        canReplace = false
+                        Perf.shared.add("ترجمة: تعذّر حفظ المختارة السابقة — لم تُستبدل", ms: 0, error.localizedDescription)
+                    }
+                }
+                // 2) This language's copy.
+                if plan.putV2 {
+                    try await GoogleDrive.shared.putSub(data, name: nameV2, lang: lang, label: label, format: c.format.rawValue,
+                                                        extra: ["shashaSub": "2", "item": item, "sha": contentSha],
+                                                        existingId: .some(v2s.first { $0.name == nameV2 }?.id))
+                }
+                // 3) The selected subtitle (what the TV and older builds read).
+                if plan.putV1 && canReplace {
+                    try await GoogleDrive.shared.putSub(data, name: name, lang: lang, label: label, format: c.format.rawValue,
+                                                        existingId: .some(v1?.id))
+                } else if !plan.putV1, let v1, v1.off {
+                    try? await GoogleDrive.shared.touchSub(v1.id, off: false)     // chosen again → no longer "off"
+                }
+                if !plan.putV1 && !plan.putV2 {
+                    Perf.shared.add("ترجمة: نفس الملف موجود في Drive — لم يُرفع", ms: 0, lang)
+                } else {
+                    Perf.shared.record("ترجمة: رفع إلى Drive", since: t0, "\(data.count / 1024) KB · \(lang)")
+                }
+                if let r = plan.replacedLang, canReplace {
+                    note("بدّلت الترجمة المختارة من \(SubIdentityRule.display(r)) إلى \(SubIdentityRule.display(lang)) — ترجمة \(SubIdentityRule.display(r)) باقية في المحفوظة")
+                } else if plan.replacedSameLang {
+                    note("استُبدلت ترجمة \(SubIdentityRule.display(lang)) السابقة لهذا العمل")
+                }
                 await pruneDriveIfDue()
             } catch {
                 Perf.shared.add("ترجمة: تعذّر الرفع إلى Drive", ms: 0, error.localizedDescription)
             }
+        }
+    }
+
+    /// On this phone: the selected copy (v1 name) and this language's copy (v2 name). A selected copy with other
+    /// content that has no copy of its own yet (kept by an older build) is kept under its guessed language first.
+    private static func keepLocal(_ data: Data, name: String, nameV2: String, item: String, format: SubFileCheck.Format) {
+        let old = [SubFileCheck.Format.srt, .ass].compactMap { local(name, $0) }.first { FileManager.default.fileExists(atPath: $0.path) }
+        if let old, let oldData = try? Data(contentsOf: old), oldData != data {
+            let mine = localV2(item: item)
+            if !mine.contains(where: { (try? Data(contentsOf: $0)) == oldData }),
+               case .success(let oc) = SubFileCheck.check(oldData) {
+                let n = SubIdentityRule.prefix + item + "-" + SubIdentityRule.lang(oc.lang) + "." + oc.format.rawValue
+                if !mine.contains(where: { $0.lastPathComponent == n }), let dest = local(n) { try? oldData.write(to: dest, options: .atomic) }
+            }
+        }
+        for f in [SubFileCheck.Format.srt, .ass] { if let u = local(name, f) { try? FileManager.default.removeItem(at: u) } }
+        if let dest = local(name, format) { try? data.write(to: dest, options: .atomic) }
+        if let dest = local(nameV2) { try? data.write(to: dest, options: .atomic) }
+    }
+
+    private static func localV2(item: String) -> [URL] {
+        guard let d = dir, let urls = try? FileManager.default.contentsOfDirectory(at: d, includingPropertiesForKeys: nil) else { return [] }
+        return urls.filter { SubIdentityRule.parse($0.lastPathComponent)?.item == item }
+    }
+
+    /// 1.7.9: the subtitles kept for this film/episode, one per language (this phone and Drive), for the player's list.
+    struct Kept: Identifiable, Equatable {
+        var id: String { name }
+        let name: String; let lang: String; let format: String
+        var local: URL?; var driveId: String?; var selected = false
+    }
+
+    static func keptList(storeKey: String, source: Source?) async -> [Kept] {
+        guard let k = key(storeKey: storeKey, source: source) else { return [] }
+        let item = SubIdentityRule.itemHash(key: k, sha256: sha)
+        let name = SubSyncRule.fileName(key: k, sha256: sha)
+        var out: [String: Kept] = [:]
+        let selectedLocal = [SubFileCheck.Format.srt, .ass].compactMap { local(name, $0) }
+            .first { FileManager.default.fileExists(atPath: $0.path) }.flatMap { try? Data(contentsOf: $0) }
+        for u in localV2(item: item) {
+            guard let p = SubIdentityRule.parse(u.lastPathComponent) else { continue }
+            let sel = selectedLocal != nil && (try? Data(contentsOf: u)) == selectedLocal
+            out[u.lastPathComponent] = Kept(name: u.lastPathComponent, lang: p.lang, format: p.format, local: u, selected: sel)
+        }
+        if DriveKeys.isLinked {
+            do {
+                async let v1Find = GoogleDrive.shared.findSub(name)
+                async let v2Find = GoogleDrive.shared.findSubsV2(item: item)
+                let v1 = try await v1Find, v2s = try await v2Find
+                for f in v2s {
+                    guard let p = SubIdentityRule.parse(f.name) else { continue }
+                    var e = out[f.name] ?? Kept(name: f.name, lang: p.lang, format: p.format)
+                    e.driveId = f.id
+                    if let a = f.md5, a == v1?.md5 { e.selected = true }
+                    out[f.name] = e
+                }
+                // A selected subtitle from the TV / an older build with no copy of its own yet.
+                if let v1, !v2s.contains(where: { $0.md5 != nil && $0.md5 == v1.md5 }), !out.values.contains(where: \.selected) {
+                    out[v1.name] = Kept(name: v1.name, lang: SubIdentityRule.lang(v1.lang), format: v1.fmt == "ass" ? "ass" : "srt",
+                                        driveId: v1.id, selected: true)
+                }
+            } catch {
+                Perf.shared.add("ترجمة: تعذّر قراءة المحفوظة من Drive", ms: 0, error.localizedDescription)
+            }
+        }
+        return out.values.sorted { ($0.selected ? 0 : 1, $0.lang) < ($1.selected ? 0 : 1, $1.lang) }
+    }
+
+    /// Content of a kept subtitle (this phone first, else Drive). Checked again by the caller before use.
+    static func load(_ e: Kept) async -> Data? {
+        if let u = e.local, let d = try? Data(contentsOf: u) {
+            try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: u.path)
+            return d
+        }
+        guard let id = e.driveId else { return nil }
+        do { return try await GoogleDrive.shared.downloadSub(id) } catch {
+            Perf.shared.add("ترجمة: تعذّر الجلب من Drive", ms: 0, error.localizedDescription)
+            return nil
         }
     }
 
@@ -123,28 +261,58 @@ enum SubShare {
         }
     }
 
-    /// Same limits on this phone: older than 30 days (by last use) or beyond 150 files.
+    /// Same limits on this phone: older than 30 days (by last use) or beyond the count. 1.7.9: the selected copies
+    /// (v1 names) and the language copies (v2) are counted apart; a language copy with the same content as its item's
+    /// selected copy counts as used with it.
     static func pruneLocal() {
-        guard let d = dir, let urls = try? FileManager.default.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey]) else { return }
-        let files = urls.map { u in
-            SubSyncRule.Stored(id: u.lastPathComponent,
-                               modifiedMs: ((try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate).map { CloudSyncRule.ms($0.timeIntervalSince1970) } ?? 0)
+        guard let d = dir, let urls = try? FileManager.default.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey]) else { return }
+        func mtime(_ u: URL) -> Int64 {
+            ((try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate).map { CloudSyncRule.ms($0.timeIntervalSince1970) } ?? 0
         }
-        for name in SubSyncRule.prune(files, nowMs: CloudSyncRule.ms(Date().timeIntervalSince1970)) {
-            try? FileManager.default.removeItem(at: d.appendingPathComponent(name))
+        let v2urls = urls.filter { SubIdentityRule.parse($0.lastPathComponent) != nil }
+        let v1urls = urls.filter { SubIdentityRule.parse($0.lastPathComponent) == nil }
+        let v1 = v1urls.map { u -> SubIdentityRule.Listed in
+            // the selected copy may be .ass locally; its identity name ends in .srt
+            let n = u.lastPathComponent.hasSuffix(".ass") ? String(u.lastPathComponent.dropLast(4)) + ".srt" : u.lastPathComponent
+            return SubIdentityRule.Listed(id: u.lastPathComponent, name: n, stampMs: mtime(u), md5: nil)
         }
+        var gone = SubSyncRule.prune(v1.map { SubSyncRule.Stored(id: $0.id, modifiedMs: $0.stampMs) }, nowMs: CloudSyncRule.ms(Date().timeIntervalSince1970))
+        // md5 only where it can matter: a language copy whose item still has a selected copy of the same size.
+        let v1ByName = Dictionary(v1urls.map { u -> (String, URL) in
+            let n = u.lastPathComponent.hasSuffix(".ass") ? String(u.lastPathComponent.dropLast(4)) + ".srt" : u.lastPathComponent
+            return (n, u) }, uniquingKeysWith: { a, _ in a })
+        func size(_ u: URL) -> Int { (try? u.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? -1 }
+        var v1md5: [String: String] = [:]
+        let v2 = v2urls.map { u -> SubIdentityRule.Listed in
+            var m: String?
+            if let p = SubIdentityRule.parse(u.lastPathComponent), let sel = v1ByName[SubSyncRule.prefix + p.item + ".srt"],
+               size(sel) == size(u), let a = try? Data(contentsOf: u) {
+                m = md5(a)
+                if v1md5[sel.lastPathComponent] == nil, let b = try? Data(contentsOf: sel) { v1md5[sel.lastPathComponent] = md5(b) }
+            }
+            return SubIdentityRule.Listed(id: u.lastPathComponent, name: u.lastPathComponent, stampMs: mtime(u), md5: m)
+        }
+        let v1WithMd5 = v1.map { SubIdentityRule.Listed(id: $0.id, name: $0.name, stampMs: $0.stampMs, md5: v1md5[$0.id]) }
+            .filter { !gone.contains($0.id) }
+        gone += SubIdentityRule.prune(v2: v2, v1: v1WithMd5, nowMs: CloudSyncRule.ms(Date().timeIntervalSince1970))
+        for name in gone { try? FileManager.default.removeItem(at: d.appendingPathComponent(name)) }
     }
 
-    /// Drive: at most once a day, after an upload.
+    /// Drive: at most once a day, after an upload. v1 files by the rule the TV shares; v2 files (iPhone only) apart.
     static func pruneDriveIfDue() async {
         let k = "subs.pruneAt"
         let now = CloudSyncRule.ms(Date().timeIntervalSince1970)
         guard now - Int64(UserDefaults.standard.double(forKey: k)) > SubSyncRule.pruneEveryMs else { return }
         do {
             var gone: [String] = []
-            let listed = try await GoogleDrive.shared.listSubs()
-            let seen = Dictionary(listed.map { ($0.id, $0.modifiedMs) }, uniquingKeysWith: { a, _ in a })
-            for id in SubSyncRule.prune(listed, nowMs: now) {
+            let v1 = try await GoogleDrive.shared.listSubs(kind: "1")
+            let v2 = try await GoogleDrive.shared.listSubs(kind: "2")
+            let seen = Dictionary((v1 + v2).map { ($0.id, $0.stampMs) }, uniquingKeysWith: { a, _ in a })
+            let goV1 = SubSyncRule.prune(v1.map { SubSyncRule.Stored(id: $0.id, modifiedMs: $0.stampMs) }, nowMs: now)
+            let keptV1 = v1.filter { !goV1.contains($0.id) }.map { SubIdentityRule.Listed(id: $0.id, name: $0.name, stampMs: $0.stampMs, md5: $0.md5) }
+            let goV2 = SubIdentityRule.prune(v2: v2.map { SubIdentityRule.Listed(id: $0.id, name: $0.name, stampMs: $0.stampMs, md5: $0.md5) },
+                                             v1: keptV1, nowMs: now)
+            for id in goV1 + goV2 {
                 // 1.7.7: read again right before deleting; skip it if it was used or replaced since the list.
                 guard let st = try await GoogleDrive.shared.subStamp(id) else { continue }
                 if st > (seen[id] ?? 0) { continue }

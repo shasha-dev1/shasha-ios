@@ -518,6 +518,8 @@ struct PlayerScreen: View {
     @State private var diagText = ""
     @ObservedObject private var samples = SampleStore.shared
     @State private var pickingSubtitle = false
+    @State private var keptSubs: [SubShare.Kept] = []     // 1.7.9: kept languages of this film/episode
+    @State private var keptSubsLoading = false
     @State private var diagDetailed = false
     @Environment(\.scenePhase) private var scenePhase
 
@@ -598,7 +600,7 @@ struct PlayerScreen: View {
             switch s {
             case .subs:
                 if current != nil { SubSearchSheet(query: current!.query) { file, r in
-                    if let data = try? Data(contentsOf: file) { useSubtitle(data, name: file.lastPathComponent, label: "OpenSubtitles · " + r.release) }
+                    if let data = try? Data(contentsOf: file) { useSubtitle(data, name: file.lastPathComponent, label: "OpenSubtitles · " + r.release, lang: r.language) }
                     else { show("تعذّر قراءة الترجمة المنزّلة") }
                 } }
             case .channels:
@@ -939,6 +941,7 @@ struct PlayerScreen: View {
         hideTask?.cancel()
         if p == .diag { diagText = diagnostics() }
         panelTracks = p == .audio ? model.audioTracks : p == .subtitles ? model.subtitleTracks : []
+        if p == .subtitles { loadKeptSubs() }
         withAnimation(.easeOut(duration: 0.18)) { panel = p }
     }
 
@@ -1006,6 +1009,16 @@ struct PlayerScreen: View {
                     panelButton("أكبر", "textformat.size.larger") { changeSubScale(0.1) }
                 }
                 .padding(.horizontal, 8).padding(.vertical, 6)
+            }
+            if !isLive, current != nil {
+                // 1.7.9: one kept subtitle per language for this film/episode (this phone + Drive).
+                panelHeader("ترجمات محفوظة لهذا العمل")
+                if keptSubsLoading && keptSubs.isEmpty { panelNote("جارٍ التحميل…") }
+                else if keptSubs.isEmpty { panelNote("لا توجد ترجمة محفوظة بعد.") }
+                ForEach(keptSubs) { e in
+                    panelRow(SubIdentityRule.display(e.lang) + " · " + e.format.uppercased() + (e.local == nil ? " · Drive" : ""),
+                             selected: e.selected, icon: "captions.bubble") { closePanel(); useKept(e) }
+                }
             }
             panelRow("تشخيص التشغيل", icon: "stethoscope") { openPanel(.diag) }
             if !isLive {
@@ -1416,7 +1429,7 @@ struct PlayerScreen: View {
 
     /// 1.7.6: one path for imported and downloaded subtitles: check the content → add to mpv → confirm the new track
     /// is listed and selected → only then say so, keep it for this film/episode and share it (Drive).
-    private func useSubtitle(_ data: Data, name: String, label: String) {
+    private func useSubtitle(_ data: Data, name: String, label: String, lang: String? = nil) {
         guard let v = current else { return }
         let c: SubFileCheck.Checked
         switch SubFileCheck.check(data) {
@@ -1432,9 +1445,40 @@ struct PlayerScreen: View {
             if ok {
                 model.clearItemOff()
                 show("أُضيفت الترجمة (\(c.format.rawValue.uppercased())) وحُددت")
-                SubShare.keep(c, storeKey: v.key, source: library.active, label: label)
+                SubShare.keep(c, storeKey: v.key, source: library.active, label: label, lang: lang) { text in
+                    if gate.isCurrent(id) { show(text) }
+                }
             } else {
                 show("لم تظهر الترجمة في قائمة المشغّل — لم تُحفظ")
+            }
+        }
+    }
+
+    /// 1.7.9: the kept languages of this film/episode, for the subtitles panel.
+    private func loadKeptSubs() {
+        guard let v = current, !isLive else { keptSubs = []; return }
+        keptSubsLoading = true
+        let src = library.active, key = v.key
+        Task {
+            let list = await SubShare.keptList(storeKey: key, source: src)
+            await MainActor.run {
+                if current?.key == key { keptSubs = list }
+                keptSubsLoading = false
+            }
+        }
+    }
+
+    /// 1.7.9: choosing a kept language = an explicit choice: same path as a download (check → add → confirm → keep),
+    /// so it becomes the selected subtitle on both devices.
+    private func useKept(_ e: SubShare.Kept) {
+        let id = session?.id
+        show("أجهّز ترجمة \(SubIdentityRule.display(e.lang))…")
+        Task {
+            let data = await SubShare.load(e)
+            await MainActor.run {
+                guard gate.isCurrent(id) else { return }
+                guard let data else { show("تعذّر جلب الترجمة المحفوظة"); return }
+                useSubtitle(data, name: e.name, label: "محفوظة · " + SubIdentityRule.display(e.lang), lang: e.lang)
             }
         }
     }
@@ -1454,7 +1498,7 @@ struct PlayerScreen: View {
                 let file = try await OnlineSubs.download(best)
                 await MainActor.run {
                     guard gate.isCurrent(id) else { return }
-                    if let data = try? Data(contentsOf: file) { useSubtitle(data, name: file.lastPathComponent, label: "OpenSubtitles · " + best.release) }
+                    if let data = try? Data(contentsOf: file) { useSubtitle(data, name: file.lastPathComponent, label: "OpenSubtitles · " + best.release, lang: best.language) }
                     else { show("تعذّر قراءة الترجمة المنزّلة") }
                 }
             } catch {
