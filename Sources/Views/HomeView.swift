@@ -30,6 +30,13 @@ struct HomeView: View {
             }
             .searchable(text: $query, prompt: "ابحث في القنوات والأفلام والمسلسلات")
             .navigationTitle("الرئيسية")
+            .toolbar {
+                // 1.8.0: downloads (work offline: nothing here waits for the provider or Google)
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink { DownloadsView(play: $play) } label: { Image(systemName: "arrow.down.circle") }
+                        .accessibilityLabel("التنزيلات")
+                }
+            }
             .refreshable { await library.reload() }
             .onAppear { tick += 1; Perf.shared.firstScreen("الرئيسية") }
             .onReceive(NotificationCenter.default.publisher(for: .cloudSyncApplied)) { _ in tick += 1 }

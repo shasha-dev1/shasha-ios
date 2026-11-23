@@ -1305,6 +1305,7 @@ struct PlayerScreen: View {
         model.workPrefKey = nil
         model.itemKey = nil
         model.onSubtitlesOff = nil
+        Downloads.shared.playing(network: true)   // 1.8.0: one connection — a download waits while streaming
         model.open(ch.url, live: true, session: s.id)
         if fit != .fit { model.apply(fit) }
         epg.load(ch, from: library.xtream)
@@ -1333,7 +1334,12 @@ struct PlayerScreen: View {
         model.itemKey = v.key
         let src = library.active
         model.onSubtitlesOff = { SubShare.markOff(storeKey: v.key, source: src) }
-        model.open(v.url, startSeconds: traktPct == nil ? pos : 0, session: s.id, startPercent: traktPct)
+        // 1.8.0: a complete download plays from the phone (same key: resume point, subtitle, sync); nothing waits for
+        // the provider or Google. Streaming from the provider pauses a running download (one connection).
+        let offline: URL? = v.url.hasPrefix("file:") ? URL(string: v.url) : Downloads.shared.localFile(source: src?.id, key: v.key)
+        Downloads.shared.playing(network: offline == nil)
+        if offline != nil && !v.key.hasPrefix("sample:") { Perf.shared.add("تشغيل من التنزيلات", ms: 0, "") }
+        model.open(offline?.absoluteString ?? v.url, startSeconds: traktPct == nil ? pos : 0, session: s.id, startPercent: traktPct)
         // 1.7.6: "no subtitles" chosen for this film/episode itself is kept and respected too.
         let itemOff = ItemSubOff.get(v.key)
         if itemOff { model.mpv.setAsync("sid", "no") }
@@ -1342,7 +1348,7 @@ struct PlayerScreen: View {
         if !itemOff && model.workPrefKey.flatMap({ WorkLangPrefs.get($0, "sub") }) != "off" {
             let id = s.id, storeKey = v.key
             Task {
-                guard let f = await SubShare.saved(storeKey: storeKey, source: src) else { return }
+                guard let f = await SubShare.saved(storeKey: storeKey, source: src, preferLocal: offline != nil) else { return }
                 await MainActor.run { if gate.isCurrent(id) { model.pendingSubFile = f } }
             }
         }

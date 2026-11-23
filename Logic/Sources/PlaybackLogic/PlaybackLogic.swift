@@ -873,3 +873,106 @@ enum SubDelayRule {
         return d.sorted { $0.value.usedMs < $1.value.usedMs }.prefix(d.count - max).map(\.key)
     }
 }
+
+/// 1.8.0: downloads for watching offline — the rules, apart from URLSession, files and screens.
+///
+/// A file is downloaded in pieces with "Range: bytes=<have>-": the bytes already kept are never asked for again and
+/// never written twice. Each answer is checked before its bytes are added:
+/// - 206 whose Content-Range starts exactly at <have> (and, when the total is known, has the same total) → append;
+/// - 200 (the server ignored the range): from 0 it is the whole file; with bytes already kept it would repeat them,
+///   so the kept part is dropped and the answer is taken as the whole file (the viewer is told: not resumable);
+/// - a different start or total (the file changed on the server) → nothing appended, the download stops with a reason;
+/// - 416 when everything is already kept → complete; other codes → stop with the code.
+/// A file is "ready" only when the bytes kept equal the total the server announced.
+enum DownloadRule {
+    struct ContentRange: Equatable { let start: Int64; let end: Int64; let total: Int64? }
+
+    /// "bytes 100-199/1000" or "bytes 100-199/*".
+    static func parseContentRange(_ s: String?) -> ContentRange? {
+        guard var t = s?.trimmingCharacters(in: .whitespaces).lowercased(), t.hasPrefix("bytes") else { return nil }
+        t = String(t.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+        let slash = t.split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false)
+        guard slash.count == 2 else { return nil }
+        let r = slash[0].split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+        guard r.count == 2, let a = Int64(r[0]), let b = Int64(r[1]), a >= 0, b >= a else { return nil }
+        let total: Int64?
+        if slash[1] == "*" { total = nil } else { guard let n = Int64(slash[1]), n > b else { return nil }; total = n }
+        return ContentRange(start: a, end: b, total: total)
+    }
+
+    enum Reply: Equatable {
+        /// Append these bytes after the kept ones; total of the file (nil = unknown yet).
+        case append(total: Int64?)
+        /// Drop what is kept; this answer is the file from its first byte. `ignoredRange`: the server didn't resume.
+        case restart(total: Int64?, ignoredRange: Bool)
+        /// Everything is already kept.
+        case complete
+        /// Nothing written; stop with this reason.
+        case stop(Stop)
+    }
+    enum Stop: Equatable { case changed, wrongStart, http(Int), noTotal }
+
+    static func reply(status: Int, contentRange: String?, contentLength: Int64?, have: Int64, knownTotal: Int64?) -> Reply {
+        switch status {
+        case 206:
+            guard let cr = parseContentRange(contentRange) else { return .stop(.wrongStart) }
+            if cr.start != have { return .stop(.wrongStart) }
+            if let k = knownTotal, let t = cr.total, k != t { return .stop(.changed) }
+            return .append(total: cr.total ?? knownTotal)
+        case 200:
+            let len = (contentLength ?? -1) > 0 ? contentLength : nil
+            if let k = knownTotal, let l = len, k != l { return .stop(.changed) }
+            return .restart(total: len ?? knownTotal, ignoredRange: have > 0)
+        case 416:
+            if let k = knownTotal, have == k { return .complete }
+            return .stop(.changed)
+        default:
+            return .stop(.http(status))
+        }
+    }
+
+    /// Ready only when every byte of a known total is kept (nothing missing, nothing extra).
+    static func isComplete(have: Int64, total: Int64?) -> Bool { total != nil && total! > 0 && have == total! }
+
+    /// Bytes of an interrupted piece that may be kept: what was received, cut at the total (never past it).
+    static func salvage(received: Int64, have: Int64, total: Int64?) -> Int64 {
+        guard received > 0 else { return 0 }
+        if let t = total { return max(0, min(received, t - have)) }
+        return received
+    }
+
+    /// Free space needed to go on: what is left to download plus a margin, so the phone isn't filled up.
+    static let spareBytes: Int64 = 1_000_000_000
+    static func enoughSpace(free: Int64, have: Int64, total: Int64?) -> Bool {
+        guard let t = total else { return free > spareBytes }
+        return free - (t - have) >= spareBytes
+    }
+
+    /// The resume check: a 1 MiB piece from the middle must come back as 206 with exactly that Content-Range.
+    enum Probe: Equatable { case resumable(total: Int64), notResumable(String) }
+    static func probe(status: Int, contentRange: String?, start: Int64, end: Int64, receivedBytes: Int64) -> Probe {
+        guard status == 206 else { return .notResumable("ردّ \(status) بدل 206") }
+        guard let cr = parseContentRange(contentRange) else { return .notResumable("بدون Content-Range صحيح") }
+        guard cr.start == start, cr.end == end else { return .notResumable("Content-Range لموضع مختلف (\(cr.start)-\(cr.end))") }
+        guard let t = cr.total else { return .notResumable("الحجم الكلي غير معروف") }
+        guard receivedBytes == end - start + 1 else { return .notResumable("وصل \(receivedBytes) بايت بدل \(end - start + 1)") }
+        return .resumable(total: t)
+    }
+
+    /// Name of the kept file: per source + item (the same film id on two sources is two files), no names in it.
+    static func fileName(source: String, key: String, ext: String, sha256: (String) -> String) -> String {
+        let e = ext.lowercased().filter { $0.isLetter || $0.isNumber }
+        return "dl-" + String(sha256(source + "|" + key).prefix(24)) + "." + (e.isEmpty || e.count > 5 ? "mkv" : e)
+    }
+
+    /// The part of an interrupted URLSession piece that URLSession kept, from its resume data (a property list):
+    /// temporary file name and bytes received. nil when the format isn't the expected one.
+    static func resumeInfo(_ data: Data) -> (file: String, bytes: Int64)? {
+        guard let p = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else { return nil }
+        let name = (p["NSURLSessionResumeInfoTempFileName"] as? String)
+            ?? (p["NSURLSessionResumeInfoLocalPath"] as? String).map { ($0 as NSString).lastPathComponent }
+        let bytes = (p["NSURLSessionResumeBytesReceived"] as? NSNumber)?.int64Value
+        guard let n = name, !n.isEmpty, !n.contains("/"), let b = bytes, b >= 0 else { return nil }
+        return (n, b)
+    }
+}
