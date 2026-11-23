@@ -37,17 +37,22 @@ struct DownloadItem: Codable, Identifiable, Equatable {
 /// Downloads for offline viewing. One at a time (the provider may allow a single connection), paused while a video
 /// streams from the provider, Wi‑Fi unless the viewer allows mobile data for that download.
 ///
-/// Pieces are fetched with a background URLSession and "Range: bytes=<have>-": iOS goes on with the transfer while
-/// the app is in the background or the screen is locked. When the viewer swipes the app away in the app switcher,
-/// iOS cancels its background transfers; the bytes already kept stay and the download goes on from there the next
-/// time the app is opened (when the server accepts ranges). Every answer is checked (DownloadRule) before its bytes
-/// are added; a file is ready only when every byte of the announced size is kept.
+/// 1.8.1 — how the bytes are kept (1.8.0 relied on iOS "resume data", which iOS only makes when the server sends
+/// ETag / Last-Modified; the owner's provider apparently doesn't, so a pause lost everything):
+/// - App open: a normal request "Range: bytes=<kept>-" whose bytes are written to the file as they arrive (FgLoader).
+///   Pause, playback, Wi‑Fi loss, airplane mode or a network error lose nothing: the file holds every byte received.
+/// - App going to the background: the open request stops (its bytes are kept) and the rest continues as one
+///   background download (iOS goes on with it in the background / screen locked); it is added when it finishes.
+///   Stopped before it finishes, only what it fetched in the background may have to be fetched again (iOS hands those
+///   bytes back only when the server allows resuming the iOS way); the screen says so.
+/// - App swiped away in the app switcher: iOS stops its transfers; what was kept stays; it goes on when opened.
+/// Every answer is checked (DownloadRule) before bytes are added; a file is ready only at the announced size.
 @MainActor
 final class Downloads: NSObject, ObservableObject {
     static let shared = Downloads()
 
     @Published private(set) var items: [DownloadItem] = []
-    /// Live progress of the piece downloading now (bytes of the whole file).
+    /// Live progress (bytes of the whole file) of the download running now.
     @Published private(set) var liveHave: [String: Int64] = [:]
     /// A download waiting for the viewer's OK to use mobile data (shown as an alert while the app is open).
     @Published var cellularAsk: String?
@@ -55,14 +60,19 @@ final class Downloads: NSObject, ObservableObject {
     nonisolated private static let sessionId = "app.shasha.ios.downloads"
     var backgroundCompletion: (() -> Void)?
     private var session: URLSession!
-    private var current: (id: String, task: URLSessionDownloadTask)?
+    private let fg = FgLoader()
+    private enum Running { case fg(URLSessionDataTask), bg(URLSessionDownloadTask) }
+    private var current: (id: String, run: Running)?
     /// The item whose resume check is running (no download runs meanwhile).
     private var probing: String?
-    /// Set while this app stops a piece itself (pause / playback), so the error that follows isn't a failure.
+    /// Tasks this app stopped itself (pause / playback / Wi‑Fi / going to the background).
     private var stopping: Set<Int> = []
+    /// Called once the open request stopped by this app has closed its file.
+    private var afterStop: [Int: () -> Void] = [:]
     private var streaming = false
     private var onWifi = true
     private var online = true
+    private var active = true
     private let monitor = NWPathMonitor()
     private var activated = false
 
@@ -78,7 +88,7 @@ final class Downloads: NSObject, ObservableObject {
         }
         return d
     }
-    private func partURL(_ id: String) -> URL { Self.folder.appendingPathComponent(id + ".part") }
+    nonisolated static func partURL(_ id: String) -> URL { folder.appendingPathComponent(id + ".part") }
     private func doneURL(_ id: String) -> URL { Self.folder.appendingPathComponent(id) }
     private var stateURL: URL { Self.folder.appendingPathComponent("downloads.json") }
 
@@ -89,7 +99,7 @@ final class Downloads: NSObject, ObservableObject {
 
     private func load() {
         guard let d = try? Data(contentsOf: stateURL), var list = try? JSONDecoder().decode([DownloadItem].self, from: d) else { return }
-        // The real size of what is kept wins over the saved number (the app may have stopped between the two).
+        // The size of the file itself wins over the saved number (the app may have stopped between the two).
         for i in list.indices {
             let it = list[i]
             if it.state == .done {
@@ -98,47 +108,60 @@ final class Downloads: NSObject, ObservableObject {
                     list[i].state = .failed; list[i].note = "الملف المحفوظ ناقص — احذفه ونزّله من جديد"; list[i].have = size
                 }
             } else {
-                list[i].have = fileSize(partURL(it.id))
+                list[i].have = fileSize(Self.partURL(it.id))
                 if it.state == .downloading || it.state == .waitingPlayback { list[i].state = .queued }
             }
         }
         items = list
     }
 
-    private func fileSize(_ u: URL) -> Int64 {
+    nonisolated static func fileBytes(_ u: URL) -> Int64 {
         ((try? FileManager.default.attributesOfItem(atPath: u.path))?[.size] as? NSNumber)?.int64Value ?? 0
     }
+    private func fileSize(_ u: URL) -> Int64 { Self.fileBytes(u) }
 
     // MARK: Start
 
-    /// Called at launch (AppDelegate): restores the list, reconnects to transfers iOS kept going, watches the network.
+    /// Called at launch (AppDelegate): restores the list, reconnects to a background transfer iOS kept going,
+    /// watches the network and the app going to / coming back from the background.
     func activate() {
         guard !activated else { return }
         activated = true
+        active = UIApplication.shared.applicationState != .background
         load()
         let c = URLSessionConfiguration.background(withIdentifier: Self.sessionId)
         c.sessionSendsLaunchEvents = true
         c.isDiscretionary = false
-        c.allowsCellularAccess = true            // decided per request (allowsCellularAccess on each piece)
+        c.allowsCellularAccess = true            // decided per request
         c.httpMaximumConnectionsPerHost = 1
         session = URLSession(configuration: c, delegate: self, delegateQueue: nil)
+        fg.onProgress = { id, have in Task { @MainActor in Downloads.shared.liveHave[id] = have } }
+        fg.onDone = { id, taskId, reply, error in Task { @MainActor in Downloads.shared.fgDone(id: id, taskId: taskId, reply: reply, error: error) } }
         session.getAllTasks { tasks in
-            Task { @MainActor in self.reattach(tasks.compactMap { $0 as? URLSessionDownloadTask }) }
+            Task { @MainActor in Downloads.shared.reattach(tasks.compactMap { $0 as? URLSessionDownloadTask }) }
         }
         monitor.pathUpdateHandler = { path in
             let wifi = path.status == .satisfied && (path.usesInterfaceType(.wifi) || path.usesInterfaceType(.wiredEthernet))
             let up = path.status == .satisfied
-            Task { @MainActor in self.network(wifi: wifi, online: up) }
+            Task { @MainActor in Downloads.shared.network(wifi: wifi, online: up) }
         }
         monitor.start(queue: DispatchQueue(label: "shasha.downloads.net"))
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in Downloads.shared.wentToBackground() }
+        }
+        nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in Downloads.shared.active = true; Downloads.shared.startNext() }
+        }
     }
 
     private func reattach(_ tasks: [URLSessionDownloadTask]) {
         for t in tasks {
             if current == nil, let id = t.taskDescription, let i = index(id), items[i].state != .done {
-                current = (id, t); items[i].state = .downloading
+                current = (id, .bg(t)); items[i].state = .downloading
+                items[i].note = "يكمل في الخلفية (iOS)"
             } else {
-                stopping.insert(t.taskIdentifier); t.cancel()     // an old piece nobody follows any more
+                stopping.insert(t.taskIdentifier); t.cancel()     // an old transfer nobody follows any more
             }
         }
         save()
@@ -194,15 +217,20 @@ final class Downloads: NSObject, ObservableObject {
         if items[i].state == .waitingWifi { items[i].state = .queued }
         items[i].note = nil
         cellularAsk = nil
-        // A piece waiting for Wi‑Fi is replaced by one allowed on mobile data.
-        stopCurrent(if: id)
+        stopCurrent(if: id)      // a request waiting for Wi‑Fi is replaced by one allowed on mobile data
         save(); startNext()
     }
 
     func delete(_ id: String) {
         guard let i = index(id) else { return }
-        if let c = current, c.id == id { stopping.insert(c.task.taskIdentifier); c.task.cancel(); current = nil }
-        try? FileManager.default.removeItem(at: partURL(id))
+        if let c = current, c.id == id {
+            switch c.run {
+            case .fg(let t): stopping.insert(t.taskIdentifier); t.cancel()
+            case .bg(let t): stopping.insert(t.taskIdentifier); t.cancel()
+            }
+            current = nil
+        }
+        try? FileManager.default.removeItem(at: Self.partURL(id))
         try? FileManager.default.removeItem(at: doneURL(id))
         items.remove(at: i); liveHave[id] = nil
         save(); startNext()
@@ -226,128 +254,227 @@ final class Downloads: NSObject, ObservableObject {
         save()
     }
 
-    // MARK: Network
+    // MARK: Network / app state
 
     private func network(wifi: Bool, online: Bool) {
-        let wasWifi = onWifi
+        let wasWifi = onWifi, wasOnline = self.online
         onWifi = wifi; self.online = online
-        if wifi && !wasWifi {
-            for i in items.indices where items[i].state == .waitingWifi { items[i].state = .queued; items[i].note = nil }
+        if (wifi && !wasWifi) || (online && !wasOnline) {
+            for i in items.indices where items[i].state == .waitingWifi && (wifi || items[i].cellular) {
+                items[i].state = .queued; items[i].note = nil
+            }
+            for i in items.indices where items[i].state == .queued && items[i].note == "ينتظر الاتصال" { items[i].note = nil }
             save(); startNext()
         } else if !wifi && online, let c = current, let i = index(c.id), !items[i].cellular {
-            // Wi‑Fi gone while downloading: the piece waits (it isn't allowed on mobile data); ask the viewer.
             items[i].state = .waitingWifi
             stopCurrent(if: c.id)
             ask(items[i]); save()
         }
     }
 
-    // MARK: Pieces
+    /// Going to the background: the open request stops (bytes kept) and the rest goes on as a background download.
+    private func wentToBackground() {
+        active = false
+        guard let c = current, case .fg = c.run else { return }
+        let id = c.id
+        let bgTask = UIApplication.shared.beginBackgroundTask(withName: "shasha.download.handover")
+        stopCurrent(if: id, then: {
+            if let i = self.index(id), self.items[i].state == .downloading { self.items[i].state = .queued }
+            self.startNext()
+            UIApplication.shared.endBackgroundTask(bgTask)
+        })
+    }
+
+    // MARK: Requests
 
     private func startNext() {
         guard current == nil, probing == nil, !streaming, session != nil else { return }
         guard let i = items.firstIndex(where: { $0.state == .queued || $0.state == .downloading }) else { return }
         var it = items[i]
-        if online && !onWifi && !it.cellular {
-            items[i].state = .waitingWifi
-            items[i].note = "ينتظر Wi‑Fi"
+        if !online { items[i].note = "ينتظر الاتصال"; save(); return }
+        if !onWifi && !it.cellular {
+            items[i].state = .waitingWifi; items[i].note = "ينتظر Wi‑Fi"
             ask(items[i]); save(); return
         }
         guard let url = streamURL(it) else {
             items[i].state = .failed; items[i].note = "المصدر غير موجود في التطبيق"; save(); startNext(); return
         }
+        it.have = fileSize(Self.partURL(it.id))       // what is really on disk
         let free = (try? Self.folder.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]))?
             .volumeAvailableCapacityForImportantUsage ?? Int64.max
         if !DownloadRule.enoughSpace(free: free, have: it.have, total: it.total) {
             items[i].state = .noSpace
-            items[i].note = "المساحة لا تكفي (المتاح \(ByteCountFormatter.string(fromByteCount: free, countStyle: .file)))"
+            let need = (it.total ?? 0) - it.have + DownloadRule.spareBytes
+            items[i].note = "يحتاج \(Self.size(need)) (الباقي + 1 GB احتياط)، والمتاح \(Self.size(free))"
             save(); return
         }
         if it.resumable == nil {
-            // First piece: check from the middle of the file that the server really resumes (206 + Content-Range).
+            // First: check from the middle of the file that the server really resumes (206 + Content-Range).
             items[i].state = .downloading; items[i].note = "فحص دعم الاستكمال…"
             let id = it.id, cell = it.cellular
             probing = id
             Task {
-                let r = await Self.probe(url, cellular: cell)
-                await MainActor.run {
-                    self.probing = nil
-                    guard let j = self.index(id) else { self.startNext(); return }
-                    switch r {
-                    case .resumable(let total):
-                        self.items[j].resumable = true; self.items[j].total = self.items[j].total ?? total; self.items[j].note = nil
-                        Perf.shared.add("تنزيل: فحص الاستكمال", ms: 0, "206 · Content-Range صحيح · \(total / 1_048_576) MB")
-                    case .notResumable(let why):
-                        self.items[j].resumable = false
-                        self.items[j].note = "المزوّد لا يدعم الإكمال من نفس المكان (\(why)) — أي انقطاع يعيد التحميل من البداية"
-                        Perf.shared.add("تنزيل: فحص الاستكمال", ms: 0, why)
-                    }
-                    if self.items[j].state == .downloading { self.items[j].state = .queued }
-                    self.save(); self.startNext()
-                }
+                let r = await Downloads.probe(url, cellular: cell)
+                await MainActor.run { Downloads.shared.probed(id, r) }
             }
             save(); return
         }
         var r = URLRequest(url: url)
         r.setValue("bytes=\(it.have)-", forHTTPHeaderField: "Range")
         r.allowsCellularAccess = it.cellular
-        let t = session.downloadTask(with: r)
-        t.taskDescription = it.id
-        current = (it.id, t)
-        it.state = .downloading; it.note = nil
+        it.state = .downloading
+        if active {
+            // App open: bytes are written as they arrive (nothing lost on any stop).
+            let t = fg.start(id: it.id, have: it.have, total: it.total, request: r)
+            current = (it.id, .fg(t)); it.note = nil
+        } else {
+            let t = session.downloadTask(with: r)
+            t.taskDescription = it.id
+            current = (it.id, .bg(t)); it.note = "يكمل في الخلفية (iOS)"
+            t.resume()
+        }
         items[i] = it
         save()
-        t.resume()
     }
 
-    /// Stops the piece of this item (keeping what URLSession received, when it can be recovered).
-    private func stopCurrent(if id: String) {
-        guard let c = current, c.id == id else { return }
+    private func probed(_ id: String, _ r: DownloadRule.Probe) {
+        probing = nil
+        guard let j = index(id) else { startNext(); return }
+        switch r {
+        case .resumable(let total):
+            items[j].resumable = true; items[j].total = items[j].total ?? total; items[j].note = nil
+            Perf.shared.add("تنزيل: فحص الاستكمال", ms: 0, "206 · Content-Range صحيح من وسط الملف · \(total / 1_048_576) MB")
+        case .notResumable(let why):
+            items[j].resumable = false
+            items[j].note = "المزوّد لا يدعم الإكمال من نفس المكان (\(why)) — أي انقطاع يعيد التحميل من البداية"
+            Perf.shared.add("تنزيل: فحص الاستكمال", ms: 0, why)
+        }
+        if items[j].state == .downloading { items[j].state = .queued }
+        save(); startNext()
+    }
+
+    /// Stops the request of this item. An open request's bytes are already in the file; a background download's
+    /// bytes are added only if iOS hands them back.
+    private func stopCurrent(if id: String, then: (() -> Void)? = nil) {
+        guard let c = current, c.id == id else { then?(); return }
         current = nil
-        let task = c.task
-        stopping.insert(task.taskIdentifier)
-        let response = task.response as? HTTPURLResponse
-        task.cancel(byProducingResumeData: { data in
-            Task { @MainActor in
-                self.salvage(id: id, resumeData: data, response: response)
-                self.startNext()
-            }
-        })
+        switch c.run {
+        case .fg(let t):
+            stopping.insert(t.taskIdentifier)
+            if let then { afterStop[t.taskIdentifier] = then }
+            t.cancel()
+        case .bg(let task):
+            stopping.insert(task.taskIdentifier)
+            let response = task.response as? HTTPURLResponse
+            let gotten = task.countOfBytesReceived
+            task.cancel(byProducingResumeData: { data in
+                Task { @MainActor in
+                    Downloads.shared.salvage(id: id, resumeData: data, response: response, received: gotten)
+                    then?()
+                    Downloads.shared.startNext()
+                }
+            })
+        }
     }
 
-    /// Adds the bytes an interrupted piece received (from URLSession's kept temporary file) — only after checking
-    /// that the answer started exactly at the kept size. Otherwise nothing is added and the loss is logged.
-    private func salvage(id: String, resumeData: Data?, response: HTTPURLResponse?) {
+    /// An open request ended (stopped, failed, or finished). The file already holds its bytes.
+    private func fgDone(id: String, taskId: Int, reply: DownloadRule.Reply?, error: Error?) {
+        let ours = stopping.remove(taskId) != nil
+        if let c = current, c.id == id, case .fg(let t) = c.run, t.taskIdentifier == taskId { current = nil }
+        liveHave[id] = nil
+        let then = afterStop.removeValue(forKey: taskId)
+        defer { then?() }
+        guard let i = index(id) else { startNext(); return }
+        items[i].have = fileSize(Self.partURL(id))
+        switch reply {
+        case .append(let t)?: items[i].total = t
+        case .restart(let t, let ignored)?:
+            items[i].total = t
+            if ignored {
+                items[i].resumable = false
+                items[i].note = "المزوّد تجاهل طلب الإكمال وأرسل الملف من البداية — حُفظ بدون تكرار"
+            }
+        case .stop(let s)?:
+            stopped(i, s); save(); startNext(); return
+        default: break
+        }
+        if finishIfComplete(i) { save(); startNext(); return }
+        if ours {
+            Perf.shared.add("تنزيل: إيقاف — المحفوظ في الملف", ms: 0, "\(items[i].have / 1_048_576) MB")
+        } else if let e = error as NSError? {
+            // Network error / airplane mode: nothing is lost; it goes on when the connection is back.
+            items[i].state = .queued
+            items[i].note = "انقطع الاتصال (\(e.code)) — المحفوظ \(Self.size(items[i].have))، يكمل لما يرجع الاتصال"
+            Perf.shared.add("تنزيل: انقطع — المحفوظ في الملف", ms: 0, "\(items[i].have / 1_048_576) MB")
+            save()
+            if online { DispatchQueue.main.asyncAfter(deadline: .now() + 5) { Downloads.shared.startNext() } }
+            return
+        } else if items[i].state == .downloading {
+            items[i].state = .queued              // ended early: go on from here
+        }
+        save(); startNext()
+    }
+
+    private func stopped(_ i: Int, _ s: DownloadRule.Stop) {
+        items[i].state = .failed
+        switch s {
+        case .changed: items[i].note = "الملف تغيّر عند المزوّد — احذفه ونزّله من جديد"
+        case .wrongStart: items[i].note = "المزوّد ردّ بجزء من موضع مختلف — لم يُضف شيء"
+        case .http(let c): items[i].note = c == 401 || c == 403 ? "المزوّد رفض الطلب (\(c)) — قد يكون الحساب مستخدمًا الآن" : "المزوّد ردّ \(c)"
+        case .noTotal: items[i].note = "حجم الملف غير معروف"
+        }
+    }
+
+    private func finishIfComplete(_ i: Int) -> Bool {
+        guard DownloadRule.isComplete(have: items[i].have, total: items[i].total) else { return false }
+        let id = items[i].id
+        do {
+            try? FileManager.default.removeItem(at: doneURL(id))
+            try FileManager.default.moveItem(at: Self.partURL(id), to: doneURL(id))
+            items[i].state = .done; items[i].note = nil
+            Perf.shared.add("تنزيل: اكتمل وتحقق الحجم", ms: 0, "\(items[i].have) بايت = الحجم المعلن")
+            notify("اكتمل التحميل", items[i].title)
+        } catch {
+            items[i].state = .failed; items[i].note = "تعذّر حفظ الملف"
+        }
+        return true
+    }
+
+    /// Adds the bytes a stopped background download received, when iOS hands them back (resume data + its
+    /// temporary file) — only after checking the answer started exactly at the kept size.
+    private func salvage(id: String, resumeData: Data?, response: HTTPURLResponse?, received: Int64) {
         guard let i = index(id) else { return }
         liveHave[id] = nil
         guard let data = resumeData, let info = DownloadRule.resumeInfo(data), let resp = response,
               let tmp = Self.findTemp(info.file) else {
-            if resumeData != nil { Perf.shared.add("تنزيل: انقطع — لم يُسترجع الجزء الأخير", ms: 0, "") }
-            return
+            if received > 0 {
+                items[i].note = "ما نزل في الخلفية (\(Self.size(received))) لم يُسترجع وسيُعاد — المحفوظ \(Self.size(items[i].have))"
+                Perf.shared.add("تنزيل: إيقاف تنزيل الخلفية — لم يُسترجع", ms: 0,
+                                "\(received / 1_048_576) MB · resumeData=\(resumeData == nil ? "لا" : "نعم")")
+            }
+            save(); return
         }
         defer { try? FileManager.default.removeItem(at: tmp) }
         let it = items[i]
         let reply = DownloadRule.reply(status: resp.statusCode, contentRange: resp.value(forHTTPHeaderField: "Content-Range"),
                                        contentLength: resp.expectedContentLength > 0 ? resp.expectedContentLength : nil,
                                        have: it.have, knownTotal: it.total)
-        let fromZero: Bool
+        let base: Int64
         switch reply {
-        case .append(let t): items[i].total = t; fromZero = false
-        case .restart(let t, _): items[i].total = t; fromZero = true
-        default: Perf.shared.add("تنزيل: انقطع — الجزء الأخير لم يطابق", ms: 0, ""); return
+        case .append(let t): items[i].total = t; base = it.have
+        case .restart(let t, _): items[i].total = t; base = 0
+        default: Perf.shared.add("تنزيل: الجزء المسترجع لم يطابق", ms: 0, ""); return
         }
-        let base = fromZero ? 0 : it.have
         let n = DownloadRule.salvage(received: min(info.bytes, fileSize(tmp)), have: base, total: items[i].total)
-        guard n > 0 else { return }
-        if append(from: tmp, count: n, to: partURL(id), truncateTo: base) {
+        if n > 0, Self.append(from: tmp, count: n, to: Self.partURL(id), truncateTo: base) {
             items[i].have = base + n
-            Perf.shared.add("تنزيل: انقطع — حُفظ ما وصل", ms: 0, "\(n / 1_048_576) MB · المجموع \(items[i].have / 1_048_576) MB")
+            Perf.shared.add("تنزيل: استُرجع ما نزل في الخلفية", ms: 0, "\(n / 1_048_576) MB")
         }
         save()
     }
 
     /// Writes the first `count` bytes of `src` after the first `truncateTo` bytes of `dst` (the rest of dst is cut).
-    private func append(from src: URL, count: Int64, to dst: URL, truncateTo: Int64) -> Bool {
+    nonisolated static func append(from src: URL, count: Int64, to dst: URL, truncateTo: Int64) -> Bool {
         if !FileManager.default.fileExists(atPath: dst.path) { FileManager.default.createFile(atPath: dst.path, contents: nil) }
         guard let r = try? FileHandle(forReadingFrom: src), let w = try? FileHandle(forWritingTo: dst) else { return false }
         defer { try? r.close(); try? w.close() }
@@ -366,10 +493,10 @@ final class Downloads: NSObject, ObservableObject {
         } catch { return false }
     }
 
-    /// A finished piece (moved out of URLSession's folder before this runs).
-    private func pieceDone(id: String, file: URL, status: Int, contentRange: String?, length: Int64?) {
+    /// A background download finished (moved out of URLSession's folder before this runs).
+    private func bgDone(id: String, file: URL, status: Int, contentRange: String?, length: Int64?) {
         defer { try? FileManager.default.removeItem(at: file) }
-        if current?.id == id { current = nil }
+        if let c = current, c.id == id, case .bg = c.run { current = nil }
         liveHave[id] = nil
         guard let i = index(id) else { startNext(); return }
         let it = items[i]
@@ -378,58 +505,29 @@ final class Downloads: NSObject, ObservableObject {
         case .append(let t):
             items[i].total = t
             let n = DownloadRule.salvage(received: size, have: it.have, total: t)
-            if append(from: file, count: n, to: partURL(id), truncateTo: it.have) { items[i].have = it.have + n }
+            if Self.append(from: file, count: n, to: Self.partURL(id), truncateTo: it.have) { items[i].have = it.have + n }
         case .restart(let t, let ignored):
             items[i].total = t
-            if append(from: file, count: DownloadRule.salvage(received: size, have: 0, total: t), to: partURL(id), truncateTo: 0) {
+            if Self.append(from: file, count: DownloadRule.salvage(received: size, have: 0, total: t), to: Self.partURL(id), truncateTo: 0) {
                 items[i].have = min(size, t ?? size)
             }
-            if ignored {
-                items[i].resumable = false
-                items[i].note = "المزوّد تجاهل طلب الإكمال وأرسل الملف من البداية — حُفظ بدون تكرار"
-            }
-        case .complete:
-            break
-        case .stop(let s):
-            items[i].state = .failed
-            switch s {
-            case .changed: items[i].note = "الملف تغيّر عند المزوّد — احذفه ونزّله من جديد"
-            case .wrongStart: items[i].note = "المزوّد ردّ بجزء من موضع مختلف — لم يُضف شيء"
-            case .http(let c): items[i].note = c == 401 || c == 403 ? "المزوّد رفض الطلب (\(c)) — قد يكون الحساب مستخدمًا الآن" : "المزوّد ردّ \(c)"
-            case .noTotal: items[i].note = "حجم الملف غير معروف"
-            }
-            save(); startNext(); return
+            if ignored { items[i].resumable = false; items[i].note = "المزوّد تجاهل طلب الإكمال وأرسل الملف من البداية — حُفظ بدون تكرار" }
+        case .complete: break
+        case .stop(let s): stopped(i, s); save(); startNext(); return
         }
-        if DownloadRule.isComplete(have: items[i].have, total: items[i].total) {
-            do {
-                try? FileManager.default.removeItem(at: doneURL(id))
-                try FileManager.default.moveItem(at: partURL(id), to: doneURL(id))
-                items[i].state = .done; items[i].note = nil
-                Perf.shared.add("تنزيل: اكتمل وتحقق الحجم", ms: 0, "\(items[i].have / 1_048_576) MB")
-                notify("اكتمل التحميل", items[i].title)
-            } catch {
-                items[i].state = .failed; items[i].note = "تعذّر حفظ الملف"
-            }
-        } else if items[i].state == .downloading {
-            items[i].state = .queued              // the piece ended early: the next one goes on from here
-        }
+        if !finishIfComplete(i), items[i].state == .downloading { items[i].state = .queued; items[i].note = nil }
         save(); startNext()
     }
 
-    private func pieceFailed(id: String, taskId: Int, error: Error, response: HTTPURLResponse?) {
+    private func bgFailed(id: String, taskId: Int, error: Error, response: HTTPURLResponse?, received: Int64) {
         if stopping.remove(taskId) != nil { return }    // stopped by this app (pause / playback / Wi‑Fi)
-        if current?.id == id { current = nil }
+        if let c = current, c.id == id, case .bg = c.run { current = nil }
         let ns = error as NSError
-        let data = ns.userInfo[NSURLSessionDownloadTaskResumeData] as? Data
-        salvage(id: id, resumeData: data, response: response)
+        salvage(id: id, resumeData: ns.userInfo[NSURLSessionDownloadTaskResumeData] as? Data, response: response, received: received)
         if let i = index(id) {
-            if ns.domain == NSURLErrorDomain && ns.code == NSURLErrorCancelled {
-                // iOS cancelled it (app swiped away / relaunched): the kept bytes stay; it goes on when possible.
-                items[i].state = .queued
-            } else {
-                items[i].state = .paused
-                items[i].note = "انقطع التحميل (\(ns.code)) — اضغط استكمال"
-            }
+            // Swiped away / network error: the kept bytes stay; it goes on when possible.
+            items[i].state = .queued
+            if items[i].note == nil { items[i].note = "توقف تنزيل الخلفية (\(ns.code)) — يكمل من المحفوظ" }
         }
         save(); startNext()
     }
@@ -513,9 +611,15 @@ final class Downloads: NSObject, ObservableObject {
 
     // MARK: Helpers
 
+    /// Sizes for the screen: "0 KB" instead of "Zero KB".
+    nonisolated static func size(_ n: Int64) -> String {
+        let f = ByteCountFormatter(); f.countStyle = .file; f.allowsNonnumericFormatting = false
+        return f.string(fromByteCount: max(0, n))
+    }
+
     nonisolated static func sha(_ s: String) -> String { SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined() }
 
-    /// URLSession's temporary file of an interrupted piece: in tmp or in the background daemon's folder of this app.
+    /// URLSession's temporary file of a stopped background download: in tmp or in the background daemon's folder.
     nonisolated static func findTemp(_ name: String) -> URL? {
         let fm = FileManager.default
         var roots = [fm.temporaryDirectory]
@@ -536,19 +640,100 @@ final class Downloads: NSObject, ObservableObject {
         }
         return nil
     }
-
-    var anyActive: Bool { items.contains { $0.state != .done && $0.state != .failed && $0.state != .paused } }
 }
 
-// MARK: URLSession (callbacks come on a background queue)
+/// 1.8.1: the open request used while the app is on screen. Its bytes go to the file as they arrive, after the
+/// answer was checked (206 at exactly the kept size, or 200 = the whole file from byte 0). One at a time; all of its
+/// state lives on its own serial queue.
+final class FgLoader: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    var onProgress: (String, Int64) -> Void = { _, _ in }
+    var onDone: (String, Int, DownloadRule.Reply?, Error?) -> Void = { _, _, _, _ in }
+
+    private struct Job { let id: String; let have: Int64; let total: Int64? }
+    private var jobs: [Int: Job] = [:]
+    private var handle: FileHandle?
+    private var base: Int64 = 0
+    private var written: Int64 = 0
+    private var limit: Int64?
+    private var reply: DownloadRule.Reply?
+    private var lastReport = Date.distantPast
+    private let queue: OperationQueue = { let q = OperationQueue(); q.maxConcurrentOperationCount = 1; return q }()
+    private lazy var session: URLSession = {
+        let c = URLSessionConfiguration.default
+        c.httpMaximumConnectionsPerHost = 1
+        c.timeoutIntervalForRequest = 30
+        c.allowsCellularAccess = true
+        return URLSession(configuration: c, delegate: self, delegateQueue: queue)
+    }()
+
+    func start(id: String, have: Int64, total: Int64?, request: URLRequest) -> URLSessionDataTask {
+        let t = session.dataTask(with: request)
+        let job = Job(id: id, have: have, total: total)
+        queue.addOperation {
+            self.jobs[t.taskIdentifier] = job
+            t.resume()
+        }
+        return t
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        guard let job = jobs[dataTask.taskIdentifier], let h = response as? HTTPURLResponse else { completionHandler(.cancel); return }
+        let r = DownloadRule.reply(status: h.statusCode, contentRange: h.value(forHTTPHeaderField: "Content-Range"),
+                                   contentLength: h.expectedContentLength > 0 ? h.expectedContentLength : nil,
+                                   have: job.have, knownTotal: job.total)
+        reply = r; written = 0; handle = nil
+        let file = Downloads.partURL(job.id)
+        switch r {
+        case .append(let t): base = job.have; limit = t
+        case .restart(let t, _): base = 0; limit = t
+        case .complete, .stop: completionHandler(.cancel); return
+        }
+        if !FileManager.default.fileExists(atPath: file.path) { FileManager.default.createFile(atPath: file.path, contents: nil) }
+        do {
+            let w = try FileHandle(forWritingTo: file)
+            try w.truncate(atOffset: UInt64(base))        // nothing after the kept bytes: no duplicate, no gap
+            try w.seek(toOffset: UInt64(base))
+            handle = w
+            completionHandler(.allow)
+        } catch {
+            reply = .stop(.http(0)); completionHandler(.cancel)
+        }
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        guard let w = handle, let job = jobs[dataTask.taskIdentifier] else { return }
+        var d = data
+        if let t = limit {
+            let room = t - base - written
+            if room <= 0 { return }
+            if Int64(d.count) > room { d = d.prefix(Int(room)) }
+        }
+        do { try w.write(contentsOf: d); written += Int64(d.count) } catch { dataTask.cancel(); return }
+        if Date().timeIntervalSince(lastReport) > 0.5 {
+            lastReport = Date()
+            onProgress(job.id, base + written)
+        }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        let job = jobs.removeValue(forKey: task.taskIdentifier)
+        if let w = handle { try? w.synchronize(); try? w.close() }
+        handle = nil
+        let r = reply; reply = nil
+        if let job { onDone(job.id, task.taskIdentifier, r, error) }
+    }
+}
+
+// MARK: URLSession (background downloads; callbacks come on a background queue)
 
 extension Downloads: URLSessionDownloadDelegate {
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
                                 totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         guard let id = downloadTask.taskDescription else { return }
         Task { @MainActor in
-            guard let it = self.items.first(where: { $0.id == id }) else { return }
-            self.liveHave[id] = it.have + totalBytesWritten
+            guard let it = Downloads.shared.items.first(where: { $0.id == id }) else { return }
+            Downloads.shared.liveHave[id] = it.have + totalBytesWritten
         }
     }
 
@@ -561,20 +746,21 @@ extension Downloads: URLSessionDownloadDelegate {
         let status = h?.statusCode ?? 0
         let cr = h?.value(forHTTPHeaderField: "Content-Range")
         let len = (h?.expectedContentLength ?? -1) > 0 ? h?.expectedContentLength : nil
-        Task { @MainActor in self.pieceDone(id: id, file: hold, status: status, contentRange: cr, length: len) }
+        Task { @MainActor in Downloads.shared.bgDone(id: id, file: hold, status: status, contentRange: cr, length: len) }
     }
 
     nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let error, let id = task.taskDescription else { return }
         let taskId = task.taskIdentifier
         let resp = task.response as? HTTPURLResponse
-        Task { @MainActor in self.pieceFailed(id: id, taskId: taskId, error: error, response: resp) }
+        let got = task.countOfBytesReceived
+        Task { @MainActor in Downloads.shared.bgFailed(id: id, taskId: taskId, error: error, response: resp, received: got) }
     }
 
     nonisolated func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         Task { @MainActor in
-            self.backgroundCompletion?()
-            self.backgroundCompletion = nil
+            Downloads.shared.backgroundCompletion?()
+            Downloads.shared.backgroundCompletion = nil
         }
     }
 }

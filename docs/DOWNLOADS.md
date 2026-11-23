@@ -42,3 +42,15 @@ provider's policy is known.
 5. Wi‑Fi → mobile data: alert in the app; in the background the notification with «موافق».
 6. Restart the app during a download: list and progress come back; download continues.
 7. Not enough space (large file on a nearly full phone): clear message, nothing deleted.
+
+## 1.8.1 — fix after the first device test (owner, 20:08): pause went back to 0
+- Cause: 1.8.0 kept the bytes of a stopped piece through iOS resume data. iOS makes resume data only when the server
+  sends ETag / Last-Modified (besides accepting ranges); the provider evidently doesn't → nothing to recover → 0.
+- Now, app open: a normal request with "Range: bytes=<kept>-" whose bytes are written to the .part file as they
+  arrive (FgLoader), after the answer is checked (206 at exactly the kept size, or 200 = whole file from 0; the file
+  is cut at the kept size before writing, so nothing is duplicated). Pause / playback / Wi‑Fi loss / airplane mode /
+  network error lose nothing.
+- Going to the background: that request stops (bytes kept) and the rest goes on as ONE background download; added when
+  it finishes. Stopped before finishing → what it fetched in the background is re-downloaded unless iOS hands it
+  back (logged: «إيقاف تنزيل الخلفية — لم يُسترجع … resumeData=لا/نعم»).
+- Sizes show "0 KB" (not "Zero KB"); "not enough space" says what is needed and what is free.

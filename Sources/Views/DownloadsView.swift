@@ -21,7 +21,9 @@ struct DownloadsView: View {
                 Text("""
                 • تنزيل واحد في كل مرة، ويتوقف تلقائيًا وأنت تشاهد من المزوّد، ويكمل بعدها.
                 • على Wi‑Fi فقط، إلا إذا سمحت ببيانات الجوال لتنزيل معيّن.
-                • يستمر والتطبيق في الخلفية أو الشاشة مقفلة (iOS يقرر السرعة). إذا سحبت التطبيق من مبدّل التطبيقات يوقف iOS التنزيل؛ ما وصل يبقى ويكمل لما تفتح التطبيق.
+                • والتطبيق مفتوح: كل ما يصل يُحفظ أولًا بأول — الإيقاف أو انقطاع الشبكة أو المشاهدة لا تضيّع شيئًا.
+                • في الخلفية أو الشاشة مقفلة: يكمل بتنزيل iOS (iOS يقرر السرعة) ويُضاف لما يخلص. إذا أوقفته قبل ما يخلص، قد يُعاد ما نزل في الخلفية فقط.
+                • إذا سحبت التطبيق من مبدّل التطبيقات يوقف iOS التنزيل؛ المحفوظ يبقى ويكمل لما تفتح التطبيق.
                 • الملف ما يُعتبر جاهزًا إلا إذا اكتمل حجمه كما أعلنه المزوّد.
                 """).font(.footnote).foregroundStyle(.secondary)
             }
@@ -33,7 +35,7 @@ struct DownloadsView: View {
         } message: { Text("نقطة التوقف والترجمة تبقى.") }
     }
 
-    private func mb(_ n: Int64) -> String { ByteCountFormatter.string(fromByteCount: n, countStyle: .file) }
+    private func mb(_ n: Int64) -> String { Downloads.size(n) }
 
     @ViewBuilder private func row(_ it: DownloadItem) -> some View {
         let have = dl.liveHave[it.id] ?? it.have
