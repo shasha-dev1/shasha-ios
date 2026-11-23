@@ -13,8 +13,8 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.8.6"
-    CURRENT_PROJECT_VERSION: "16"
+    MARKETING_VERSION: "1.8.7"
+    CURRENT_PROJECT_VERSION: "17"
 targets:
   ShashaIOS:
     type: application

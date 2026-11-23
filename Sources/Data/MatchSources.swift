@@ -40,8 +40,9 @@ enum MatchSourceFiles {
         }
     }
 
-    /// Checks the file, then keeps it under its source name (the same source again replaces the older file).
-    static func importFile(_ url: URL) -> Result<MatchSourcesRule.ExtSource, Failure> {
+    /// Checks the file (and the limit) before writing anything, then keeps it under its source name: the same source
+    /// again replaces the older file whole (no match twice; manual links belong to the match and stay).
+    static func importFile(_ url: URL) -> Result<(new: MatchSourcesRule.ExtSource, replaced: MatchSourcesRule.ExtSource?), Failure> {
         let ok = url.startAccessingSecurityScopedResource()
         defer { if ok { url.stopAccessingSecurityScopedResource() } }
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
@@ -52,11 +53,13 @@ enum MatchSourceFiles {
         catch let e as MatchSourcesRule.BadFile { return .failure(.bad(e.reason)) }
         catch { return .failure(.bad(error.localizedDescription)) }
         guard let d = dir else { return .failure(.io("لا مكان للحفظ")) }
-        let name = fileName(src.name)
         let existing = list()
-        if !existing.contains(where: { $0.file == name }) && existing.count >= maxFiles { return .failure(.tooMany) }
-        do { try data.write(to: d.appendingPathComponent(name), options: .atomic) } catch { return .failure(.io(error.localizedDescription)) }
-        return .success(src)
+        do { _ = try MatchSourcesRule.planImport(existing.map(\.source), src, max: maxFiles) } catch { return .failure(.tooMany) }
+        let replaced = existing.first { $0.source.name == src.name }
+        // a file of the same source under another file name (renamed source file) is replaced too
+        if let old = replaced, old.file != fileName(src.name) { remove(old.file) }
+        do { try data.write(to: d.appendingPathComponent(fileName(src.name)), options: .atomic) } catch { return .failure(.io(error.localizedDescription)) }
+        return .success((src, replaced?.source))
     }
 
     static func remove(_ file: String) {

@@ -115,7 +115,8 @@ final class MatchStore: ObservableObject {
         guard let lib = lastLibrary else { return }
         let chans = lib.channels
         let stamp = "\(lib.active?.name ?? "")#\(chans.count)#\(chans.first?.id ?? "")#\(chans.last?.id ?? "")"
-        let needIdx = libIdx == nil || stamp != libStamp
+        // the library index is needed only to match imported schedules: not built at all without one
+        let needIdx = !files.isEmpty && (libIdx == nil || stamp != libStamp)
         let libList = needIdx ? chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name) } : []
         let oldIdx = libIdx
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
@@ -123,13 +124,15 @@ final class MatchStore: ObservableObject {
         let guideSource = result != nil ? "EPG المزوّد (\(source))" : "EPG المزوّد"
         let guideAt = result?.built ?? 0
         mergeGen += 1; let gen = mergeGen
+        let t0 = Perf.now()
         Task {
             let (idx, out) = await Task.detached(priority: .userInitiated) { () -> (MatchSourcesRule.LibIndex, [MatchSourcesRule.Row]) in
-                let idx = needIdx ? MatchSourcesRule.LibIndex(libList) : oldIdx!
+                let idx = needIdx ? MatchSourcesRule.LibIndex(libList) : (srcs.isEmpty ? MatchSourcesRule.LibIndex([]) : oldIdx!)
                 return (idx, MatchSourcesRule.merge(gs, sources: srcs, idx: idx, pool: pl, manual: man, guideSource: guideSource, guideAt: guideAt, from: from, to: to))
             }.value
             guard gen == mergeGen else { return }
             if needIdx { libIdx = idx; libStamp = stamp }
+            Perf.shared.record("مباريات اليوم: الدمج", since: t0, "\(out.count) مباراة · فهرس المكتبة \(needIdx ? "بُني" : "محفوظ أو غير لازم")")
             rows = out
         }
     }
@@ -151,16 +154,30 @@ final class MatchStore: ObservableObject {
 
     func importFile(_ url: URL) {
         switch MatchSourceFiles.importFile(url) {
-        case .success(let s): status = "استُورد «\(s.name)»: \(s.matches.count) مباراة · \(s.matches.reduce(0) { $0 + $1.channels.count }) قناة"
-        case .failure(let f): status = "لم يُستورد: " + f.text
+        case .success(let r):
+            let s = r.new, cov = MatchSourcesRule.coverage(s, now: MatchIndexBuilder.ms(Date())).text(MatchIndexBuilder.fmt)
+            if let old = r.replaced {
+                status = "حُدّث «\(s.name)»: \(s.matches.count) مباراة (كانت \(old.matches.count)، بيانات \(MatchIndexBuilder.fmt(old.fetchedAt))) — الربط اليدوي باقٍ · " + cov
+            } else {
+                status = "استُورد «\(s.name)»: \(s.matches.count) مباراة · \(s.matches.reduce(0) { $0 + $1.channels.count }) قناة · " + cov
+            }
+        case .failure(let f): status = "لم يُستورد (لم يتغيّر شيء): " + f.text
         }
         files = MatchSourceFiles.list(); remerge()
     }
 
     func removeFile(_ file: String) { MatchSourceFiles.remove(file); files = MatchSourceFiles.list(); remerge() }
 
-    func setManual(_ m: MatchSourcesRule.Manual) { saveManual(MatchSourcesRule.manualSet(manual, m)) }
-    func clearManual(key: String, channelId: String) { saveManual(MatchSourcesRule.manualClear(manual, key: key, channelId: channelId)) }
+    func setManual(row: MatchSourcesRule.Row, channelId: String, name: String, add: Bool) {
+        saveManual(MatchSourcesRule.manualSetFor(manual, row: row, channelId: channelId, name: name, add: add, at: MatchIndexBuilder.ms(Date())))
+    }
+    func clearManual(row: MatchSourcesRule.Row, channelId: String) { saveManual(MatchSourcesRule.manualClearFor(manual, row: row, channelId: channelId)) }
+
+    /// Imported schedules whose coverage has ended.
+    var endedSources: [String] {
+        let now = MatchIndexBuilder.ms(Date())
+        return files.filter { MatchSourcesRule.coverage($0.source, now: now).ended }.map(\.source.name)
+    }
     private func saveManual(_ list: [MatchSourcesRule.Manual]) {
         manual = list
         if !MatchSourceFiles.saveManual(list) { status = "تعذّر حفظ الربط اليدوي" }
@@ -181,9 +198,10 @@ struct MatchesView: View {
     @State private var showFiles = false
 
     private var shown: [MatchSourcesRule.Row] {
-        let from = store.result?.from ?? MatchIndexBuilder.ms(MatchIndexBuilder.dayStart(Date()))
+        // "today" is the device's today, also while yesterday's kept index is shown after midnight
+        let from = MatchIndexBuilder.ms(MatchIndexBuilder.dayStart(Date()))
         let tomorrow = MatchIndexBuilder.ms(Calendar.current.date(byAdding: .day, value: 1, to: Date(timeIntervalSince1970: Double(from) / 1000)) ?? Date())
-        let end = store.result?.to ?? tomorrow + 86_400_000
+        let end = max(store.result?.to ?? 0, tomorrow + 86_400_000)
         return MatchSourcesRule.rowsFor(store.rows, now: MatchIndexBuilder.ms(Date()), dayStart: from, tomorrow: tomorrow, end: end,
                                         day: store.day, nowOnly: store.nowOnly, sport: store.sport)
     }
@@ -192,7 +210,11 @@ struct MatchesView: View {
         var t = "التغطية جزئية: دليل برامج المزوّد"
         if !store.files.isEmpty { t += " + \(store.files.count) جدول مستورد" }
         t += ". الأوقات بتوقيت هذا الجهاز (\(TimeZone.current.identifier))."
-        if let r = store.result { t += " آخر تحديث للدليل " + MatchIndexBuilder.fmt(r.built) + "." }
+        if let r = store.result {
+            t += " آخر تحديث للدليل " + MatchIndexBuilder.fmt(r.built) + "."
+            if r.from != MatchIndexBuilder.ms(MatchIndexBuilder.dayStart(Date())) { t += " (قائمة أمس، وتغطي اليوم، لين تجهز قائمة اليوم)" }
+        }
+        for n in store.endedSources { t += " ⚠︎ «\(n)» انتهت تغطيته: استورد تحديثًا." }
         return t
     }
 
@@ -290,7 +312,8 @@ struct MatchFilesView: View {
             ForEach(store.files, id: \.file) { it in
                 VStack(alignment: .leading, spacing: 3) {
                     Text(it.source.name)
-                    Text("\(it.source.kind.label) · البيانات بتاريخ \(MatchIndexBuilder.fmt(it.source.fetchedAt)) · \(it.source.matches.count) مباراة")
+                    Text("\(it.source.kind.label) · \(it.source.matches.count) مباراة · "
+                         + MatchSourcesRule.coverage(it.source, now: MatchIndexBuilder.ms(Date())).text(MatchIndexBuilder.fmt))
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 .swipeActions { Button(role: .destructive) { store.removeFile(it.file) } label: { Label("حذف", systemImage: "trash") } }
@@ -315,6 +338,9 @@ struct MatchRowView: View {
     @AppStorage("match.hideSd") private var hideSd = false
     @State private var showAll = false
     @State private var adding = false
+    /// "" = all. Channels of unknown country / language always stay.
+    @AppStorage("match.country") private var country = ""
+    @AppStorage("match.lang") private var lang = ""
 
     private var row: MatchSourcesRule.Row? { store.rows.first { MatchStore.key($0) == key } }
 
@@ -332,24 +358,27 @@ struct MatchRowView: View {
     }
 
     @ViewBuilder private func content(_ r: MatchSourcesRule.Row) -> some View {
-        let sec = MatchSourcesRule.sections(r, versionOf: versionOf, hideHd: hideHd && !showAll, hideSd: hideSd && !showAll)
-        let playable = sec.confirmed + sec.possible + sec.suggested
+        let sec = MatchSourcesRule.sections(r, versionOf: versionOf, hideHd: hideHd && !showAll, hideSd: hideSd && !showAll,
+                                            country: showAll || country.isEmpty ? nil : country, lang: showAll || lang.isEmpty ? nil : lang)
         List {
             Section { info(r) }
-            linkSection("مؤكدة", sec.confirmed, playable, r,
-                        footer: "مؤكدة بدليل: EPG المزوّد، أو اسم مطابق في جدول ناقل/دليل نقل، أو أضفتها يدويًا. 4K أولًا ثم 1080p.")
-            linkSection("محتملة", sec.possible, playable, r,
-                        footer: "اسم قريب أو بلد آخر أو نسخة 4K لقناة مذكورة — غير مؤكدة.")
-            linkSection("قنوات بلا دليل قد تنقلها", sec.suggested, playable, r,
+            filters(r)
+            linkSection("مؤكدة", sec.confirmed, zap: true, r,
+                        footer: "مؤكدة بدليل: EPG المزوّد، أو اسم مطابق في جدول ناقل/دليل نقل، أو أضفتها يدويًا. 4K أولًا ثم 1080p. التنقل بين القنوات داخل هذه القائمة فقط.")
+            linkSection("بدائل 4K محتملة (قد لا تكون نفس البث)", sec.alternatives, zap: false, r,
+                        footer: "جدول يذكر قناة 4K (مثل Sky Sports Ultra HDR أو TNT Sports Ultimate)؛ هذه نسخ 4K لقنوات مذكورة معها. غير مؤكدة، وتُشغَّل فقط إذا اخترتها.")
+            linkSection("محتملة", sec.possible, zap: false, r,
+                        footer: "اسم قريب أو بلد آخر — غير مؤكدة، وتُشغَّل فقط إذا اخترتها.")
+            linkSection("قنوات بلا دليل قد تنقلها", sec.suggested, zap: false, r,
                         footer: "من نفس الشبكة واسمها قريب؛ لا مصدر يؤكد أنها تعرض المباراة، ولا تُعدّ ضمن المؤكدة.")
-            if sec.hidden > 0 { Section { Button("إظهار باقي الجودات (\(sec.hidden))") { showAll = true } } }
+            if sec.hidden > 0 { Section { Button("إظهار المخفي بالجودة أو الدولة أو اللغة (\(sec.hidden))") { showAll = true } } }
             Section { Button { adding = true } label: { Label("إضافة قناة لهذه المباراة يدويًا", systemImage: "plus") } } footer: {
                 Text("الربط اليدوي يُحفظ على الجهاز ويبقى بعد إعادة التشغيل، لهذه المباراة فقط.")
             }
             if !r.removed.isEmpty {
                 Section("أزلتها من هذه المباراة") {
                     ForEach(r.removed, id: \.channelId) { m in
-                        HStack { Text(m.name).lineLimit(1); Spacer(); Button("إرجاع") { store.clearManual(key: r.key, channelId: m.channelId) } }
+                        HStack { Text(m.name).lineLimit(1); Spacer(); Button("إرجاع") { store.clearManual(row: r, channelId: m.channelId) } }
                     }
                 }
             }
@@ -394,22 +423,40 @@ struct MatchRowView: View {
         return out.joined(separator: " / ")
     }
 
-    @ViewBuilder private func linkSection(_ title: String, _ links: [MatchSourcesRule.Link], _ playable: [MatchSourcesRule.Link],
+    /// Country and commentary-language filters (all by default; unknown country / language always stay).
+    @ViewBuilder private func filters(_ r: MatchSourcesRule.Row) -> some View {
+        let o = MatchSourcesRule.filterOptions(r)
+        let cs = Array(NSOrderedSet(array: o.countries + (country.isEmpty ? [] : [country]) + [MatchSourcesRule.unknownCountry])) as? [String] ?? []
+        let ls = Array(NSOrderedSet(array: o.languages + (lang.isEmpty ? [] : [lang]) + [MatchSourcesRule.unknownLang])) as? [String] ?? []
+        Section {
+            Picker("الدولة", selection: $country) {
+                Text("كل الدول").tag("")
+                ForEach(cs, id: \.self) { Text($0).tag($0) }
+            }
+            Picker("لغة التعليق", selection: $lang) {
+                Text("كل اللغات").tag("")
+                ForEach(ls, id: \.self) { Text($0).tag($0) }
+            }
+        } footer: { Text("اختيار دولة أو لغة يُبقي القنوات مجهولة الدولة أو اللغة. اللغة من اسم القناة فقط، لا تُخمَّن.") }
+    }
+
+    @ViewBuilder private func linkSection(_ title: String, _ links: [MatchSourcesRule.Link], zap: Bool,
                                           _ r: MatchSourcesRule.Row, footer: String) -> some View {
         if !links.isEmpty {
             Section {
                 ForEach(links, id: \.channelId) { l in
-                    Button { play(playable.map(\.channelId), playable.firstIndex { $0.channelId == l.channelId } ?? 0) } label: { linkLabel(l) }
+                    // confirmed: zapping between the confirmed ones; anything else plays alone, only when chosen
+                    Button { zap ? play(links.map(\.channelId), links.firstIndex { $0.channelId == l.channelId } ?? 0) : play([l.channelId], 0) } label: { linkLabel(l) }
                         .contextMenu {
                             if l.proofs.contains(where: { $0.kind == .manual }) {
-                                Button(role: .destructive) { store.clearManual(key: r.key, channelId: l.channelId) } label: { Label("حذف الربط اليدوي", systemImage: "link.badge.plus") }
+                                Button(role: .destructive) { store.clearManual(row: r, channelId: l.channelId) } label: { Label("حذف الربط اليدوي", systemImage: "link.badge.plus") }
                             }
                             Button(role: .destructive) {
-                                store.setManual(.init(matchKey: r.key, channelId: l.channelId, name: l.name, add: false, at: MatchIndexBuilder.ms(Date())))
+                                store.setManual(row: r, channelId: l.channelId, name: l.name, add: false)
                             } label: { Label("إزالة من هذه المباراة", systemImage: "minus.circle") }
                             if !l.proofs.contains(where: { $0.kind == .manual }) {
                                 Button {
-                                    store.setManual(.init(matchKey: r.key, channelId: l.channelId, name: l.name, add: true, at: MatchIndexBuilder.ms(Date())))
+                                    store.setManual(row: r, channelId: l.channelId, name: l.name, add: true)
                                 } label: { Label("تأكيدها يدويًا", systemImage: "checkmark.circle") }
                             }
                         }
@@ -465,7 +512,7 @@ struct MatchAddChannelView: View {
             if MatchGuideRule.words(q).count < 2 { Text("اكتب حرفين على الأقل من اسم القناة (مثل sky ultra أو tnt 1).").foregroundStyle(.secondary) }
             ForEach(found, id: \.id) { ch in
                 Button {
-                    MatchStore.shared.setManual(.init(matchKey: row.key, channelId: ch.id, name: ch.name, add: true, at: MatchIndexBuilder.ms(Date())))
+                    MatchStore.shared.setManual(row: row, channelId: ch.id, name: ch.name, add: true)
                     dismiss()
                 } label: { Text(ch.name).foregroundStyle(.primary) }
             }

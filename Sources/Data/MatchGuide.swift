@@ -234,7 +234,9 @@ enum MatchIndexBuilder {
     /// The kept index of this source and day, or nil (missing, damaged, other rules, other source, another day).
     static func load(source: String, now: Date) -> Result? {
         guard let data = try? Data(contentsOf: cacheURL), let s = try? JSONDecoder().decode(Stored.self, from: data),
-              s.rules == rules, s.source == source, s.from == ms(dayStart(now)) else { return nil }
+              s.rules == rules, s.source == source,
+              // after midnight yesterday's index still covers today (it spans two days): shown, and rebuilt (isStale)
+              s.from == ms(dayStart(now)) || s.to > ms(now) else { return nil }
         let entries = s.e.map { x in
             MatchGuideRule.Entry(channel: x.c, source: x.s, start: x.a, stop: x.b, title: x.t,
                                  teams: MatchGuideRule.Teams(home: x.h, away: x.w, lead: x.l), kind: MatchGuideRule.Kind(rawValue: x.k) ?? .unknown,

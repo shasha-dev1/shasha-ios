@@ -1473,3 +1473,139 @@ final class MatchSourcesTypesTests: XCTestCase {
         XCTAssertTrue(rows.allSatisfy { !$0.timeConflict })
     }
 }
+
+/// 1.8.7: re-import, stable match identity, 4K alternatives apart, types by country, filters. Same vectors as the TV's MatchSourcesUpdateTest.
+final class MatchSourcesUpdateTests: XCTestCase {
+    typealias S = MatchSourcesRule
+    let h: Int64 = 3_600_000
+    let ko: Int64 = 1_795_550_400_000          // 2026-11-24T20:00:00Z
+    let from: Int64 = 1_795_467_600_000        // 2026-11-24 00:00 Bahrain
+    var to: Int64 { from + 2 * 86_400_000 }
+    let bahrain = TimeZone(identifier: "Asia/Bahrain")!
+    let lib: [S.LibCh] = [.init(id: "1", name: "UK: TNT SPORTS 1 ᴴᴰ"), .init(id: "2", name: "4K: TNT SPORTS 1 ᵁᴴᴰ"),
+                          .init(id: "3", name: "UK: SKY SPORTS MAIN EVENT ᴴᴰ"), .init(id: "4", name: "4K: SKY SPORTS ᵁᴴᴰ ³⁸⁴⁰ᴾ (EVENT)"),
+                          .init(id: "5", name: "UK: SKY SPORTS ULTRA HDR"), .init(id: "6", name: "AR: beIN SPORTS 1 ᴴᴰ"),
+                          .init(id: "7", name: "FR: CANAL+ HD"), .init(id: "8", name: "AR: beIN SPORTS ENGLISH 1")]
+    lazy var idx = S.LibIndex(lib)
+
+    private func iso(_ ms: Int64) -> String {
+        let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime]; return f.string(from: Date(timeIntervalSince1970: Double(ms) / 1000))
+    }
+    private func file(_ fetched: Int64, _ m: [(String, String, Int64)], channels: String = #"{"name":"TNT Sports 1","country":"GB"}"#) -> Data {
+        let ms = m.map { #"{"home":"\#($0.0)","away":"\#($0.1)","kickoff":"\#(iso($0.2))","sport":"football","channels":[\#(channels)]}"# }.joined(separator: ",")
+        return Data(#"{"format":"shasha-matches","version":1,"source":{"name":"LiveSoccerTV","kind":"guide","fetchedAt":"\#(iso(fetched))"},"matches":[\#(ms)]}"#.utf8)
+    }
+    private func rows(_ srcs: [S.ExtSource], _ manual: [S.Manual]) -> [S.Row] {
+        S.merge([], sources: srcs, idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: manual, guideSource: "EPG", guideAt: 0, from: from, to: to, tz: bahrain)
+    }
+
+    func testASecondImportReplacesTheSourceAndKeepsTheManualLinks() throws {
+        let v1 = try S.parse(file(ko - 10 * h, [("Manchester City", "Napoli", ko)]), now: 1)
+        var kept = try S.planImport([], v1)
+        let r1 = rows(kept, [])[0]
+        var manual = S.manualSetFor([], row: r1, channelId: "6", name: "AR: beIN SPORTS 1 ᴴᴰ", add: true, at: 5)
+        manual = S.manualSetFor(manual, row: r1, channelId: "1", name: "UK: TNT SPORTS 1 ᴴᴰ", add: false, at: 6)
+        manual = try JSONDecoder().decode([S.Manual].self, from: JSONEncoder().encode(manual))
+        kept = try S.planImport(kept, v1)
+        XCTAssertEqual(kept.count, 1); XCTAssertEqual(rows(kept, manual).count, 1)
+        let v2 = try S.parse(file(ko - 2 * h, [("Man City", "Napoli", ko + h / 2)]), now: 2)
+        kept = try S.planImport(kept, v2)
+        let r2s = rows(kept, manual); XCTAssertEqual(r2s.count, 1)
+        let r2 = r2s[0]
+        XCTAssertEqual(r2.kickoff, ko + h / 2)
+        XCTAssertEqual(r2.links.first { $0.channelId == "6" }?.best, .manual)
+        XCTAssertEqual(r2.removed.map(\.channelId), ["1"])
+        let v3 = try S.parse(file(ko, [("Manchester City", "Napoli", ko + 24 * h)]), now: 3)
+        let r3 = rows(try S.planImport(kept, v3), manual)[0]
+        XCTAssertNotEqual(r3.key, r1.key)
+        XCTAssertEqual(r3.links.first { $0.channelId == "6" }?.best, .manual)
+        let m4 = S.manualClearFor(manual, row: r3, channelId: "1")
+        XCTAssertEqual(m4.count, 1)
+        XCTAssertTrue(rows(try S.planImport(kept, v3), m4)[0].removed.isEmpty)
+    }
+
+    func testAManualLinkNeverSpreadsToTheTeamsOtherMatches() throws {
+        let two = try S.parse(file(ko, [("Manchester City", "Napoli", ko), ("Napoli", "Manchester City", ko + 20 * h)]), now: 1)
+        let rs = rows([two], [])
+        XCTAssertEqual(rs.count, 2)
+        let manual = S.manualSetFor([], row: rs[0], channelId: "6", name: "AR: beIN SPORTS 1 ᴴᴰ", add: true, at: 5)
+        let after = rows([two], manual)
+        XCTAssertEqual(after.filter { $0.links.contains { $0.channelId == "6" } }.count, 1)
+        XCTAssertTrue(after[0].links.contains { $0.channelId == "6" })
+    }
+
+    func testManualChoicesOfOlderVersionsFindTheirMatch() throws {
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = bahrain; f.dateFormat = "yyyy-MM-dd"
+        let legacy = S.Manual(matchKey: "derby county | wolves @" + f.string(from: Date(timeIntervalSince1970: Double(ko) / 1000)), channelId: "3",
+                              name: "UK: SKY SPORTS MAIN EVENT ᴴᴰ", add: true, at: 1)
+        let s = try S.parse(file(ko, [("Wolverhampton Wanderers", "Derby County", ko)], channels: ""), now: 1)
+        let r = S.merge([], sources: [s], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [legacy], guideSource: "EPG", guideAt: 0, from: from, to: to, tz: bahrain)
+        XCTAssertEqual(r[0].links.first?.best, .manual)
+        // a pre-1.8.7 file (no "ko") still decodes
+        XCTAssertNotNil(try? JSONDecoder().decode([S.Manual].self, from: Data(#"[{"matchKey":"a | b @2026-11-24","channelId":"1","name":"x","add":true,"at":1}]"#.utf8)))
+    }
+
+    func testBadFilesAndASeventhSourceChangeNothing() throws {
+        let ok = try S.parse(file(ko, [("A", "B", ko)]), now: 1)
+        let kept = [ok]
+        let good = String(decoding: file(ko, [("A", "B", ko)]), as: UTF8.self)
+        for (bad, why) in [("{broken", "JSON"), (#"{"format":"shasha-matches","version":2,"matches":[]}"#, "الإصدار"),
+                           (good.replacingOccurrences(of: #""kickoff":""#, with: #""kickoff":"x"#), "ISO"),
+                           (String(decoding: file(ko, [("A", "B", ko)], channels: #"{"name":"X","type":"tvchannel"}"#), as: UTF8.self), "النوع")] {
+            XCTAssertThrowsError(try S.planImport(kept, try S.parse(Data(bad.utf8), now: 2))) { e in
+                XCTAssertTrue((e as? S.BadFile)?.reason.contains(why) == true, bad)
+            }
+        }
+        XCTAssertEqual(kept.count, 1)
+        let six = (1...6).map { S.ExtSource(name: "S\($0)", kind: ok.kind, url: nil, fetchedAt: ok.fetchedAt, importedAt: 0, matches: ok.matches) }
+        XCTAssertThrowsError(try S.planImport(six, ok))
+        XCTAssertEqual(try S.planImport(six, S.ExtSource(name: "S3", kind: ok.kind, url: nil, fetchedAt: 0, importedAt: 0, matches: [])).count, 6)
+    }
+
+    func testAFileNeverAddsChannelsOutsideTheLibrary() throws {
+        let s = try S.parse(file(ko, [("A", "B", ko)], channels: #"{"name":"Evil Sports 1","url":"http://x/live.m3u8","stream":"http://y"},{"name":"TNT Sports 1","country":"GB","url":"http://z"}"#), now: 1)
+        let r = rows([s], [])[0]
+        XCTAssertTrue(r.links.allSatisfy { l in lib.contains { $0.id == l.channelId } })
+        XCTAssertEqual(r.missing.map(\.0), ["Evil Sports 1"])
+    }
+
+    func testA4kAlternativeIsKeptApartFromTheNamedChannel() throws {
+        let s = try S.parse(file(ko, [("Wolves", "Derby County", ko)],
+                                 channels: #"{"name":"Sky Sports Main Event","country":"GB"},{"name":"Sky Sports Ultra HDR","country":"GB"}"#), now: 1)
+        let r = rows([s], [])[0]
+        let sec = S.sections(r, versionOf: { MatchGuideRule.version($0) }, hideHd: false, hideSd: false)
+        XCTAssertEqual(Set(sec.confirmed.map(\.channelId)), ["3", "5"])
+        XCTAssertEqual(sec.alternatives.map(\.channelId), ["4"])
+        XCTAssertFalse(sec.possible.contains { $0.channelId == "4" })
+        XCTAssertEqual(r.links.first { $0.channelId == "4" }?.confirmed, false)
+    }
+
+    func testPlatformLikeNamesAreChannelsOnlyWhenTheLibraryOrTheFileSaysSo() {
+        func t(_ n: String, _ c: String?, _ type: S.ChType? = nil) -> S.ChType { S.typeOf(S.ExtChannel(name: n, country: c, programmeStart: nil, type: type), idx) }
+        XCTAssertEqual(t("Canal+", "France"), .channel)
+        XCTAssertEqual(t("Canal+", "Poland"), .network)
+        XCTAssertEqual(t("Canal+", nil), .network)
+        XCTAssertEqual(t("DAZN Germany", "Germany"), .platform)
+        XCTAssertEqual(t("TNT Sports 1", "GB", .platform), .platform)
+        XCTAssertEqual(t("DAZN", "Spain", .channel), .channel)
+    }
+
+    func testCountryAndLanguageFiltersNeverDropUnknownOnes() throws {
+        let s = try S.parse(file(ko, [("A", "B", ko)], channels: #"{"name":"TNT Sports 1","country":"GB"},{"name":"beIN Sports English 1","country":"Bahrain"},{"name":"beIN Sports 1","country":"Bahrain"}"#), now: 1)
+        let r = rows([s], [])[0]
+        let o = S.filterOptions(r)
+        XCTAssertTrue(o.countries.contains("بريطانيا")); XCTAssertTrue(o.languages.contains("إنجليزي")); XCTAssertTrue(o.languages.contains(S.unknownLang))
+        let v: (String) -> MatchGuideRule.Version = { MatchGuideRule.version($0) }
+        XCTAssertEqual(Set(S.sections(r, versionOf: v, hideHd: false, hideSd: false, lang: "إنجليزي").confirmed.map(\.channelId)), ["1", "6", "8"])
+        XCTAssertEqual(Set(S.sections(r, versionOf: v, hideHd: false, hideSd: false, lang: S.unknownLang).confirmed.map(\.channelId)), ["1", "6"])
+        XCTAssertEqual(Set(S.sections(r, versionOf: v, hideHd: false, hideSd: false, country: "بريطانيا").confirmed.map(\.channelId)), ["1"])
+    }
+
+    func testCoverageSaysWhenASourceHasEnded() throws {
+        let s = try S.parse(file(ko - 10 * h, [("A", "B", ko)]), now: 1)
+        XCTAssertFalse(S.coverage(s, now: ko).ended)
+        XCTAssertTrue(S.coverage(s, now: ko + 4 * h).ended)
+        XCTAssertTrue(S.coverage(s, now: ko + 30 * h).old)
+        XCTAssertTrue(S.coverage(s, now: ko + 4 * h).text { _ in "t" }.contains("انتهت"))
+    }
+}
