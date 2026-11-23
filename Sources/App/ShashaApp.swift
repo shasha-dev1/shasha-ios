@@ -13,6 +13,7 @@ enum Theme {
 
 @main
 struct ShashaApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate   // 1.8.0: background downloads
     @StateObject private var library = Library()
     @StateObject private var epg = EPG()
 
@@ -61,6 +62,7 @@ struct RootView: View {
             if let item = play {
                 PlayerScreen(item: item, close: {
                     Perf.shared.untilNextFrame("رجوع من المشغّل"); minimized = false; play = nil
+                    Downloads.shared.playing(network: nil)    // 1.8.0: a paused download goes on
                     Task { try? await Task.sleep(nanoseconds: 1_500_000_000); await CloudSync.sync(library, force: true) }
                 }, minimized: $minimized)
                     .id(item.id)
@@ -95,6 +97,7 @@ struct RootView: View {
             Task { if CloudSync.pendingCount(library) > 0 { await CloudSync.sync(library, force: true) } }
         }
         .onAppear { NetworkWatch.shared.start() }
+        .modifier(CellularAsk())
     }
 
     @ViewBuilder private var content: some View {

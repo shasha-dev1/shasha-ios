@@ -235,6 +235,10 @@ struct MovieDetail: View {
                     .frame(maxWidth: .infinity).padding(.vertical, 8)
                 }
                 .buttonStyle(.borderedProminent).padding(.horizontal)
+                // 1.8.0: download for watching offline.
+                DownloadButton(key: key, kind: "movie", streamId: movie.id, ext: movie.ext, title: movie.name,
+                               queryName: SubQuery.clean(movie.name).name, traktName: movie.name)
+                    .buttonStyle(.bordered).padding(.horizontal)
                 if let t = info.trailerURL {
                     Button { openURL(t) } label: { Label("الإعلان", systemImage: "play.rectangle").frame(maxWidth: .infinity).padding(.vertical, 4) }
                         .buttonStyle(.bordered).padding(.horizontal)
@@ -489,12 +493,21 @@ struct SeriesDetail: View {
                 let shown = episodes.filter { $0.season == season }
                 LazyVStack(spacing: 14) {
                     ForEach(shown) { e in
-                        Button { open(e) } label: {
-                            EpisodeRow(episode: e, showName: show.name, progress: progress(key(e)), current: e.id == current,
-                                       watched: Store.position(key(e)) == nil && recent.contains(key(e)),
-                                       tmdb: tmdbEps[e.number], translated: epTranslated)
+                        HStack(spacing: 6) {
+                            Button { open(e) } label: {
+                                EpisodeRow(episode: e, showName: show.name, progress: progress(key(e)), current: e.id == current,
+                                           watched: Store.position(key(e)) == nil && recent.contains(key(e)),
+                                           tmdb: tmdbEps[e.number], translated: epTranslated)
+                            }
+                            .buttonStyle(.plain)
+                            // 1.8.0: download this episode for watching offline.
+                            DownloadButton(key: key(e), kind: "ep", streamId: e.id, ext: e.ext,
+                                           title: "\(show.name) · م\(e.season) ح\(e.number)",
+                                           queryName: SubQuery.clean(show.name).name, season: e.season, number: e.number,
+                                           traktName: show.name, compact: true)
+                                .buttonStyle(.plain).foregroundStyle(Theme.accent)
                         }
-                        .buttonStyle(.plain).padding(.horizontal)
+                        .padding(.horizontal)
                     }
                 }
                 .modifier(TranslateBatch(texts: seasonTexts(shown), result: $epTranslated))
