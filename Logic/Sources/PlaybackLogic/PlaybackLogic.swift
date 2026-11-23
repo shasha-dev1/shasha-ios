@@ -1094,6 +1094,52 @@ enum MatchGuideRule {
         return Set(st.filter { $0.value.n >= 3 && $0.value.named > 0 && $0.value.other * 10 >= $0.value.named * 3 }.keys)
     }
 
+    /// The channel's own words after the provider prefix, without the version.
+    static func bodyWords(_ name: String) -> Set<String> {
+        let folded = foldName(name)
+        let b = leadPrefix(name) != nil ? body(folded) : folded
+        return Set(channelKey(b).split(separator: " ").map(String.init))
+    }
+    private static let channelNoise: Set<String> = ["sport", "sports", "spor", "tv", "channel", "the", "+", "plus", "uk", "ar", "en", "english"]
+
+    /// The words that tell a channel apart inside its network ("event", "1", "f1").
+    static func ownWords(_ name: String, net: String? = nil) -> Set<String> {
+        let n = net ?? network(name)
+        return bodyWords(name).subtracting(channelNoise).subtracting(words(n).split(separator: " ").map(String.init))
+    }
+
+    /// A sports channel WITHOUT a guide that may carry a card (shown apart, unconfirmed): same network, and its own
+    /// words all inside a carrying channel's name ("SKY SPORTS UHD (EVENT)" ↔ "SKY SPORTS MAIN EVENT ᴴᴰ"). Same as the TV.
+    static func mayCarry(_ unguided: String, _ guided: String) -> Bool {
+        let net = network(unguided)
+        guard net != "أخرى", net == network(guided) else { return false }
+        let own = ownWords(unguided, net: net)
+        return !own.isEmpty && own.isSubset(of: bodyWords(guided))
+    }
+
+    /// Channels without a guide, read once.
+    final class ExtraPool {
+        struct Item: Hashable { let id: String; let name: String; let source: String }
+        private var byNet: [String: [(Item, Set<String>)]] = [:]
+        init(_ pool: [Item]) {
+            for t in pool {
+                let net = MatchGuideRule.network(t.name)
+                guard net != "أخرى" else { continue }
+                let own = MatchGuideRule.ownWords(t.name, net: net)
+                if !own.isEmpty { byNet[net, default: []].append((t, own)) }
+            }
+        }
+        func forNames(_ guided: [String]) -> [Item] {
+            var out: [Item] = []; var seen = Set<Item>()
+            for g in guided {
+                guard let list = byNet[MatchGuideRule.network(g)] else { continue }
+                let bw = MatchGuideRule.bodyWords(g)
+                for (t, own) in list where own.isSubset(of: bw) && !seen.contains(t) { seen.insert(t); out.append(t) }
+            }
+            return out
+        }
+    }
+
     private static let versionTokens: Set<String> = ["hd", "fhd", "uhd", "sd", "lq", "4k", "8k", "hevc", "h265", "x265", "raw", "1080p", "720p",
         "1080", "720", "2160p", "2160", "3840p", "3840", "fullhd", "50fps", "60fps", "hdr", "hdr10", "dv", "backup", "multi", "low", "high"]
 
@@ -1145,7 +1191,7 @@ enum MatchGuideRule {
     static func teams(_ title: String) -> Teams? {
         var s = trim(title)
         for _ in 0..<3 { if let r = s.range(of: leadPattern, options: [.regularExpression, .caseInsensitive]) { s.removeSubrange(r) } }
-        let parts = s.split(whereSeparator: { $0 == ":" || $0 == "：" }, omittingEmptySubsequences: false).map(String.init)
+        let parts = s.split(omittingEmptySubsequences: false, whereSeparator: { $0 == ":" || $0 == "：" }).map(String.init)
         guard let seg = parts.last(where: { p in separators.contains { p.range(of: $0, options: .caseInsensitive) != nil } }) else { return nil }
         s = trim(seg)
         guard let sep = separators.first(where: { s.range(of: $0, options: .caseInsensitive) != nil }),
@@ -1367,6 +1413,27 @@ enum MatchGuideRule {
         func airingAt(_ now: Int64) -> Bool { entries.contains { $0.start <= now && now < $0.stop } }
     }
 
+    private static let compNoise: Set<String> = ["english", "spanish", "french", "italian", "german", "portuguese", "dutch", "turkish", "saudi", "the",
+        "week", "md", "round", "j", "matchday", "live", "season"]
+
+    /** Two named competitions are the same unless their words disagree (one's words inside the other's = same). */
+    static func sameCompetition(_ a: String?, _ b: String?) -> Bool {
+        guard let a, let b else { return true }
+        func w(_ x: String) -> Set<String> {
+            Set(x.split(whereSeparator: { $0 == " " || $0 == "#" }).map(String.init).filter { !compNoise.contains($0) && !$0.allSatisfy(\.isNumber) })
+        }
+        let wa = w(a), wb = w(b)
+        return wa.isEmpty || wb.isEmpty || wa.isSubset(of: wb) || wb.isSubset(of: wa)
+    }
+
+    /// Same airing as the card's first entry: starts within the window, or overlaps at least half of the shorter one.
+    private static func sameTime(_ e: Entry, _ anchor: Entry, _ windowMs: Int64) -> Bool {
+        if abs(e.start - anchor.start) <= windowMs { return true }
+        let overlap = min(e.stop, anchor.stop) - max(e.start, anchor.start)
+        let shorter = min(e.stop - e.start, anchor.stop - anchor.start)
+        return shorter > 0 && overlap * 2 >= shorter
+    }
+
     private static func sportsAgree(_ a: SportGuess, _ b: SportGuess) -> Bool {
         a.sport == .unknown || b.sport == .unknown || (a.sport == b.sport && a.name == b.name)
     }
@@ -1388,9 +1455,7 @@ enum MatchGuideRule {
             var open: [[Entry]] = []
             for e in buckets[key]!.sorted(by: { $0.start < $1.start }) {
                 if let i = open.firstIndex(where: { g in
-                    let comps = Set(g.compactMap(\.competition))
-                    return abs(e.start - g[0].start) <= windowMs && (e.competition == nil || comps.isEmpty || comps.contains(e.competition!))
-                        && g.allSatisfy { sportsAgree($0.sport, e.sport) }
+                    sameTime(e, g[0], windowMs) && g.allSatisfy { sameCompetition($0.competition, e.competition) && sportsAgree($0.sport, e.sport) }
                 }) { open[i].append(e) } else { open.append([e]) }
             }
             for g in open { out.append(Group(key: key, home: g[0].teams.home, away: g[0].teams.away, start: g[0].start, entries: g)) }
@@ -1446,6 +1511,18 @@ enum MatchScreenRule {
         }
         let shown = rows.filter { r in !(hideHd && r.version.res == .hd) && !(hideSd && r.version.res == .sd) }
         return (shown, rows.count - shown.count)
+    }
+
+    struct Extra: Equatable { let id: String; let name: String; let source: String; let version: MatchGuideRule.Version }
+
+    /// Channels without a guide that may carry the card, best quality first; the same quality filter applies.
+    static func extras(_ g: MatchGuideRule.Group, pool: MatchGuideRule.ExtraPool, versionOf: (String, String) -> MatchGuideRule.Version,
+                       hideHd: Bool, hideSd: Bool) -> [Extra] {
+        var names: [String] = []
+        for e in g.entries where !names.contains(e.channel) { names.append(e.channel) }
+        return pool.forNames(names).map { Extra(id: $0.id, name: $0.name, source: $0.source, version: versionOf($0.name, $0.source)) }
+            .filter { !(hideHd && $0.version.res == .hd) && !(hideSd && $0.version.res == .sd) }
+            .sorted { ($0.version.res.rawValue, $0.name, $0.id) < ($1.version.res.rawValue, $1.name, $1.id) }
     }
 
     /// Short line under the teams: the guide's own wording before or after the teams, when there is one.

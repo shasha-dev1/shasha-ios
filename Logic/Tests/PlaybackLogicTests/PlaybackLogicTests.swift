@@ -1263,3 +1263,36 @@ final class MatchGuideRuleV2Tests: XCTestCase {
         XCTAssertEqual(MatchScreenRule.state(gs.first { $0.home == "Eps" }!, now: start), R.Kind.unknown.label)
     }
 }
+
+/// TV 0.9.30 / iPhone 1.8.5: the owner's first look on the TV (23:17).
+final class MatchGuideOwnerTests: XCTestCase {
+    typealias R = MatchGuideRule
+    private let m: Int64 = 60_000, t0: Int64 = 1_800_000_000_000
+    private func e(_ ch: String, _ title: String, _ start: Int64, _ mins: Int64 = 120) -> R.Entry {
+        R.Entry(channel: ch, source: "S1", start: start, stop: start + mins * m, title: title, teams: R.teams(title)!,
+                kind: R.kind(title: title, description: nil, minutes: mins))
+    }
+
+    func testOneCardWhenAChannelStartsEarlyOrNamesTheLeagueDifferently() {
+        let g = R.group([e("UK: SKY SPORTS MAIN EVENT ᴴᴰ", "Brentford v Everton", t0 - 60 * m, 180),
+                         e("AR: beIN SPORTS 2", "Brentford vs Everton - English Premier League", t0, 120),
+                         e("PL: CANAL+ SPORT", "Premier League: Brentford - Everton", t0 + 5 * m, 115)])
+        XCTAssertEqual(g.count, 1)
+        XCTAssertTrue(R.sameCompetition("spanish laliga 2026 2027", "laliga"))
+        XCTAssertFalse(R.sameCompetition("premier league", "fa cup"))
+        XCTAssertEqual(R.group([e("A", "Alpha v Beta", t0), e("B", "Alpha v Beta", t0 + 100 * m)]).count, 2)
+    }
+
+    func testChannelsWithoutGuideOfferedApart() {
+        XCTAssertTrue(R.mayCarry("4K: SKY SPORTS ᵁᴴᴰ ³⁸⁴⁰ᴾ (EVENT)", "UK: SKY SPORTS MAIN EVENT ᴴᴰ"))
+        XCTAssertTrue(R.mayCarry("4K: TNT SPORTS 1 ᵁᴴᴰ", "UK: TNT SPORTS 1 ᴴᴰ"))
+        XCTAssertFalse(R.mayCarry("4K: TNT SPORTS 1 ᵁᴴᴰ", "UK: TNT SPORTS 2 ᴴᴰ"))
+        XCTAssertFalse(R.mayCarry("4K: SKY SPORTS ᵁᴴᴰ", "UK: SKY SPORTS MAIN EVENT ᴴᴰ"))
+        XCTAssertFalse(R.mayCarry("4K: SKY SPORTS ᵁᴴᴰ (EVENT)", "AR: beIN SPORTS 1"))
+        XCTAssertFalse(R.mayCarry("4K: SKY SPORTS ᵁᴴᴰ (F1)", "UK: SKY SPORTS MAIN EVENT ᴴᴰ"))
+        let g = R.group([e("UK: SKY SPORTS MAIN EVENT ᴴᴰ", "Brentford v Everton", t0)])[0]
+        let pool = R.ExtraPool([.init(id: "9", name: "4K: SKY SPORTS ᵁᴴᴰ ³⁸⁴⁰ᴾ (EVENT)", source: "S1"), .init(id: "10", name: "UK: SKY SPORTS F1 ᴴᴰ", source: "S1")])
+        let x = MatchScreenRule.extras(g, pool: pool, versionOf: { n, _ in R.version(n) }, hideHd: false, hideSd: false)
+        XCTAssertEqual(x.map(\.id), ["9"]); XCTAssertEqual(x.first?.version.res, .uhd)
+    }
+}

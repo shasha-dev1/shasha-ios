@@ -31,6 +31,8 @@ enum MatchIndexBuilder {
         let built: Int64, from: Int64, to: Int64, entries: [MatchGuideRule.Entry], labels: [String: Set<String>]
         var stats: Stats?
         var guideMB: Int64 = 0
+        /// Sports channels without a guide — offered apart, unconfirmed (MatchGuideRule.mayCarry).
+        var unguided: [MatchGuideRule.ExtraPool.Item] = []
         var groups: [MatchGuideRule.Group] { MatchGuideRule.group(entries) }
         func version(_ e: MatchGuideRule.Entry) -> MatchGuideRule.Version { MatchGuideRule.version(e.channel, labelPrefixes: labels[e.source] ?? []) }
     }
@@ -141,6 +143,7 @@ enum MatchIndexBuilder {
         var onId: [String: [GuideChannel]] = [:]
         var isSports: [String: Bool] = [:]
         var sportIds = Set<String>(), sportKeys = Set<String>(), sportKeysLinked = Set<String>()
+        var unguided: [MatchGuideRule.ExtraPool.Item] = []
         for ch in channels {
             var how = 0
             var id: String?
@@ -148,7 +151,7 @@ enum MatchIndexBuilder {
             if id == nil, let g = p.idOfName[nameKey(ch.name)] { id = g; how = 2 }
             let sp = MatchGuideRule.isSportsChannel(name: ch.name, group: ch.group)
             isSports[ch.id] = sp
-            if let id { onId[id, default: []].append(ch) }
+            if let id { onId[id, default: []].append(ch) } else if sp { unguided.append(.init(id: ch.id, name: ch.name, source: source)) }
             if sp, let st {
                 st.sports += 1
                 switch how { case 1: st.sportsById += 1; case 2: st.sportsByName += 1; default: st.sportsUnlinked += 1 }
@@ -196,6 +199,7 @@ enum MatchIndexBuilder {
         mark("استخراج المباريات (\(entries.count) نسخة)")
         var res = Result(built: ms(Date()), from: from, to: to, entries: entries, labels: labels, stats: st)
         res.guideMB = size / 1_048_576
+        res.unguided = unguided
         if st != nil { let n = res.groups.count; mark("جمع البطاقات (\(n))") }
         return res
     }
@@ -208,6 +212,7 @@ enum MatchIndexBuilder {
             let d: String?, g: String?, x: Bool, m: String?, p: String, pn: String?, pe: String?, u: [String]
         }
         let rules: Int, built: Int64, from: Int64, to: Int64, source: String, guideMB: Int64, labels: [String: [String]], e: [E]
+        var ug: [[String]]? = nil
     }
 
     static var cacheURL: URL {
@@ -222,7 +227,7 @@ enum MatchIndexBuilder {
                      pn: x.sport.name, pe: x.sport.evidence, u: x.audience.sorted())
         }
         let s = Stored(rules: rules, built: r.built, from: r.from, to: r.to, source: source, guideMB: r.guideMB,
-                       labels: r.labels.mapValues { $0.sorted() }, e: e)
+                       labels: r.labels.mapValues { $0.sorted() }, e: e, ug: r.unguided.map { [$0.id, $0.name, $0.source] })
         if let data = try? JSONEncoder().encode(s) { try? data.write(to: cacheURL, options: .atomic) }
     }
 
@@ -239,6 +244,7 @@ enum MatchIndexBuilder {
         }
         var r = Result(built: s.built, from: s.from, to: s.to, entries: entries, labels: s.labels.mapValues { Set($0) }, stats: nil)
         r.guideMB = s.guideMB
+        r.unguided = (s.ug ?? []).compactMap { $0.count == 3 ? MatchGuideRule.ExtraPool.Item(id: $0[0], name: $0[1], source: $0[2]) : nil }
         return r
     }
 
@@ -299,6 +305,36 @@ enum MatchIndexBuilder {
         line("نسخ بنفس الاسم داخل نفس البطاقة: \(dup) — تُعرض كنسخ مستقلة (نسخة 1، نسخة 2…) لأن الاسم وحده لا يثبت أنها نفس البث")
         for (src, l) in r.labels where !l.isEmpty { line("بادئات اعتُبرت تسمية مجموعة (لا دقة) في «\(src)» بعد فحص أسماء قنواته: \(l.sorted().joined(separator: ", "))") }
         line("نسبة تغطية مباريات اليوم: لا يمكن حسابها — تحتاج جدول مباريات مستقلًا للمقارنة. الأرقام أعلاه هي ما وجدناه في الدليل فقط.")
+        line()
+        line("قنوات رياضية بلا دليل: \(r.unguided.count) — تُعرض تحت المباراة كـ«قد تنقلها (غير مؤكد)» إذا كانت من نفس الشبكة واسمها يطابق قناة ناقلة (مثل Sky Sports UHD Event ↔ Sky Sports Main Event).")
+        let pool = MatchGuideRule.ExtraPool(r.unguided)
+        let withExtra = football.filter { !MatchScreenRule.extras($0, pool: pool, versionOf: { n, src in MatchGuideRule.version(n, labelPrefixes: r.labels[src] ?? []) }, hideHd: false, hideSd: false).isEmpty }.count
+        line("بطاقات كرة قدم لها قناة بلا دليل مقترحة: \(withExtra)")
+        line()
+        line("— نفس الفريقين في أكثر من بطاقة في نفس اليوم (للتحقق من سبب الفصل)")
+        var shown = 0
+        let hm = DateFormatter(); hm.locale = Locale(identifier: "ar"); hm.dateFormat = "HH:mm"
+        var byTeams: [String: [MatchGuideRule.Group]] = [:]; var teamOrder: [String] = []
+        for g in football {
+            let k = g.key.hasSuffix(" |R") ? String(g.key.dropLast(3)) : g.key
+            if byTeams[k] == nil { teamOrder.append(k) }
+            byTeams[k, default: []].append(g)
+        }
+        for k in teamOrder where shown < 12 {
+            let list = byTeams[k]!
+            guard list.count > 1 else { continue }
+            var byDay: [Date: [MatchGuideRule.Group]] = [:]
+            for g in list { byDay[Calendar.current.startOfDay(for: Date(timeIntervalSince1970: Double(g.start) / 1000)), default: []].append(g) }
+            for (_, d) in byDay.sorted(by: { $0.key < $1.key }) where d.count > 1 && shown < 12 {
+                shown += 1
+                line("\(d[0].home) × \(d[0].away): \(d.count) بطاقات")
+                for g in d {
+                    line("   \(fmt(g.start))–\(hm.string(from: Date(timeIntervalSince1970: Double(g.stop) / 1000))) · \(g.replay ? "إعادة" : g.live ? "موسوم مباشر" : "غير محدد")"
+                         + " · البطولة: \(g.competition ?? "-") · \(g.entries.count) نسخة · «\(g.entries[0].title)» · \(g.entries[0].channel)")
+                }
+            }
+        }
+        if shown == 0 { line("   لا يوجد") }
         line()
         line("— الشبكات (القنوات الرياضية: نسخ · مربوطة بالدليل ولها برامج · بطاقات كرة القدم · نسخها)")
         var netCards: [String: Int] = [:], netVers: [String: Int] = [:]

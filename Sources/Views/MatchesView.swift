@@ -7,6 +7,8 @@ final class MatchStore: ObservableObject {
 
     @Published private(set) var result: MatchIndexBuilder.Result?
     @Published private(set) var groups: [MatchGuideRule.Group] = []
+    /// Sports channels without a guide, read once per index.
+    private(set) var pool = MatchGuideRule.ExtraPool([])
     @Published private(set) var busy = false
     @Published var status = ""
     @Published var day = 0
@@ -29,7 +31,7 @@ final class MatchStore: ObservableObject {
     static func key(_ g: MatchGuideRule.Group) -> String { g.key + "@\(g.start)" }
 
     func adopt(_ r: MatchIndexBuilder.Result, source: String) {
-        result = r; groups = r.groups; self.source = source
+        result = r; groups = r.groups; self.source = source; pool = MatchGuideRule.ExtraPool(r.unguided)
         let copy = r
         Task.detached(priority: .utility) { MatchIndexBuilder.save(copy, source: source) }
     }
@@ -45,7 +47,8 @@ final class MatchStore: ObservableObject {
         let src = library.active?.name ?? "?"
         if result == nil || source != src {
             let now = Date()
-            if let r = MatchIndexBuilder.load(source: src, now: now) { result = r; groups = r.groups; source = src } else { result = nil; groups = [] }
+            if let r = MatchIndexBuilder.load(source: src, now: now) { result = r; groups = r.groups; source = src; pool = MatchGuideRule.ExtraPool(r.unguided) }
+            else { result = nil; groups = [] }
         }
         guard isStale, !busy else { return }
         if PathCost.shared.isExpensive {
@@ -173,11 +176,14 @@ struct MatchVersionsView: View {
         let r = MatchStore.shared.result
         let v = MatchScreenRule.versions(group, versionOf: { r?.version($0) ?? MatchGuideRule.version($0.channel) },
                                          hideHd: hideHd && !showAll, hideSd: hideSd && !showAll)
+        let x = MatchScreenRule.extras(group, pool: MatchStore.shared.pool,
+                                       versionOf: { n, src in MatchGuideRule.version(n, labelPrefixes: r?.labels[src] ?? []) },
+                                       hideHd: hideHd && !showAll, hideSd: hideSd && !showAll)
         List {
             Section {
                 if v.rows.isEmpty { Text("لا توجد نسخة تطابق تفضيلاتك (مخفية \(v.hidden)).").foregroundStyle(.secondary) }
                 ForEach(Array(v.rows.enumerated()), id: \.offset) { i, row in
-                    Button { play(v.rows, i) } label: {
+                    Button { play(v.rows.map(\.entry.channelId) + x.map(\.id), i) } label: {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(row.entry.channel + (row.copy > 0 ? " · نسخة \(row.copy)" : "")).lineLimit(1).foregroundStyle(.primary)
                             Text([row.version.label(), row.entry.kind.label, row.entry.general ? "قناة عامة" : nil, "«\(row.entry.title)»"].compactMap { $0 }.joined(separator: " · "))
@@ -189,21 +195,35 @@ struct MatchVersionsView: View {
             } footer: {
                 Text("الدقة من اسم القناة فقط. لا نشغّل جودة أقل بدل المخفية تلقائيًا.")
             }
+            if !x.isEmpty {
+                Section {
+                    ForEach(Array(x.enumerated()), id: \.offset) { k, c in
+                        Button { play(v.rows.map(\.entry.channelId) + x.map(\.id), v.rows.count + k) } label: {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(c.name).lineLimit(1).foregroundStyle(.primary)
+                                Text("\(c.version.label()) · غير مؤكد").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: { Text("قنوات بلا دليل قد تنقلها") } footer: {
+                    Text("من نفس الشبكة واسمها يطابق قناة ناقلة؛ الدليل لا يؤكد أنها تعرض هذه المباراة.")
+                }
+            }
         }
         .navigationTitle("\(group.home) × \(group.away)")
         .onAppear { MatchStore.shared.selectedKey = MatchStore.key(group) }
     }
 
     /// Plays the chosen version; the player then switches only between the versions shown here.
-    private func play(_ rows: [MatchScreenRule.Row], _ i: Int) {
+    private func play(_ ids: [String], _ i: Int) {
         let byId = Dictionary(library.channels.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var list: [Channel] = []; var at = 0
-        for (k, row) in rows.enumerated() {
-            guard let ch = byId[row.entry.channelId] else { continue }
+        for (k, id) in ids.enumerated() {
+            guard let ch = byId[id] else { continue }
             if k == i { at = list.count }
             list.append(ch)
         }
-        guard !list.isEmpty, byId[rows[i].entry.channelId] != nil else { return }
+        guard !list.isEmpty, ids.indices.contains(i), byId[ids[i]] != nil else { return }
         onPlay(list, at)
     }
 }
