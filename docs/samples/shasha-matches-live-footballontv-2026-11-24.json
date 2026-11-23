@@ -1,0 +1,467 @@
+{
+ "format": "shasha-matches",
+ "version": 1,
+ "source": {
+  "name": "Live-FootballOnTV (UK)",
+  "kind": "guide",
+  "url": "https://www.live-footballontv.com/",
+  "fetchedAt": "2026-11-23T21:15:00Z"
+ },
+ "note": "Personal test sample read by hand from live-footballontv.com (home + 4K page). The site lists UK times; in November the UK is on GMT (UTC+0), written here with an explicit +00:00 offset. Not for redistribution.",
+ "matches": [
+  {
+   "home": "Santos",
+   "away": "Gremio",
+   "kickoff": "2026-11-24T00:00:00+00:00",
+   "competition": "Campeonato Brasileiro Serie A",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Premier Player",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "St. Louis City SC",
+   "away": "Los Angeles Football Club",
+   "kickoff": "2026-11-24T01:00:00+00:00",
+   "competition": "MLS Cup Round 1",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Apple TV",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Arsenal U19",
+   "away": "Borussia Dortmund U19",
+   "kickoff": "2026-11-24T13:00:00+00:00",
+   "competition": "UEFA Youth League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 2",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    },
+    {
+     "name": "UEFA.tv",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Japan U17",
+   "away": "Serbia U17",
+   "kickoff": "2026-11-24T13:00:00+00:00",
+   "competition": "FIFA U17 World Cup",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "DAZN",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Brazil U17",
+   "away": "Tanzania U17",
+   "kickoff": "2026-11-24T15:00:00+00:00",
+   "competition": "FIFA U17 World Cup",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "DAZN",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Bodo/Glimt",
+   "away": "LASK",
+   "kickoff": "2026-11-24T17:45:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 4",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Galatasaray",
+   "away": "Aston Villa",
+   "kickoff": "2026-11-24T17:45:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 2",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Fleetwood Town",
+   "away": "Leeds United U21",
+   "kickoff": "2026-11-24T19:00:00+00:00",
+   "competition": "EFL Trophy",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Oxford United",
+   "away": "Tottenham Hotspur U21",
+   "kickoff": "2026-11-24T19:00:00+00:00",
+   "competition": "EFL Trophy",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Cesena",
+   "away": "Ascoli",
+   "kickoff": "2026-11-24T19:00:00+00:00",
+   "competition": "Serie B",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Destination Calcio",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Bristol City",
+   "away": "Wrexham",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Cardiff City",
+   "away": "Preston North End",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Middlesbrough",
+   "away": "Swansea City",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Norwich City",
+   "away": "QPR",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Portsmouth",
+   "away": "West Ham United",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Sheffield United",
+   "away": "Southampton",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Blackpool",
+   "away": "Leicester City",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "League One",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Port Vale",
+   "away": "Northampton Town",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "League Two",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Hibernian",
+   "away": "Dundee",
+   "kickoff": "2026-11-24T19:45:00+00:00",
+   "competition": "Scottish Premiership",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Hibs TV",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Wolves",
+   "away": "Derby County",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports Main Event",
+     "country": "GB"
+    },
+    {
+     "name": "Sky Sports Ultra HDR",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Rangers",
+   "away": "Aberdeen",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "Scottish Premiership",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports Football",
+     "country": "GB"
+    },
+    {
+     "name": "Sky Sports Ultra HDR",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Arsenal",
+   "away": "Borussia Dortmund",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Amazon Prime Video",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Como",
+   "away": "AEK Athens",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 4",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Feyenoord",
+   "away": "FC Porto",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 7",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Manchester City",
+   "away": "Napoli",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 1",
+     "country": "GB"
+    },
+    {
+     "name": "TNT Sports Ultimate",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "RB Leipzig",
+   "away": "RC Lens",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 6",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Real Madrid",
+   "away": "PSV Eindhoven",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 2",
+     "country": "GB"
+    },
+    {
+     "name": "TNT Sports 9",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Slovan Bratislava",
+   "away": "Real Betis",
+   "kickoff": "2026-11-24T20:00:00+00:00",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "TNT Sports 5",
+     "country": "GB"
+    },
+    {
+     "name": "HBO Max",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Chapecoense",
+   "away": "Palmeiras",
+   "kickoff": "2026-11-24T21:00:00+00:00",
+   "competition": "Campeonato Brasileiro Serie A",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Premier Sports 1",
+     "country": "GB"
+    }
+   ]
+  },
+  {
+   "home": "Stoke City",
+   "away": "Millwall",
+   "kickoff": "2026-11-25T20:00:00+00:00",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports Main Event",
+     "country": "GB"
+    },
+    {
+     "name": "Sky Sports Football",
+     "country": "GB"
+    },
+    {
+     "name": "Sky Sports Ultra HDR",
+     "country": "GB"
+    }
+   ]
+  }
+ ]
+}

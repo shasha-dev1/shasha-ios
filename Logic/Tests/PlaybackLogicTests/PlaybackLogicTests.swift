@@ -1296,3 +1296,165 @@ final class MatchGuideOwnerTests: XCTestCase {
         XCTAssertEqual(x.map(\.id), ["9"]); XCTAssertEqual(x.first?.version.res, .uhd)
     }
 }
+
+/// 1.8.6: sources merged with provenance — the TV's MatchSourcesCoreTest vectors.
+final class MatchSourcesRuleTests: XCTestCase {
+    typealias S = MatchSourcesRule
+    typealias R = MatchGuideRule
+    let m: Int64 = 60_000
+    let ko: Int64 = 1_795_464_000_000          // 2026-11-23T20:00:00Z
+    let bahrain = TimeZone(identifier: "Asia/Bahrain")!
+
+    func file(_ kind: String = "guide", _ matches: String) -> Data {
+        Data("""
+        {"format":"shasha-matches","version":1,
+         "source":{"name":"Test guide","kind":"\(kind)","url":"https://example.org","fetchedAt":"2026-11-23T19:00:00Z"},
+         "matches":[\(matches)]}
+        """.utf8)
+    }
+    let brentford = """
+    {"home":"Brentford","away":"Everton","kickoff":"2026-11-23T20:00:00Z","competition":"Premier League","sport":"football",
+     "channels":[{"name":"Sky Sports Main Event","country":"GB","programmeStart":"2026-11-23T18:30:00Z"},
+                 {"name":"beIN Sports HD 2","country":"Bahrain"},{"name":"Canal+ Foot","country":"France"},{"name":"USA Network","country":"USA"}]}
+    """
+    let lib = [S.LibCh(id: "1", name: "AR: beIN SPORTS 2 ᴴᴰ"), S.LibCh(id: "2", name: "UK: SKY SPORTS MAIN EVENT ᴴᴰ"),
+               S.LibCh(id: "3", name: "4K: SKY SPORTS ᵁᴴᴰ ³⁸⁴⁰ᴾ (EVENT)"), S.LibCh(id: "4", name: "FR: CANAL+ FOOT HD"),
+               S.LibCh(id: "5", name: "FR: beIN SPORTS 2"), S.LibCh(id: "6", name: "UK: SKY SPORTS F1 ᴴᴰ")]
+    var idx: S.LibIndex { S.LibIndex(lib) }
+    var pool: R.ExtraPool { R.ExtraPool(lib.filter { $0.id != "1" }.map { .init(id: $0.id, name: $0.name, source: "S1") }) }
+
+    func epg(_ ch: String, _ id: String, _ title: String, _ start: Int64, _ mins: Int64 = 120) -> R.Entry {
+        R.Entry(channel: ch, source: "S1", start: start, stop: start + mins * m, title: title, teams: R.teams(title)!,
+                kind: R.kind(title: title, description: nil, minutes: mins), channelId: id)
+    }
+
+    func testParsesTheDocumentedFileAndRefusesWithAReason() throws {
+        let s = try S.parse(file("guide", brentford), now: 7)
+        XCTAssertEqual(s.name, "Test guide"); XCTAssertEqual(s.kind, .guide); XCTAssertEqual(s.importedAt, 7)
+        XCTAssertEqual(s.matches.first?.kickoff, ko)
+        XCTAssertEqual(s.matches.first?.channels.count, 4)
+        XCTAssertEqual(s.matches.first?.channels.first?.programmeStart, ko - 90 * m)
+        let bad: [(Data, String)] = [(Data("nope".utf8), "JSON"), (Data(#"{"format":"x","version":1}"#.utf8), "format"),
+            (file("web", brentford), "broadcaster"), (file("guide", #"{"home":"A","kickoff":"2026-11-23T20:00:00Z"}"#), "الفريقان"),
+            (file("guide", #"{"home":"A","away":"B","kickoff":"23/11 20:00"}"#), "ISO")]
+        for (d, why) in bad {
+            XCTAssertThrowsError(try S.parse(d, now: 0)) { e in XCTAssertTrue((e as? S.BadFile)?.reason.contains(why) == true, why) }
+        }
+    }
+
+    func testScheduleChannelsMatchTheLibraryWithoutGuessingUhd() {
+        func hits(_ n: String, _ c: String?) -> [String] { S.libraryMatches(.init(name: n, country: c, programmeStart: nil), idx).map { "\($0.0.ch.id):\($0.1)" } }
+        XCTAssertEqual(hits("Sky Sports Main Event", "GB"), ["2:true"])
+        XCTAssertEqual(hits("beIN Sports HD 2", "Bahrain"), ["1:true", "5:false"])
+        XCTAssertEqual(hits("Canal+ Foot", "France"), ["4:true"])
+        XCTAssertTrue(hits("USA Network", "USA").isEmpty)
+        XCTAssertTrue(hits("Sky Sports UHD Event", "GB").contains("3:true"))
+    }
+
+    func testOneRowPerMatchWithEveryProofAndSuggestionsApart() throws {
+        let g = R.group([epg("AR: beIN SPORTS 2 ᴴᴰ", "1", "Brentford vs Everton - English Premier League", ko - 30 * m, 150)])
+        let src = try S.parse(file("guide", brentford), now: 0)
+        let rows = S.merge(g, sources: [src], idx: idx, pool: pool, manual: [], guideSource: "دليل المزوّد", guideAt: 1, from: ko - 20 * 3_600_000, to: ko + 28 * 3_600_000)
+        XCTAssertEqual(rows.count, 1)
+        let r = rows[0]
+        XCTAssertEqual(r.kickoff, ko); XCTAssertFalse(r.timeConflict)
+        let by = Dictionary(uniqueKeysWithValues: r.links.map { ($0.channelId, $0) })
+        XCTAssertEqual(Set(by["1"]!.proofs.map(\.kind)), [.epg, .guide]); XCTAssertTrue(by["1"]!.confirmed)
+        XCTAssertEqual(by["2"]!.best, .guide); XCTAssertTrue(by["2"]!.confirmed)
+        XCTAssertTrue(by["4"]!.confirmed)
+        XCTAssertFalse(by["5"]!.confirmed)
+        XCTAssertEqual(by["3"]!.best, .candidate); XCTAssertFalse(by["3"]!.confirmed)
+        XCTAssertNil(by["6"])
+        XCTAssertEqual(r.missing.map { "\($0.0)|\($0.1)" }, ["USA Network|Test guide"])
+    }
+
+    func testAddedMatchesConflictsReplaysAndAgeGroupsStayApart() throws {
+        let g = R.group([epg("SR: ARENA SPORT 1", "1", "Fudbal - Poljska liga: Wieczysta - Motor", ko - 180 * m),
+                         epg("UK: SKY SPORTS MAIN EVENT ᴴᴰ", "2", "Leeds United v Fleetwood Town (R)", ko - 60 * m)])
+        let src = try S.parse(file("guide", """
+            {"home":"Wieczysta Kraków","away":"Motor Lublin","kickoff":"2026-11-23T19:30:00Z","channels":[]},
+            {"home":"Fleetwood Town","away":"Leeds United U21","kickoff":"2026-11-24T19:00:00Z","channels":[{"name":"Sky Sports+","country":"GB"}]},
+            {"home":"Leeds United","away":"Fleetwood Town","kickoff":"2026-11-23T19:00:00Z","channels":[]},
+            {"home":"Levante","away":"Elche","kickoff":"2026-11-23T20:00:00Z","competition":"La Liga","channels":[]}
+            """), now: 0)
+        let rows = S.merge(g, sources: [src], idx: idx, pool: pool, manual: [], guideSource: "EPG", guideAt: 1, from: ko - 20 * 3_600_000, to: ko + 28 * 3_600_000)
+        let w = rows.first { $0.home.hasPrefix("Wieczysta") }!
+        XCTAssertEqual(w.kickoff, ko - 30 * m); XCTAssertTrue(w.timeConflict)
+        XCTAssertEqual(w.group?.start, ko - 180 * m)
+        XCTAssertTrue(rows.contains { $0.home == "Levante" && $0.group == nil })
+        XCTAssertTrue(rows.contains { $0.away == "Leeds United U21" && $0.group == nil })
+        XCTAssertEqual(rows.filter { $0.home.contains("Leeds") || ($0.away.contains("Leeds") && !$0.away.contains("U21")) }.count, 2)
+        let report = S.compare(rows) { "\($0)" }
+        XCTAssertTrue(report.contains("Levante × Elche")); XCTAssertTrue(report.contains("تعارض"))
+    }
+
+    func testManualLinksWinAndSurviveSaving() throws {
+        let key = S.matchKey(home: "Brentford", away: "Everton", audience: [], at: ko, tz: bahrain)
+        XCTAssertEqual(key, S.matchKey(home: "Everton FC", away: "Brentford", audience: [], at: ko - 90 * m, tz: bahrain))
+        var manual = S.manualSet([], .init(matchKey: key, channelId: "6", name: "UK: SKY SPORTS F1 ᴴᴰ", add: true, at: 5))
+        manual = S.manualSet(manual, .init(matchKey: key, channelId: "1", name: "AR: beIN SPORTS 2 ᴴᴰ", add: false, at: 6))
+        manual = try JSONDecoder().decode([S.Manual].self, from: JSONEncoder().encode(manual))
+        XCTAssertEqual(manual.count, 2)
+        let g = R.group([epg("AR: beIN SPORTS 2 ᴴᴰ", "1", "Brentford vs Everton", ko - 30 * m, 150)])
+        let r = S.merge(g, sources: [], idx: idx, pool: pool, manual: manual, guideSource: "EPG", guideAt: 1, from: ko - 20 * 3_600_000, to: ko + 28 * 3_600_000, tz: bahrain)[0]
+        XCTAssertEqual(r.links.first { $0.channelId == "6" }?.best, .manual)
+        XCTAssertFalse(r.links.contains { $0.channelId == "1" })
+        XCTAssertEqual(r.removed.map(\.channelId), ["1"])
+        XCTAssertFalse(S.manualClear(manual, key: key, channelId: "1").contains { $0.channelId == "1" })
+    }
+
+    func testTheSampleFileImports() throws {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("docs/samples/shasha-matches-livesoccertv-2026-11-24.json")
+        let s = try S.parse(Data(contentsOf: url), now: 0)
+        XCTAssertEqual(s.matches.count, 23)
+        let city = s.matches.first { $0.home == "Manchester City" }!
+        XCTAssertEqual(city.kickoff, 1_795_550_400_000)
+        let lib2 = S.LibIndex([.init(id: "1", name: "AR: beIN SPORTS 3 ᴴᴰ"), .init(id: "2", name: "UK: TNT SPORTS 1 ᴴᴰ"), .init(id: "3", name: "4K: TNT SPORTS 1 ᵁᴴᴰ")])
+        let ids = Set(city.channels.flatMap { S.libraryMatches($0, lib2) }.filter { $0.1 }.map { $0.0.ch.id })
+        XCTAssertEqual(ids, ["1", "2"])
+    }
+}
+
+/// 1.8.6: LiveSoccerTV international coverage + Live-FootballOnTV 4K names (owner 23:57). Same vectors as the TV's MatchSourcesTypesTest.
+final class MatchSourcesTypesTests: XCTestCase {
+    typealias S = MatchSourcesRule
+
+    func testChannelNetworkOrPlatformNeverGuessed() {
+        for n in ["beIN Sports HD 3", "beIN Sports English 2", "TNT Sports 1", "Sky Sports Main Event", "Canal+ Live 3", "MAX Sport 4",
+                  "DAZN1 Portugal", "Sky Sport Uno", "Movistar Liga de Campeones 4", "Sky Sports Ultra HDR", "TNT Sports Ultimate", "Sky Sports+",
+                  "Arena Sport 3 Croatia", "SuperSport MaXimo 2", "Ziggo Sport 5", "TVP Sport", "Canal+ Sport", "Sportdigital FUSSBALL", "Canal Gol Brazil"] {
+            XCTAssertEqual(S.channelType(n), .channel, n)
+        }
+        for n in ["TOD", "beIN SPORTS CONNECT", "beIN Sports Connect Hong Kong", "HBO Max", "myCANAL", "SKY Go Italia", "NOW TV",
+                  "Paramount+", "DAZN Germany", "fuboTV Canada", "Amazon Prime Video", "DStv Now", "Arena Cloud", "tabii", "Viaplay Denmark", "TV 2 Play"] {
+            XCTAssertEqual(S.channelType(n), .platform, n)
+        }
+        for n in ["Canal+", "Movistar+", "TNT Sports"] { XCTAssertEqual(S.channelType(n), .network, n) }
+        XCTAssertEqual(S.language("beIN Sports English 2"), "إنجليزي")
+        XCTAssertEqual(S.language("beIN Sports French 2"), "فرنسي")
+        XCTAssertNil(S.language("beIN Sports HD 3"))
+    }
+
+    private func set(_ x: [(S.LibIndex.E, Bool)]) -> Set<String> { Set(x.map { "\($0.0.ch.id):\($0.1)" }) }
+
+    func testNamed4kChannelsMatchOnlyThe4kVersionsOfWhatIsListedWithThem() {
+        let lib = S.LibIndex([.init(id: "1", name: "4K: SKY SPORTS ᵁᴴᴰ ³⁸⁴⁰ᴾ (EVENT)"), .init(id: "2", name: "UK: SKY SPORTS MAIN EVENT ᴴᴰ"),
+                              .init(id: "3", name: "4K: TNT SPORTS 1 ᵁᴴᴰ"), .init(id: "4", name: "4K: TNT SPORTS 2 ᵁᴴᴰ"),
+                              .init(id: "5", name: "UK: SKY SPORTS ULTRA HDR"), .init(id: "6", name: "4K: SKY SPORTS ᵁᴴᴰ (F1)")])
+        func hits(_ n: String, _ sib: [String]) -> Set<String> { set(S.libraryMatches(S.ExtChannel(name: n, country: "GB", programmeStart: nil), lib, siblings: sib)) }
+        XCTAssertEqual(hits("Sky Sports Ultra HDR", ["Sky Sports Main Event", "Sky Sports Ultra HDR"]), ["1:false", "5:true"])
+        XCTAssertEqual(hits("Sky Sports Main Event", ["Sky Sports Main Event"]), ["2:true"])          // HD alone never brings the 4K one
+        XCTAssertEqual(hits("TNT Sports Ultimate", ["TNT Sports 1", "TNT Sports Ultimate", "HBO Max"]), ["3:false"])
+    }
+
+    func testCountryWordsAndBareNames() {
+        let lib = S.LibIndex([.init(id: "1", name: "HR: ARENA SPORT 3 HD"), .init(id: "2", name: "SR: ARENA SPORT 3 ᴿᴬᵂ"),
+                              .init(id: "3", name: "FR: CANAL+ SPORT HD"), .init(id: "4", name: "FR: CANAL+ HD"), .init(id: "5", name: "PL: TVP SPORT ᴴᴰ")])
+        func hits(_ n: String, _ c: String?) -> Set<String> { set(S.libraryMatches(S.ExtChannel(name: n, country: c, programmeStart: nil), lib)) }
+        XCTAssertEqual(hits("Arena Sport 3 Croatia", "Croatia"), ["1:true", "2:false"])
+        XCTAssertEqual(hits("Canal+ Sport", "France"), ["3:true"])
+        XCTAssertTrue(hits("Canal+", "Poland").isEmpty)
+        XCTAssertEqual(hits("TVP Sport", "Poland"), ["5:true"])
+    }
+}

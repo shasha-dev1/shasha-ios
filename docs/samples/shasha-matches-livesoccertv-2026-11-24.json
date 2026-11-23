@@ -1,0 +1,3060 @@
+{
+ "format": "shasha-matches",
+ "version": 1,
+ "source": {
+  "name": "LiveSoccerTV (عينة للتجربة الشخصية)",
+  "kind": "guide",
+  "url": "https://www.livesoccertv.com/schedules/2026-11-24/",
+  "fetchedAt": "2026-11-23T21:10:00Z"
+ },
+ "note": "Personal test sample read by hand from livesoccertv.com match pages (International Coverage) — its disclaimer allows copying for personal use with the source acknowledged. Kickoffs converted from America/New_York (UTC-5) to UTC. Countries with the same channels as a listed one may be merged. Not for redistribution.",
+ "matches": [
+  {
+   "home": "Manchester City",
+   "away": "Napoli",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Tring Sport 2",
+     "country": "Albania"
+    },
+    {
+     "name": "Tring",
+     "country": "Albania"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Algeria"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Algeria"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Algeria"
+    },
+    {
+     "name": "TOD",
+     "country": "Algeria"
+    },
+    {
+     "name": "Canal+ Live 3",
+     "country": "Andorra"
+    },
+    {
+     "name": "SuperSport MaXimo 2",
+     "country": "Angola"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Angola"
+    },
+    {
+     "name": "SuperSport Premier League ROA",
+     "country": "Angola"
+    },
+    {
+     "name": "Bluu",
+     "country": "Anguilla"
+    },
+    {
+     "name": "Rush Sports 3",
+     "country": "Anguilla"
+    },
+    {
+     "name": "ESPN Argentina",
+     "country": "Argentina"
+    },
+    {
+     "name": "Disney+ Premium Argentina",
+     "country": "Argentina"
+    },
+    {
+     "name": "Fast Sports 2",
+     "country": "Armenia"
+    },
+    {
+     "name": "FAST TV",
+     "country": "Armenia"
+    },
+    {
+     "name": "Stan Sport",
+     "country": "Australia"
+    },
+    {
+     "name": "Sky Sport Austria 1",
+     "country": "Austria"
+    },
+    {
+     "name": "Sky Sport Austria 4",
+     "country": "Austria"
+    },
+    {
+     "name": "TV NET",
+     "country": "Azerbaijan"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Bahrain"
+    },
+    {
+     "name": "TOD",
+     "country": "Bahrain"
+    },
+    {
+     "name": "Sony LIV",
+     "country": "Bangladesh"
+    },
+    {
+     "name": "SONY TEN 1",
+     "country": "Bangladesh"
+    },
+    {
+     "name": "tapmad",
+     "country": "Bangladesh"
+    },
+    {
+     "name": "Okko Sport",
+     "country": "Belarus"
+    },
+    {
+     "name": "Club RTL",
+     "country": "Belgium"
+    },
+    {
+     "name": "Proximus Pickx",
+     "country": "Belgium"
+    },
+    {
+     "name": "RTL Play",
+     "country": "Belgium"
+    },
+    {
+     "name": "VTM 2",
+     "country": "Belgium"
+    },
+    {
+     "name": "Pickx+ Sports 2",
+     "country": "Belgium"
+    },
+    {
+     "name": "Moja TV",
+     "country": "Bosnia and Herzegovina"
+    },
+    {
+     "name": "Arena Sport 2P",
+     "country": "Bosnia and Herzegovina"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Bosnia and Herzegovina"
+    },
+    {
+     "name": "Space Brazil",
+     "country": "Brazil"
+    },
+    {
+     "name": "Max Brazil",
+     "country": "Brazil"
+    },
+    {
+     "name": "beIN Sports 3 Thailand",
+     "country": "Brunei Darussalam"
+    },
+    {
+     "name": "beIN Sports Connect",
+     "country": "Brunei Darussalam"
+    },
+    {
+     "name": "MAX Sport 4",
+     "country": "Bulgaria"
+    },
+    {
+     "name": "DAZN Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "fuboTV Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "ESPN Chile",
+     "country": "Chile"
+    },
+    {
+     "name": "Disney+ Premium Chile",
+     "country": "Chile"
+    },
+    {
+     "name": "iQiyi",
+     "country": "China"
+    },
+    {
+     "name": "eltaott.tv",
+     "country": "Chinese Taipei"
+    },
+    {
+     "name": "ELTA Sports 1",
+     "country": "Chinese Taipei"
+    },
+    {
+     "name": "ESPN2 Colombia",
+     "country": "Colombia"
+    },
+    {
+     "name": "Disney+ Premium Sur",
+     "country": "Colombia"
+    },
+    {
+     "name": "Arena Sport 3 Croatia",
+     "country": "Croatia"
+    },
+    {
+     "name": "MAXtv To Go",
+     "country": "Croatia"
+    },
+    {
+     "name": "Cytavision Sports 5",
+     "country": "Cyprus"
+    },
+    {
+     "name": "Cytavision on the Go",
+     "country": "Cyprus"
+    },
+    {
+     "name": "OnePlay",
+     "country": "Czech Republic"
+    },
+    {
+     "name": "Nova Sport 6 CZ",
+     "country": "Czech Republic"
+    },
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Egypt"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Egypt"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Egypt"
+    },
+    {
+     "name": "TOD",
+     "country": "Egypt"
+    },
+    {
+     "name": "Go3 Extra Sports Estonia",
+     "country": "Estonia"
+    },
+    {
+     "name": "MTV Katsomo",
+     "country": "Finland"
+    },
+    {
+     "name": "myCANAL",
+     "country": "France"
+    },
+    {
+     "name": "Canal+ Live 3",
+     "country": "France"
+    },
+    {
+     "name": "DAZN Germany",
+     "country": "Germany"
+    },
+    {
+     "name": "TNT Sports 1",
+     "country": "Great Britain"
+    },
+    {
+     "name": "HBO Max",
+     "country": "Great Britain"
+    },
+    {
+     "name": "MagentaSport 4",
+     "country": "Greece"
+    },
+    {
+     "name": "beIN Sports Connect Hong Kong",
+     "country": "Hong Kong"
+    },
+    {
+     "name": "beIN Sports 3 Hong Kong",
+     "country": "Hong Kong"
+    },
+    {
+     "name": "Sport 2 Hungary",
+     "country": "Hungary"
+    },
+    {
+     "name": "RTL+",
+     "country": "Hungary"
+    },
+    {
+     "name": "Selekt",
+     "country": "Hungary"
+    },
+    {
+     "name": "SÝN Sport 2",
+     "country": "Iceland"
+    },
+    {
+     "name": "Sony LIV",
+     "country": "India"
+    },
+    {
+     "name": "SONY TEN 1",
+     "country": "India"
+    },
+    {
+     "name": "JioTV",
+     "country": "India"
+    },
+    {
+     "name": "beIN Sports 3 Indonesia",
+     "country": "Indonesia"
+    },
+    {
+     "name": "beIN Sports Connect Indonesia",
+     "country": "Indonesia"
+    },
+    {
+     "name": "Vidio",
+     "country": "Indonesia"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Iraq"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Iraq"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Iraq"
+    },
+    {
+     "name": "TOD",
+     "country": "Iraq"
+    },
+    {
+     "name": "TNT Sports 1",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "Virgin Media Two",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "HBO Max",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "Sport 5max",
+     "country": "Israel"
+    },
+    {
+     "name": "Sky Sport 252",
+     "country": "Italy"
+    },
+    {
+     "name": "SKY Go Italia",
+     "country": "Italy"
+    },
+    {
+     "name": "Sky Sport Uno",
+     "country": "Italy"
+    },
+    {
+     "name": "NOW TV",
+     "country": "Italy"
+    },
+    {
+     "name": "WOWOW Cinema",
+     "country": "Japan"
+    },
+    {
+     "name": "WOWOW",
+     "country": "Japan"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Jordan"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Jordan"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Jordan"
+    },
+    {
+     "name": "TOD",
+     "country": "Jordan"
+    },
+    {
+     "name": "SuperSport MaXimo 2",
+     "country": "Kenya"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Kenya"
+    },
+    {
+     "name": "SuperSport Premier League ROA",
+     "country": "Kenya"
+    },
+    {
+     "name": "GOtv",
+     "country": "Kenya"
+    },
+    {
+     "name": "SPOTV NOW",
+     "country": "Korea Republic"
+    },
+    {
+     "name": "SPOTV Prime+",
+     "country": "Korea Republic"
+    },
+    {
+     "name": "Tring Sport 2",
+     "country": "Kosovo"
+    },
+    {
+     "name": "ArtMotion",
+     "country": "Kosovo"
+    },
+    {
+     "name": "Arena 3 Premium",
+     "country": "Kosovo"
+    },
+    {
+     "name": "TV Vala Kosovo Telecom",
+     "country": "Kosovo"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Kuwait"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Kuwait"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Kuwait"
+    },
+    {
+     "name": "TOD",
+     "country": "Kuwait"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Lebanon"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Lebanon"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Lebanon"
+    },
+    {
+     "name": "TOD",
+     "country": "Lebanon"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Libya"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Libya"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Libya"
+    },
+    {
+     "name": "TOD",
+     "country": "Libya"
+    },
+    {
+     "name": "DAZN Germany",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Blue Sport",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Blue Sport 1 Live",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Pickx+ Sports 2",
+     "country": "Luxembourg"
+    },
+    {
+     "name": "Arena 3 Premium",
+     "country": "Macedonia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Macedonia"
+    },
+    {
+     "name": "beIN Sports Connect Malaysia",
+     "country": "Malaysia"
+    },
+    {
+     "name": "beIN Sports 3 Malaysia",
+     "country": "Malaysia"
+    },
+    {
+     "name": "sooka",
+     "country": "Malaysia"
+    },
+    {
+     "name": "TSN5 Malta",
+     "country": "Malta"
+    },
+    {
+     "name": "Max Mexico",
+     "country": "Mexico"
+    },
+    {
+     "name": "Space Mexico",
+     "country": "Mexico"
+    },
+    {
+     "name": "Premier Sports 1",
+     "country": "Mongolia"
+    },
+    {
+     "name": "Arena 3 Premium",
+     "country": "Montenegro"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Montenegro"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Morocco"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Morocco"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Morocco"
+    },
+    {
+     "name": "TOD",
+     "country": "Morocco"
+    },
+    {
+     "name": "Canal+ Myanmar",
+     "country": "Myanmar"
+    },
+    {
+     "name": "Canal+ Sports 2 Myanmar",
+     "country": "Myanmar"
+    },
+    {
+     "name": "Ziggo Go",
+     "country": "Netherlands"
+    },
+    {
+     "name": "Ziggo Sport 5",
+     "country": "Netherlands"
+    },
+    {
+     "name": "DAZN New Zealand",
+     "country": "New Zealand"
+    },
+    {
+     "name": "SuperSport MaXimo 2",
+     "country": "Nigeria"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Nigeria"
+    },
+    {
+     "name": "SuperSport Premier League Nigeria",
+     "country": "Nigeria"
+    },
+    {
+     "name": "TV 2 Play",
+     "country": "Norway"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Oman"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Oman"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Oman"
+    },
+    {
+     "name": "TOD",
+     "country": "Oman"
+    },
+    {
+     "name": "Sony LIV",
+     "country": "Pakistan"
+    },
+    {
+     "name": "SONY TEN 1",
+     "country": "Pakistan"
+    },
+    {
+     "name": "tapmad",
+     "country": "Pakistan"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Palestine"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Palestine"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Palestine"
+    },
+    {
+     "name": "TOD",
+     "country": "Palestine"
+    },
+    {
+     "name": "beIN Sports 3 Philippines",
+     "country": "Philippines"
+    },
+    {
+     "name": "beIN Sports Connect Philippines",
+     "country": "Philippines"
+    },
+    {
+     "name": "Canal+",
+     "country": "Poland"
+    },
+    {
+     "name": "Canal+ Extra 3",
+     "country": "Poland"
+    },
+    {
+     "name": "DAZN2 Portugal",
+     "country": "Portugal"
+    },
+    {
+     "name": "DAZN Portugal",
+     "country": "Portugal"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Qatar"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Qatar"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Qatar"
+    },
+    {
+     "name": "TOD",
+     "country": "Qatar"
+    },
+    {
+     "name": "Digi Sport 3 Romania",
+     "country": "Romania"
+    },
+    {
+     "name": "Digi Online",
+     "country": "Romania"
+    },
+    {
+     "name": "Orange TV Go",
+     "country": "Romania"
+    },
+    {
+     "name": "Prima Sport 3",
+     "country": "Romania"
+    },
+    {
+     "name": "Prima Play",
+     "country": "Romania"
+    },
+    {
+     "name": "Okko Sport",
+     "country": "Russia"
+    },
+    {
+     "name": "Sky Sport 252",
+     "country": "San Marino"
+    },
+    {
+     "name": "SKY Go Italia",
+     "country": "San Marino"
+    },
+    {
+     "name": "Sky Sport Uno",
+     "country": "San Marino"
+    },
+    {
+     "name": "NOW TV",
+     "country": "San Marino"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "TOD",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "Arena 3 Premium",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Serbia"
+    },
+    {
+     "name": "StarHub TV+",
+     "country": "Singapore"
+    },
+    {
+     "name": "beIN Sports Connect Singapore",
+     "country": "Singapore"
+    },
+    {
+     "name": "beIN Sports 3 Singapore",
+     "country": "Singapore"
+    },
+    {
+     "name": "Voyo",
+     "country": "Slovakia"
+    },
+    {
+     "name": "Nova Sport 6",
+     "country": "Slovakia"
+    },
+    {
+     "name": "SportKlub 1 Slovenia",
+     "country": "Slovenia"
+    },
+    {
+     "name": "SuperSport MaXimo 2",
+     "country": "South Africa"
+    },
+    {
+     "name": "SuperSport Premier League",
+     "country": "South Africa"
+    },
+    {
+     "name": "DStv App",
+     "country": "South Africa"
+    },
+    {
+     "name": "Movistar+",
+     "country": "Spain"
+    },
+    {
+     "name": "Movistar Liga de Campeones 4",
+     "country": "Spain"
+    },
+    {
+     "name": "Movistar Liga de Campeones 5",
+     "country": "Spain"
+    },
+    {
+     "name": "V Sport Football",
+     "country": "Sweden"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "Blue Sport",
+     "country": "Switzerland"
+    },
+    {
+     "name": "Blue Sport 1 Live",
+     "country": "Switzerland"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Syria"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Syria"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Syria"
+    },
+    {
+     "name": "TOD",
+     "country": "Syria"
+    },
+    {
+     "name": "beIN Sports 3 Thailand",
+     "country": "Thailand"
+    },
+    {
+     "name": "beIN Sports Connect",
+     "country": "Thailand"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Tunisia"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Tunisia"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Tunisia"
+    },
+    {
+     "name": "TOD",
+     "country": "Tunisia"
+    },
+    {
+     "name": "tabii",
+     "country": "Turkey"
+    },
+    {
+     "name": "Megogo",
+     "country": "Ukraine"
+    },
+    {
+     "name": "MEGOGO Football 2",
+     "country": "Ukraine"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "TOD",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "DAZN USA",
+     "country": "USA"
+    },
+    {
+     "name": "ON Football",
+     "country": "Vietnam"
+    },
+    {
+     "name": "VTVcab ON",
+     "country": "Vietnam"
+    },
+    {
+     "name": "ON Plus",
+     "country": "Vietnam"
+    },
+    {
+     "name": "beIN Sports HD 3",
+     "country": "Yemen"
+    },
+    {
+     "name": "beIN Sports English 2",
+     "country": "Yemen"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Yemen"
+    },
+    {
+     "name": "TOD",
+     "country": "Yemen"
+    },
+    {
+     "name": "SuperSport MaXimo 2",
+     "country": "Benin"
+    },
+    {
+     "name": "SuperSport Premier League ROA",
+     "country": "Benin"
+    },
+    {
+     "name": "New World Sport2",
+     "country": "Benin"
+    },
+    {
+     "name": "New World Sport App",
+     "country": "Benin"
+    },
+    {
+     "name": "Nexgen",
+     "country": "Belize"
+    },
+    {
+     "name": "Disney+ Premium Norte",
+     "country": "Costa Rica"
+    },
+    {
+     "name": "Disney+ Premium Norte",
+     "country": "Panama"
+    },
+    {
+     "name": "Rush Sports 3",
+     "country": "Panama"
+    },
+    {
+     "name": "TDM Desporto",
+     "country": "Macau"
+    },
+    {
+     "name": "iQiyi",
+     "country": "Macau"
+    },
+    {
+     "name": "Zoʻr TV",
+     "country": "Uzbekistan"
+    },
+    {
+     "name": "ESPN2 Colombia",
+     "country": "Venezuela"
+    },
+    {
+     "name": "Disney+ Premium Sur",
+     "country": "Venezuela"
+    },
+    {
+     "name": "inter",
+     "country": "Venezuela"
+    },
+    {
+     "name": "Go3 Extra Sports Latvia",
+     "country": "Latvia"
+    },
+    {
+     "name": "Go3 Extra Sports Lithuania",
+     "country": "Lithuania"
+    },
+    {
+     "name": "Okko Sport",
+     "country": "Moldova"
+    },
+    {
+     "name": "SuperSport MaXimo 2",
+     "country": "Seychelles"
+    },
+    {
+     "name": "Bluu",
+     "country": "Seychelles"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Seychelles"
+    },
+    {
+     "name": "SuperSport Premier League ROA",
+     "country": "Seychelles"
+    },
+    {
+     "name": "New World Sport2",
+     "country": "Seychelles"
+    },
+    {
+     "name": "New World Sport App",
+     "country": "Seychelles"
+    },
+    {
+     "name": "Rush Sports 3",
+     "country": "Seychelles"
+    }
+   ]
+  },
+  {
+   "home": "Real Madrid",
+   "away": "PSV",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Tring Sport 3",
+     "country": "Albania"
+    },
+    {
+     "name": "Tring",
+     "country": "Albania"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Algeria"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Algeria"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Algeria"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Algeria"
+    },
+    {
+     "name": "TOD",
+     "country": "Algeria"
+    },
+    {
+     "name": "Canal+ Sport",
+     "country": "Andorra"
+    },
+    {
+     "name": "Canal+ Live 2",
+     "country": "Andorra"
+    },
+    {
+     "name": "Disney+ Premium Argentina",
+     "country": "Argentina"
+    },
+    {
+     "name": "Fast Sports 1",
+     "country": "Armenia"
+    },
+    {
+     "name": "FAST TV",
+     "country": "Armenia"
+    },
+    {
+     "name": "Q Sport 1 League",
+     "country": "Armenia"
+    },
+    {
+     "name": "Stan Sport",
+     "country": "Australia"
+    },
+    {
+     "name": "Sky Sport Austria 1",
+     "country": "Austria"
+    },
+    {
+     "name": "Sky Sport Austria 5",
+     "country": "Austria"
+    },
+    {
+     "name": "CBC Sport Azerbaijan",
+     "country": "Azerbaijan"
+    },
+    {
+     "name": "Q Sport 1 League",
+     "country": "Azerbaijan"
+    },
+    {
+     "name": "TV NET",
+     "country": "Azerbaijan"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Bahrain"
+    },
+    {
+     "name": "TOD",
+     "country": "Bahrain"
+    },
+    {
+     "name": "Proximus Pickx",
+     "country": "Belgium"
+    },
+    {
+     "name": "Pickx+ Sports 4",
+     "country": "Belgium"
+    },
+    {
+     "name": "Arena Sport 1",
+     "country": "Bosnia and Herzegovina"
+    },
+    {
+     "name": "Moja TV",
+     "country": "Bosnia and Herzegovina"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Bosnia and Herzegovina"
+    },
+    {
+     "name": "TNT Brasil",
+     "country": "Brazil"
+    },
+    {
+     "name": "SBT",
+     "country": "Brazil"
+    },
+    {
+     "name": "Max Brazil",
+     "country": "Brazil"
+    },
+    {
+     "name": "beIN Sports 1 Thailand",
+     "country": "Brunei Darussalam"
+    },
+    {
+     "name": "beIN Sports Connect",
+     "country": "Brunei Darussalam"
+    },
+    {
+     "name": "MAX Sport 2",
+     "country": "Bulgaria"
+    },
+    {
+     "name": "DAZN Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "fuboTV Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "Disney+ Premium Chile",
+     "country": "Chile"
+    },
+    {
+     "name": "ESPN5 Chile",
+     "country": "Chile"
+    },
+    {
+     "name": "ESPN Colombia",
+     "country": "Colombia"
+    },
+    {
+     "name": "Disney+ Premium Sur",
+     "country": "Colombia"
+    },
+    {
+     "name": "MAXtv To Go",
+     "country": "Croatia"
+    },
+    {
+     "name": "Arena Sport 6 Croatia",
+     "country": "Croatia"
+    },
+    {
+     "name": "Cytavision on the Go",
+     "country": "Cyprus"
+    },
+    {
+     "name": "Cytavision Sports 6",
+     "country": "Cyprus"
+    },
+    {
+     "name": "Nova Sport 4 CZ",
+     "country": "Czech Republic"
+    },
+    {
+     "name": "OnePlay",
+     "country": "Czech Republic"
+    },
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Egypt"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Egypt"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Egypt"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Egypt"
+    },
+    {
+     "name": "TOD",
+     "country": "Egypt"
+    },
+    {
+     "name": "Canal+ Sport",
+     "country": "France"
+    },
+    {
+     "name": "myCANAL",
+     "country": "France"
+    },
+    {
+     "name": "Canal+ Live 2",
+     "country": "France"
+    },
+    {
+     "name": "DAZN Germany",
+     "country": "Germany"
+    },
+    {
+     "name": "TNT Sports 2",
+     "country": "Great Britain"
+    },
+    {
+     "name": "TNT Sports 9",
+     "country": "Great Britain"
+    },
+    {
+     "name": "HBO Max",
+     "country": "Great Britain"
+    },
+    {
+     "name": "MagentaSport 5",
+     "country": "Greece"
+    },
+    {
+     "name": "Now Player",
+     "country": "Hong Kong"
+    },
+    {
+     "name": "beIN Sports 1 Hong Kong",
+     "country": "Hong Kong"
+    },
+    {
+     "name": "beIN Sports Connect Hong Kong",
+     "country": "Hong Kong"
+    },
+    {
+     "name": "RTL+",
+     "country": "Hungary"
+    },
+    {
+     "name": "SÝN Sport 3",
+     "country": "Iceland"
+    },
+    {
+     "name": "Sony LIV",
+     "country": "India"
+    },
+    {
+     "name": "JioTV",
+     "country": "India"
+    },
+    {
+     "name": "SCTV",
+     "country": "Indonesia"
+    },
+    {
+     "name": "beIN Sports 1 Indonesia",
+     "country": "Indonesia"
+    },
+    {
+     "name": "beIN Sports Connect Indonesia",
+     "country": "Indonesia"
+    },
+    {
+     "name": "Vidio",
+     "country": "Indonesia"
+    },
+    {
+     "name": "IRIB Varzesh",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Iran"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Iraq"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Iraq"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Iraq"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Iraq"
+    },
+    {
+     "name": "TOD",
+     "country": "Iraq"
+    },
+    {
+     "name": "TNT Sports 2",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "TNT Sports 9",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "HBO Max",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "5Sport",
+     "country": "Israel"
+    },
+    {
+     "name": "Sky Sport 255",
+     "country": "Italy"
+    },
+    {
+     "name": "SKY Go Italia",
+     "country": "Italy"
+    },
+    {
+     "name": "NOW TV",
+     "country": "Italy"
+    },
+    {
+     "name": "Sky Sport Mix",
+     "country": "Italy"
+    },
+    {
+     "name": "WOWOW Prime",
+     "country": "Japan"
+    },
+    {
+     "name": "WOWOW",
+     "country": "Japan"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Jordan"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Jordan"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Jordan"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Jordan"
+    },
+    {
+     "name": "TOD",
+     "country": "Jordan"
+    },
+    {
+     "name": "SPOTV NOW",
+     "country": "Korea Republic"
+    },
+    {
+     "name": "SPOTV Prime 2",
+     "country": "Korea Republic"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Kuwait"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Kuwait"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Kuwait"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Kuwait"
+    },
+    {
+     "name": "TOD",
+     "country": "Kuwait"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Lebanon"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Lebanon"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Lebanon"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Lebanon"
+    },
+    {
+     "name": "TOD",
+     "country": "Lebanon"
+    },
+    {
+     "name": "Arena Sport 1 Serbia",
+     "country": "Macedonia"
+    },
+    {
+     "name": "MaxTV Go",
+     "country": "Macedonia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Macedonia"
+    },
+    {
+     "name": "beIN Sports Malaysia",
+     "country": "Malaysia"
+    },
+    {
+     "name": "beIN Sports Connect Malaysia",
+     "country": "Malaysia"
+    },
+    {
+     "name": "sooka",
+     "country": "Malaysia"
+    },
+    {
+     "name": "TSN7 Malta",
+     "country": "Malta"
+    },
+    {
+     "name": "TNT Sports",
+     "country": "Mexico"
+    },
+    {
+     "name": "Max Mexico",
+     "country": "Mexico"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Morocco"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Morocco"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Morocco"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Morocco"
+    },
+    {
+     "name": "TOD",
+     "country": "Morocco"
+    },
+    {
+     "name": "Ziggo Go",
+     "country": "Netherlands"
+    },
+    {
+     "name": "Ziggo Sport 2",
+     "country": "Netherlands"
+    },
+    {
+     "name": "TV 2 Play",
+     "country": "Norway"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Oman"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Oman"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Oman"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Oman"
+    },
+    {
+     "name": "TOD",
+     "country": "Oman"
+    },
+    {
+     "name": "Canal+",
+     "country": "Poland"
+    },
+    {
+     "name": "Canal+ Extra 2",
+     "country": "Poland"
+    },
+    {
+     "name": "DAZN1 Portugal",
+     "country": "Portugal"
+    },
+    {
+     "name": "DAZN Portugal",
+     "country": "Portugal"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Qatar"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Qatar"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Qatar"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Qatar"
+    },
+    {
+     "name": "TOD",
+     "country": "Qatar"
+    },
+    {
+     "name": "Digi Sport 1 Romania",
+     "country": "Romania"
+    },
+    {
+     "name": "Digi Online",
+     "country": "Romania"
+    },
+    {
+     "name": "Prima Sport 1",
+     "country": "Romania"
+    },
+    {
+     "name": "Orange TV Go",
+     "country": "Romania"
+    },
+    {
+     "name": "Prima Play",
+     "country": "Romania"
+    },
+    {
+     "name": "Sky Sport 255",
+     "country": "San Marino"
+    },
+    {
+     "name": "SKY Go Italia",
+     "country": "San Marino"
+    },
+    {
+     "name": "NOW TV",
+     "country": "San Marino"
+    },
+    {
+     "name": "Sky Sport Mix",
+     "country": "San Marino"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "TOD",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "Arena Sport 1 Serbia",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Serbia"
+    },
+    {
+     "name": "Voyo",
+     "country": "Slovakia"
+    },
+    {
+     "name": "Nova Sport 4",
+     "country": "Slovakia"
+    },
+    {
+     "name": "Kanal A",
+     "country": "Slovenia"
+    },
+    {
+     "name": "SuperSport Action",
+     "country": "South Africa"
+    },
+    {
+     "name": "SuperSport MáXimo 3",
+     "country": "South Africa"
+    },
+    {
+     "name": "SuperSport PSL",
+     "country": "South Africa"
+    },
+    {
+     "name": "DStv App",
+     "country": "South Africa"
+    },
+    {
+     "name": "SuperSport Action Africa",
+     "country": "South Africa"
+    },
+    {
+     "name": "Movistar+",
+     "country": "Spain"
+    },
+    {
+     "name": "Movistar Liga de Campeones 4",
+     "country": "Spain"
+    },
+    {
+     "name": "Movistar Liga de Campeones",
+     "country": "Spain"
+    },
+    {
+     "name": "Movistar Plus+",
+     "country": "Spain"
+    },
+    {
+     "name": "V Sport 1",
+     "country": "Sweden"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "Canal+ Sport",
+     "country": "Switzerland"
+    },
+    {
+     "name": "Blue Sport D 2",
+     "country": "Switzerland"
+    },
+    {
+     "name": "Blue Sport",
+     "country": "Switzerland"
+    },
+    {
+     "name": "Blue Sport 6 Live",
+     "country": "Switzerland"
+    },
+    {
+     "name": "Sunrise TV",
+     "country": "Switzerland"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Syria"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Syria"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Syria"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Syria"
+    },
+    {
+     "name": "TOD",
+     "country": "Syria"
+    },
+    {
+     "name": "beIN Sports 1 Thailand",
+     "country": "Thailand"
+    },
+    {
+     "name": "beIN Sports Connect",
+     "country": "Thailand"
+    },
+    {
+     "name": "AIS PLAY",
+     "country": "Thailand"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Tunisia"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Tunisia"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Tunisia"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Tunisia"
+    },
+    {
+     "name": "TOD",
+     "country": "Tunisia"
+    },
+    {
+     "name": "tabii",
+     "country": "Turkey"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "TOD",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "TUDN USA",
+     "country": "USA"
+    },
+    {
+     "name": "UniMás",
+     "country": "USA"
+    },
+    {
+     "name": "TUDN.com",
+     "country": "USA"
+    },
+    {
+     "name": "Univision NOW",
+     "country": "USA"
+    },
+    {
+     "name": "TUDN App",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    },
+    {
+     "name": "beIN Sports HD 1",
+     "country": "Yemen"
+    },
+    {
+     "name": "beIN Sports English",
+     "country": "Yemen"
+    },
+    {
+     "name": "beIN Sports French 2",
+     "country": "Yemen"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Yemen"
+    },
+    {
+     "name": "TOD",
+     "country": "Yemen"
+    },
+    {
+     "name": "SuperSport MáXimo 3",
+     "country": "Benin"
+    },
+    {
+     "name": "Supersport Grandstand ROA",
+     "country": "Benin"
+    },
+    {
+     "name": "SuperSport Action Africa",
+     "country": "Benin"
+    },
+    {
+     "name": "New World Sport3",
+     "country": "Benin"
+    },
+    {
+     "name": "New World Sport App",
+     "country": "Benin"
+    },
+    {
+     "name": "SuperSport MáXimo 3",
+     "country": "Angola"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Angola"
+    },
+    {
+     "name": "Supersport Grandstand ROA",
+     "country": "Angola"
+    },
+    {
+     "name": "SuperSport Action Africa",
+     "country": "Angola"
+    },
+    {
+     "name": "Bluu",
+     "country": "Anguilla"
+    },
+    {
+     "name": "Rush Sports",
+     "country": "Anguilla"
+    },
+    {
+     "name": "Nexgen",
+     "country": "Belize"
+    },
+    {
+     "name": "Sony LIV",
+     "country": "Bangladesh"
+    },
+    {
+     "name": "tapmad",
+     "country": "Bangladesh"
+    },
+    {
+     "name": "Disney+ Premium Norte",
+     "country": "Costa Rica"
+    },
+    {
+     "name": "Q Sport 1 League",
+     "country": "Kazakhstan"
+    },
+    {
+     "name": "Q Sport 1 League",
+     "country": "Georgia"
+    },
+    {
+     "name": "Premier Sports 3",
+     "country": "Mongolia"
+    },
+    {
+     "name": "Canal+ Myanmar",
+     "country": "Myanmar"
+    },
+    {
+     "name": "Canal + Sports 3 Myanmar",
+     "country": "Myanmar"
+    },
+    {
+     "name": "beIN Sports 1 Philippines",
+     "country": "Philippines"
+    },
+    {
+     "name": "beIN Sports Connect Philippines",
+     "country": "Philippines"
+    },
+    {
+     "name": "UniMás",
+     "country": "Puerto Rico"
+    },
+    {
+     "name": "ViX",
+     "country": "Puerto Rico"
+    },
+    {
+     "name": "NAICOM",
+     "country": "Puerto Rico"
+    },
+    {
+     "name": "StarHub TV+",
+     "country": "Singapore"
+    },
+    {
+     "name": "beIN Sports Singapore",
+     "country": "Singapore"
+    },
+    {
+     "name": "beIN Sports Connect Singapore",
+     "country": "Singapore"
+    },
+    {
+     "name": "VTVcab ON",
+     "country": "Vietnam"
+    },
+    {
+     "name": "ESPN Colombia",
+     "country": "Venezuela"
+    },
+    {
+     "name": "Disney+ Premium Sur",
+     "country": "Venezuela"
+    },
+    {
+     "name": "inter",
+     "country": "Venezuela"
+    },
+    {
+     "name": "Okko Sport",
+     "country": "Russia"
+    },
+    {
+     "name": "Okko Sport",
+     "country": "Moldova"
+    },
+    {
+     "name": "Q Sport 1 League",
+     "country": "Moldova"
+    },
+    {
+     "name": "iQiyi",
+     "country": "China"
+    },
+    {
+     "name": "eltaott.tv",
+     "country": "Chinese Taipei"
+    },
+    {
+     "name": "Sony LIV",
+     "country": "Pakistan"
+    },
+    {
+     "name": "tapmad",
+     "country": "Pakistan"
+    },
+    {
+     "name": "SuperSport MáXimo 3",
+     "country": "Kenya"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Kenya"
+    },
+    {
+     "name": "Supersport Grandstand ROA",
+     "country": "Kenya"
+    },
+    {
+     "name": "SuperSport Action Africa",
+     "country": "Kenya"
+    },
+    {
+     "name": "GOtv",
+     "country": "Kenya"
+    },
+    {
+     "name": "SuperSport MáXimo 3",
+     "country": "Nigeria"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Nigeria"
+    },
+    {
+     "name": "SuperSport Action Africa",
+     "country": "Nigeria"
+    },
+    {
+     "name": "DAZN New Zealand",
+     "country": "New Zealand"
+    },
+    {
+     "name": "MTV Katsomo",
+     "country": "Finland"
+    },
+    {
+     "name": "Go3 Extra Sports Estonia",
+     "country": "Estonia"
+    },
+    {
+     "name": "Go3 Extra Sports Latvia",
+     "country": "Latvia"
+    },
+    {
+     "name": "Go3 Extra Sports Lithuania",
+     "country": "Lithuania"
+    },
+    {
+     "name": "DAZN Germany",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Blue Sport D 2",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Blue Sport",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Blue Sport 6 Live",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Pickx+ Sports 4",
+     "country": "Luxembourg"
+    },
+    {
+     "name": "Arena Sport 1 Serbia",
+     "country": "Montenegro"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Montenegro"
+    },
+    {
+     "name": "Tring Sport 3",
+     "country": "Kosovo"
+    },
+    {
+     "name": "ArtMotion",
+     "country": "Kosovo"
+    },
+    {
+     "name": "TV Vala Kosovo Telecom",
+     "country": "Kosovo"
+    },
+    {
+     "name": "ESPN Colombia",
+     "country": "Peru"
+    },
+    {
+     "name": "Disney+ Premium Chile",
+     "country": "Peru"
+    },
+    {
+     "name": "TSN7 Malta",
+     "country": "Malta"
+    }
+   ]
+  },
+  {
+   "home": "Arsenal",
+   "away": "Borussia Dortmund",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "beIN Sports HD 4",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN Sports French",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Bahrain"
+    },
+    {
+     "name": "TOD",
+     "country": "Bahrain"
+    },
+    {
+     "name": "beIN Sports HD 4",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "TOD",
+     "country": "Saudi Arabia"
+    },
+    {
+     "name": "Amazon Prime Video",
+     "country": "Great Britain"
+    },
+    {
+     "name": "myCANAL",
+     "country": "France"
+    },
+    {
+     "name": "Canal+ Live 4",
+     "country": "France"
+    },
+    {
+     "name": "Movistar+",
+     "country": "Spain"
+    },
+    {
+     "name": "Movistar Liga de Campeones 3",
+     "country": "Spain"
+    },
+    {
+     "name": "Movistar Liga de Campeones 4",
+     "country": "Spain"
+    },
+    {
+     "name": "Amazon Prime Video",
+     "country": "Germany"
+    },
+    {
+     "name": "Sky Sport 254",
+     "country": "Italy"
+    },
+    {
+     "name": "SKY Go Italia",
+     "country": "Italy"
+    },
+    {
+     "name": "Sky Sport Calcio",
+     "country": "Italy"
+    },
+    {
+     "name": "NOW TV",
+     "country": "Italy"
+    },
+    {
+     "name": "tabii",
+     "country": "Turkey"
+    },
+    {
+     "name": "MagentaSport 3",
+     "country": "Greece"
+    },
+    {
+     "name": "Canal+",
+     "country": "Poland"
+    },
+    {
+     "name": "Canal+ Extra 1",
+     "country": "Poland"
+    },
+    {
+     "name": "DAZN3 Portugal",
+     "country": "Portugal"
+    },
+    {
+     "name": "DAZN Portugal",
+     "country": "Portugal"
+    },
+    {
+     "name": "Ziggo Go",
+     "country": "Netherlands"
+    },
+    {
+     "name": "Ziggo Sport 3",
+     "country": "Netherlands"
+    },
+    {
+     "name": "Cytavision on the Go",
+     "country": "Cyprus"
+    },
+    {
+     "name": "Cytavision Sports 4",
+     "country": "Cyprus"
+    },
+    {
+     "name": "Arena 2 Premium",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Sport 1 Croatia",
+     "country": "Croatia"
+    },
+    {
+     "name": "MAXtv To Go",
+     "country": "Croatia"
+    },
+    {
+     "name": "FOX One",
+     "country": "Mexico"
+    },
+    {
+     "name": "ESPN2 Argentina",
+     "country": "Argentina"
+    },
+    {
+     "name": "Disney+ Premium Argentina",
+     "country": "Argentina"
+    },
+    {
+     "name": "Max Brazil",
+     "country": "Brazil"
+    },
+    {
+     "name": "DAZN Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "fuboTV Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    }
+   ]
+  },
+  {
+   "home": "Galatasaray",
+   "away": "Aston Villa",
+   "kickoff": "2026-11-24T17:45:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "TUDN USA",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    }
+   ]
+  },
+  {
+   "home": "Bodø / Glimt",
+   "away": "LASK Linz",
+   "kickoff": "2026-11-24T17:45:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    },
+    {
+     "name": "DAZN Canada",
+     "country": "Canada"
+    }
+   ]
+  },
+  {
+   "home": "Slovan Bratislava",
+   "away": "Real Betis",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    },
+    {
+     "name": "DAZN Canada",
+     "country": "Canada"
+    }
+   ]
+  },
+  {
+   "home": "RB Leipzig",
+   "away": "Lens",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    },
+    {
+     "name": "Max Mexico",
+     "country": "Mexico"
+    }
+   ]
+  },
+  {
+   "home": "Feyenoord",
+   "away": "Porto",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    },
+    {
+     "name": "CBS Sports Golazo",
+     "country": "USA"
+    }
+   ]
+  },
+  {
+   "home": "Como",
+   "away": "AEK Athens",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "UEFA Champions League",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ViX",
+     "country": "USA"
+    },
+    {
+     "name": "Max Mexico",
+     "country": "Mexico"
+    }
+   ]
+  },
+  {
+   "home": "Wolverhampton Wanderers",
+   "away": "Derby County",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "beIN Sports Xtra",
+     "country": "Algeria"
+    },
+    {
+     "name": "beIN SPORTS 3",
+     "country": "Australia"
+    },
+    {
+     "name": "beIN Sports Connect",
+     "country": "Australia"
+    },
+    {
+     "name": "beIN Sports Xtra",
+     "country": "Bahrain"
+    },
+    {
+     "name": "ESPN Brazil",
+     "country": "Brazil"
+    },
+    {
+     "name": "Disney+ Premium Brazil",
+     "country": "Brazil"
+    },
+    {
+     "name": "Play Diema Xtra",
+     "country": "Bulgaria"
+    },
+    {
+     "name": "Diema Sport 2",
+     "country": "Bulgaria"
+    },
+    {
+     "name": "DAZN Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "fuboTV Canada",
+     "country": "Canada"
+    },
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "beIN Sports Xtra",
+     "country": "Egypt"
+    },
+    {
+     "name": "Elisa Viihde Viaplay",
+     "country": "Finland"
+    },
+    {
+     "name": "beIN Sports MAX 5",
+     "country": "France"
+    },
+    {
+     "name": "beIN SPORTS CONNECT",
+     "country": "France"
+    },
+    {
+     "name": "myCANAL",
+     "country": "France"
+    },
+    {
+     "name": "Sky Go UK",
+     "country": "Great Britain"
+    },
+    {
+     "name": "NOW",
+     "country": "Great Britain"
+    },
+    {
+     "name": "SKY GO Extra",
+     "country": "Great Britain"
+    },
+    {
+     "name": "Sky Sports Main Event",
+     "country": "Great Britain"
+    },
+    {
+     "name": "Viaplay Iceland",
+     "country": "Iceland"
+    },
+    {
+     "name": "FanCode",
+     "country": "India"
+    },
+    {
+     "name": "Sky Go UK",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "NOW",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "SKY GO Extra",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "Sky Sports Main Event",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "Sport 1",
+     "country": "Israel"
+    },
+    {
+     "name": "DAZN Japan",
+     "country": "Japan"
+    },
+    {
+     "name": "Arena Sport 9 Serbia",
+     "country": "Macedonia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Macedonia"
+    },
+    {
+     "name": "TSN1 Malta",
+     "country": "Malta"
+    },
+    {
+     "name": "Viaplay Netherlands",
+     "country": "Netherlands"
+    },
+    {
+     "name": "Viaplay Norway",
+     "country": "Norway"
+    },
+    {
+     "name": "TV 2 Play",
+     "country": "Norway"
+    },
+    {
+     "name": "V Sport 1 Norway",
+     "country": "Norway"
+    },
+    {
+     "name": "TVP Sport",
+     "country": "Poland"
+    },
+    {
+     "name": "sport.tvp.pl",
+     "country": "Poland"
+    },
+    {
+     "name": "Canal+",
+     "country": "Poland"
+    },
+    {
+     "name": "TVP Sport App",
+     "country": "Poland"
+    },
+    {
+     "name": "Sport TV1",
+     "country": "Portugal"
+    },
+    {
+     "name": "Sport TV Multiscreen",
+     "country": "Portugal"
+    },
+    {
+     "name": "beIN Sports Xtra",
+     "country": "Qatar"
+    },
+    {
+     "name": "Arena Sport 8 Serbia",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Sport 9 Serbia",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Sport 1 Premium",
+     "country": "Slovenia"
+    },
+    {
+     "name": "ESPN Africa",
+     "country": "South Africa"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "S Sport+",
+     "country": "Turkey"
+    },
+    {
+     "name": "beIN Sports Xtra",
+     "country": "United Arab Emirates"
+    },
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ESPN Africa",
+     "country": "Angola"
+    },
+    {
+     "name": "DStv Now",
+     "country": "Angola"
+    },
+    {
+     "name": "Disney+ Premium Argentina",
+     "country": "Argentina"
+    },
+    {
+     "name": "Disney+ Premium Mexico",
+     "country": "Mexico"
+    },
+    {
+     "name": "Disney+ Premium Norte",
+     "country": "Costa Rica"
+    },
+    {
+     "name": "Disney+ Premium Chile",
+     "country": "Chile"
+    },
+    {
+     "name": "Disney+ Premium Sur",
+     "country": "Colombia"
+    },
+    {
+     "name": "Como TV",
+     "country": "Italy"
+    },
+    {
+     "name": "beIN Sports Connect New Zealand",
+     "country": "New Zealand"
+    },
+    {
+     "name": "Arena Sport 9 Serbia",
+     "country": "Montenegro"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Montenegro"
+    }
+   ]
+  },
+  {
+   "home": "Norwich City",
+   "away": "Queens Park Rangers",
+   "kickoff": "2026-11-24T19:45:00Z",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "Viaplay Norway",
+     "country": "Norway"
+    }
+   ]
+  },
+  {
+   "home": "Sheffield United",
+   "away": "Southampton",
+   "kickoff": "2026-11-24T19:45:00Z",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "Viaplay Norway",
+     "country": "Norway"
+    }
+   ]
+  },
+  {
+   "home": "Portsmouth",
+   "away": "West Ham United",
+   "kickoff": "2026-11-24T19:45:00Z",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "Viaplay Norway",
+     "country": "Norway"
+    }
+   ]
+  },
+  {
+   "home": "Middlesbrough",
+   "away": "Swansea City",
+   "kickoff": "2026-11-24T19:45:00Z",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "Viaplay Norway",
+     "country": "Norway"
+    }
+   ]
+  },
+  {
+   "home": "Bristol City",
+   "away": "Wrexham",
+   "kickoff": "2026-11-24T19:45:00Z",
+   "competition": "Championship",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "Viaplay Denmark",
+     "country": "Denmark"
+    },
+    {
+     "name": "Viaplay Sweden",
+     "country": "Sweden"
+    },
+    {
+     "name": "Viaplay Norway",
+     "country": "Norway"
+    }
+   ]
+  },
+  {
+   "home": "Port Vale",
+   "away": "Northampton Town",
+   "kickoff": "2026-11-24T19:45:00Z",
+   "competition": "League Two",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Sky Sports+",
+     "country": "Great Britain"
+    }
+   ]
+  },
+  {
+   "home": "Rangers",
+   "away": "Aberdeen",
+   "kickoff": "2026-11-24T20:00:00Z",
+   "competition": "Scottish Premiership",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "beIN SPORTS 2",
+     "country": "Australia"
+    },
+    {
+     "name": "beIN Sports Connect",
+     "country": "Australia"
+    },
+    {
+     "name": "Sportdigital FUSSBALL",
+     "country": "Austria"
+    },
+    {
+     "name": "sportdigital+",
+     "country": "Austria"
+    },
+    {
+     "name": "Canal Gol Brazil",
+     "country": "Brazil"
+    },
+    {
+     "name": "Sportklub 6 Croatia",
+     "country": "Croatia"
+    },
+    {
+     "name": "Sportdigital FUSSBALL",
+     "country": "Germany"
+    },
+    {
+     "name": "sportdigital+",
+     "country": "Germany"
+    },
+    {
+     "name": "Sky Go UK",
+     "country": "Great Britain"
+    },
+    {
+     "name": "NOW",
+     "country": "Great Britain"
+    },
+    {
+     "name": "SKY GO Extra",
+     "country": "Great Britain"
+    },
+    {
+     "name": "Sky Sports Football",
+     "country": "Great Britain"
+    },
+    {
+     "name": "MagentaSport 9",
+     "country": "Greece"
+    },
+    {
+     "name": "Match4",
+     "country": "Hungary"
+    },
+    {
+     "name": "Onefootball",
+     "country": "International"
+    },
+    {
+     "name": "Sky Go UK",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "NOW",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "SKY GO Extra",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "Sky Sports Football",
+     "country": "Ireland Republic"
+    },
+    {
+     "name": "Como TV",
+     "country": "Italy"
+    },
+    {
+     "name": "Polsat Sport 3",
+     "country": "Poland"
+    },
+    {
+     "name": "Polsat Box Go",
+     "country": "Poland"
+    },
+    {
+     "name": "Sport TV2",
+     "country": "Portugal"
+    },
+    {
+     "name": "Sport TV Multiscreen",
+     "country": "Portugal"
+    },
+    {
+     "name": "Telekanal Futbol",
+     "country": "Russia"
+    },
+    {
+     "name": "Arena Sport 8 Serbia",
+     "country": "Serbia"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Serbia"
+    },
+    {
+     "name": "ŠTV 1",
+     "country": "Slovenia"
+    },
+    {
+     "name": "ESPN2 Africa",
+     "country": "South Africa"
+    },
+    {
+     "name": "Sportdigital FUSSBALL",
+     "country": "Switzerland"
+    },
+    {
+     "name": "Blue Sport",
+     "country": "Switzerland"
+    },
+    {
+     "name": "Sunrise TV",
+     "country": "Switzerland"
+    },
+    {
+     "name": "sportdigital+",
+     "country": "Switzerland"
+    },
+    {
+     "name": "S Sport+",
+     "country": "Turkey"
+    },
+    {
+     "name": "Paramount+",
+     "country": "USA"
+    },
+    {
+     "name": "ESPN2 Africa",
+     "country": "Angola"
+    },
+    {
+     "name": "eltaott.tv",
+     "country": "Chinese Taipei"
+    },
+    {
+     "name": "Blue Sport",
+     "country": "Liechtenstein"
+    },
+    {
+     "name": "Arena Cloud",
+     "country": "Macedonia"
+    }
+   ]
+  },
+  {
+   "home": "Juve Stabia",
+   "away": "Catanzaro",
+   "kickoff": "2026-11-24T18:00:00Z",
+   "competition": "Serie B",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "DAZN Italia",
+     "country": "Italy"
+    },
+    {
+     "name": "LAB Channel",
+     "country": "Italy"
+    }
+   ]
+  },
+  {
+   "home": "Palermo",
+   "away": "Südtirol",
+   "kickoff": "2026-11-24T19:00:00Z",
+   "competition": "Serie B",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "DAZN Italia",
+     "country": "Italy"
+    },
+    {
+     "name": "LAB Channel",
+     "country": "Italy"
+    }
+   ]
+  },
+  {
+   "home": "Chapecoense",
+   "away": "Palmeiras",
+   "kickoff": "2026-11-24T21:00:00Z",
+   "competition": "Brasileirão",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Premiere",
+     "country": "Brazil"
+    }
+   ]
+  },
+  {
+   "home": "Japan U17",
+   "away": "Serbia U17",
+   "kickoff": "2026-11-24T13:00:00Z",
+   "competition": "FIFA U-17 World Cup",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Fox Soccer Plus",
+     "country": "USA"
+    },
+    {
+     "name": "DAZN Germany",
+     "country": "Germany"
+    }
+   ]
+  },
+  {
+   "home": "Brazil U17",
+   "away": "Tanzania U17",
+   "kickoff": "2026-11-24T15:00:00Z",
+   "competition": "FIFA U-17 World Cup",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Fox Soccer Plus",
+     "country": "USA"
+    }
+   ]
+  },
+  {
+   "home": "SJ Earthquakes",
+   "away": "Houston Dynamo",
+   "kickoff": "2026-11-25T03:00:00Z",
+   "competition": "MLS",
+   "sport": "football",
+   "channels": [
+    {
+     "name": "Fox Sports 1",
+     "country": "USA"
+    },
+    {
+     "name": "Apple TV",
+     "country": "USA"
+    }
+   ]
+  }
+ ]
+}

@@ -1100,12 +1100,13 @@ enum MatchGuideRule {
         let b = leadPrefix(name) != nil ? body(folded) : folded
         return Set(channelKey(b).split(separator: " ").map(String.init))
     }
-    private static let channelNoise: Set<String> = ["sport", "sports", "spor", "tv", "channel", "the", "+", "plus", "uk", "ar", "en", "english"]
+    private static let channelNoise: Set<String> = ["sport", "sports", "spor", "tv", "channel", "the", "+", "plus", "uk", "ar"]
 
     /// The words that tell a channel apart inside its network ("event", "1", "f1").
     static func ownWords(_ name: String, net: String? = nil) -> Set<String> {
         let n = net ?? network(name)
-        return bodyWords(name).subtracting(channelNoise).subtracting(words(n).split(separator: " ").map(String.init))
+        let netWords = words(n).split(separator: " ").map(String.init)
+        return bodyWords(name).subtracting(channelNoise).subtracting(netWords).subtracting(netWords.map { $0 + "+" })   // "Canal+" is the network itself
     }
 
     /// A sports channel WITHOUT a guide that may carry a card (shown apart, unconfirmed): same network, and its own
@@ -1537,6 +1538,421 @@ enum MatchScreenRule {
         guard let r = t.range(of: e.teams.away) else { return nil }
         let rest = String(t[r.upperBound...]).trimmingCharacters(in: CharacterSet(charactersIn: " -–—/|"))
         return rest.isEmpty ? nil : String(rest.prefix(60))
+    }
+}
+
+/// 1.8.6: matches and broadcasters from several sources, each fact with its source and time (owner 23:44).
+/// The iPhone side of the TV's MatchSourcesCore — same rules and vectors (docs/MATCH-SOURCES.md).
+enum MatchSourcesRule {
+    enum Kind: Int, CaseIterable {
+        case manual, broadcaster, guide, epg, candidate
+        var label: String { ["أضفتها يدويًا", "مدرجة في جدول الناقل", "مدرجة في دليل نقل خارجي", "موجودة في EPG المزوّد", "نسخة محتملة بلا دليل"][rawValue] }
+    }
+
+    // ---------- the import file ----------
+
+    struct ExtChannel: Equatable { let name: String; let country: String?; let programmeStart: Int64? }
+    struct ExtMatch: Equatable { let home: String; let away: String; let kickoff: Int64; let competition: String?; let sport: String?; let channels: [ExtChannel] }
+    struct ExtSource { let name: String; let kind: Kind; let url: String?; let fetchedAt: Int64; let importedAt: Int64; let matches: [ExtMatch] }
+    struct BadFile: Error { let reason: String }
+
+    private static func time(_ s: String?, _ what: String) throws -> Int64 {
+        guard let s = s?.trimmingCharacters(in: .whitespaces), !s.isEmpty else { throw BadFile(reason: "\(what): الوقت ناقص") }
+        let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime]
+        let g = ISO8601DateFormatter(); g.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let d = f.date(from: s) ?? g.date(from: s) else {
+            throw BadFile(reason: "\(what): الوقت «\(s)» ليس بصيغة ISO-8601 مع المنطقة (مثل 2026-11-23T20:00:00Z)")
+        }
+        return Int64((d.timeIntervalSince1970 * 1000).rounded())
+    }
+
+    private static func str(_ o: [String: Any], _ k: String) -> String { ((o[k] as? String) ?? "").trimmingCharacters(in: .whitespaces) }
+
+    /// Reads a "shasha-matches" v1 file; refused whole, with the reason, when something required is missing.
+    static func parse(_ data: Data, now: Int64) throws -> ExtSource {
+        guard let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { throw BadFile(reason: "ليس ملف JSON") }
+        guard (root["format"] as? String) == "shasha-matches" else { throw BadFile(reason: "الحقل format يجب أن يكون shasha-matches") }
+        guard (root["version"] as? Int) == 1 else { throw BadFile(reason: "الإصدار المدعوم 1") }
+        guard let src = root["source"] as? [String: Any] else { throw BadFile(reason: "المصدر (source) ناقص") }
+        let name = str(src, "name"); if name.isEmpty { throw BadFile(reason: "اسم المصدر ناقص") }
+        let kind: Kind
+        switch src["kind"] as? String { case "broadcaster": kind = .broadcaster; case "guide": kind = .guide
+        default: throw BadFile(reason: "نوع المصدر يجب أن يكون broadcaster أو guide") }
+        let fetched = try time(src["fetchedAt"] as? String, "وقت أخذ البيانات")
+        guard let arr = root["matches"] as? [Any] else { throw BadFile(reason: "قائمة المباريات (matches) ناقصة") }
+        if arr.count > 5000 { throw BadFile(reason: "أكثر من 5000 مباراة") }
+        var out: [ExtMatch] = []
+        for (i, x) in arr.enumerated() {
+            guard let m = x as? [String: Any] else { throw BadFile(reason: "المباراة \(i + 1) ليست كائنًا") }
+            let home = str(m, "home"), away = str(m, "away")
+            if home.isEmpty || away.isEmpty { throw BadFile(reason: "المباراة \(i + 1): الفريقان مطلوبان") }
+            let ko = try time(m["kickoff"] as? String, "المباراة \(i + 1)")
+            var chs: [ExtChannel] = []
+            for c in (m["channels"] as? [Any]) ?? [] {
+                guard let c = c as? [String: Any] else { continue }
+                let n = str(c, "name"); if n.isEmpty { continue }
+                let ps = str(c, "programmeStart")
+                chs.append(ExtChannel(name: n, country: str(c, "country").isEmpty ? nil : str(c, "country"),
+                                      programmeStart: ps.isEmpty ? nil : try time(ps, "المباراة \(i + 1) قناة \(n)")))
+            }
+            out.append(ExtMatch(home: home, away: away, kickoff: ko, competition: str(m, "competition").isEmpty ? nil : str(m, "competition"),
+                                sport: str(m, "sport").isEmpty ? nil : str(m, "sport"), channels: chs))
+        }
+        return ExtSource(name: name, kind: kind, url: str(src, "url").isEmpty ? nil : str(src, "url"), fetchedAt: fetched, importedAt: now, matches: out)
+    }
+
+    // ---------- what a schedule names: a channel, a whole network, or a viewing platform ----------
+
+    /// A listed name is a specific channel, a network as a whole, or a platform (app / service) — never guessed into a channel. Same as the TV.
+    enum ChType: String { case channel = "قناة محددة", network = "شبكة عامة", platform = "منصة مشاهدة"; var label: String { rawValue } }
+
+    private static let platformTokens: Set<String> = ["connect", "tod", "go", "now", "app", "player", "play", "online", "multiscreen", "katsomo", "viihde",
+        "selekt", "stream", "streaming", "web", "com", "tv2play"]
+    private static let platformPhrases: [String] = ["hbo max", "max", "paramount", "peacock", "fubotv", "fubo", "vix", "disney", "prime video", "amazon prime",
+        "apple tv", "mycanal", "tabii", "sooka", "vidio", "jiotv", "sony liv", "fancode", "onefootball", "youtube", "stan sport", "pickx",
+        "voyo", "oneplay", "rtl", "megogo", "okko", "iqiyi", "eltaott", "starhub", "dstv", "gotv", "arena cloud", "univision", "sling",
+        "bluu", "inter", "nexgen", "viaplay", "dazn", "polsat box", "tvp sport app", "uefa tv", "city", "hibs tv",
+        "nifl tv", "cymru football tv", "destination calcio", "moja tv", "artmotion", "tv vala", "medianet", "dialog tv", "tapmad",
+        "wowow", "spotv now", "now player", "ais play", "nexgen", "tring", "fast tv", "tv net"].map { MatchGuideRule.words($0) }
+
+    /// Country words inside listed names ("Arena Sport 3 Croatia"): the country, not the channel.
+    private static let countryWords: Set<String> = ["croatia", "serbia", "slovenia", "bosnia", "thailand", "indonesia", "malaysia", "philippines", "singapore",
+        "hong", "kong", "portugal", "spain", "espana", "italia", "italy", "germany", "deutschland", "france", "cz", "czech", "romania", "hungary",
+        "mexico", "brazil", "brasil", "argentina", "chile", "colombia", "canada", "usa", "us", "africa", "roa", "nigeria", "myanmar", "estonia",
+        "latvia", "lithuania", "norway", "sweden", "denmark", "iceland", "japan", "korea", "zealand", "new", "australia", "turkey", "greece",
+        "cyprus", "malta", "kosova", "kosovo", "azerbaijan", "austria", "switzerland", "belgium", "netherlands", "poland", "ukraine", "russia",
+        "england", "uk", "ireland", "mena", "sur", "norte", "caribbean", "international", "middle", "east"]
+    /// Names that are a whole network or package when nothing else is said.
+    private static let genericNetworks: Set<String> = ["canal", "canal plus", "movistar", "movistar plus", "bein", "bein sports", "bein sport", "sky sports",
+        "sky sport", "tnt sports", "tnt sport", "espn", "dazn", "fox sports", "premiere", "eleven sports", "arena sport", "sport tv",
+        "supersport", "polsat sport", "nova sport", "digi sport", "cosmote sport", "sport klub", "sportklub"]
+
+    static func distinct(_ name: String, net: String? = nil) -> Set<String> {
+        MatchGuideRule.ownWords(name, net: net ?? MatchGuideRule.network(name)).subtracting(countryWords)
+    }
+    private static func bodyNoCountry(_ name: String) -> Set<String> { MatchGuideRule.bodyWords(name).subtracting(countryWords) }
+    private static func toks(_ name: String) -> [String] { MatchGuideRule.words(name).split(separator: " ").map(String.init) }
+
+    static func channelType(_ name: String) -> ChType {
+        let w = MatchGuideRule.words(name)
+        let t = Set(toks(name))
+        let hasNumber = t.contains { $0.contains { $0.isNumber } }
+        if t.contains(where: { platformTokens.contains($0) }) { return .platform }
+        if !hasNumber && platformPhrases.contains(where: { " \(w) ".contains(" \($0) ") }) { return .platform }
+        let net = MatchGuideRule.network(name)
+        let bare = toks(name).filter { !countryWords.contains($0) }.joined(separator: " ")
+        return net != "أخرى" && distinct(name, net: net).isEmpty && genericNetworks.contains(bare) ? .network : .channel
+    }
+
+    private static let langWords: [String: String] = ["english": "إنجليزي", "french": "فرنسي", "francais": "فرنسي", "arabic": "عربي", "spanish": "إسباني",
+        "espanol": "إسباني", "turkish": "تركي", "portuguese": "برتغالي", "german": "ألماني", "deutsch": "ألماني", "italian": "إيطالي"]
+    /// Commentary language when the name says it; nil otherwise (never guessed).
+    static func language(_ name: String) -> String? { toks(name).lazy.compactMap { langWords[$0] }.first }
+
+    private static let ultraWords: Set<String> = ["ultra", "ultimate", "uhd", "4k", "hdr"]
+    static func namesUhd(_ name: String) -> Bool {
+        MatchGuideRule.version(name).res == .uhd || toks(name).contains { $0 == "ultra" || $0 == "ultimate" }
+    }
+
+    // ---------- the library ----------
+
+    struct LibCh { let id: String; let name: String }
+
+    private static let countryNames: [String: String] = [
+        "gb": "بريطانيا", "uk": "بريطانيا", "great britain": "بريطانيا", "england": "بريطانيا", "united kingdom": "بريطانيا",
+        "ie": "إيرلندا", "ireland": "إيرلندا", "fr": "فرنسا", "france": "فرنسا", "es": "إسبانيا", "spain": "إسبانيا",
+        "de": "ألمانيا", "germany": "ألمانيا", "it": "إيطاليا", "italy": "إيطاليا", "pt": "البرتغال", "portugal": "البرتغال",
+        "nl": "هولندا", "netherlands": "هولندا", "be": "بلجيكا", "belgium": "بلجيكا", "pl": "بولندا", "poland": "بولندا",
+        "tr": "تركيا", "turkey": "تركيا", "gr": "اليونان", "greece": "اليونان", "cy": "قبرص", "cyprus": "قبرص",
+        "rs": "صربيا", "serbia": "صربيا", "hr": "كرواتيا", "croatia": "كرواتيا", "us": "أمريكا", "usa": "أمريكا",
+        "ca": "كندا", "canada": "كندا", "mx": "المكسيك", "mexico": "المكسيك", "br": "البرازيل", "brazil": "البرازيل",
+        "ar": "الأرجنتين", "argentina": "الأرجنتين", "se": "السويد", "sweden": "السويد", "no": "النرويج", "norway": "النرويج",
+        "dk": "الدنمارك", "denmark": "الدنمارك", "at": "النمسا", "austria": "النمسا", "ch": "سويسرا", "switzerland": "سويسرا",
+    ]
+    private static let arab: Set<String> = ["bh", "bahrain", "sa", "saudi arabia", "ae", "united arab emirates", "qa", "qatar", "kw", "kuwait", "om", "oman",
+        "eg", "egypt", "jo", "jordan", "lb", "lebanon", "iq", "iraq", "ma", "morocco", "dz", "algeria", "tn", "tunisia", "ly", "libya",
+        "sy", "syria", "ye", "yemen", "ps", "palestine", "sd", "sudan", "mena"]
+
+    static func countryFits(_ country: String?, _ libName: String) -> Bool {
+        guard let c = country?.lowercased().trimmingCharacters(in: .whitespaces) else { return true }
+        let lib = MatchGuideRule.country(libName)
+        if lib == "بدون بادئة" || lib.hasPrefix("تسمية") { return true }
+        if arab.contains(c) { return lib == "عربي" || ["السعودية", "قطر", "الإمارات", "الكويت", "البحرين", "عُمان", "مصر"].contains(lib) }
+        guard let want = countryNames[c] else { return true }
+        return lib == want
+    }
+
+    final class LibIndex {
+        struct E { let ch: LibCh; let own: Set<String>; let body: Set<String>; let res: MatchGuideRule.Res }
+        let byNet: [String: [E]]
+        init(_ lib: [LibCh]) {
+            var d: [String: [E]] = [:]
+            for ch in lib {
+                let net = MatchGuideRule.network(ch.name)
+                d[net, default: []].append(E(ch: ch, own: distinct(ch.name, net: net), body: bodyNoCountry(ch.name),
+                                             res: MatchGuideRule.version(ch.name).res))
+            }
+            byNet = d
+        }
+    }
+
+    /// Library versions of a channel a schedule names: (version, exact). Same as the TV's libraryMatches.
+    static func libraryMatches(_ c: ExtChannel, _ idx: LibIndex, siblings: [String] = []) -> [(LibIndex.E, Bool)] {
+        if channelType(c.name) != .channel { return [] }     // a platform or a whole network is never guessed into a channel
+        let net = MatchGuideRule.network(c.name)
+        guard let list = idx.byNet[net] else { return [] }
+        let own = distinct(c.name, net: net)
+        let body = bodyNoCountry(c.name)
+        let wantsUhd = namesUhd(c.name)
+        if own.isEmpty && net == "أخرى" { return [] }
+        // a named 4K channel: the library's 4K versions of the channels listed with it are possible, never confirmed by name alone
+        let uhdOwn = own.subtracting(ultraWords)
+        let sib = siblings.filter { MatchGuideRule.network($0) == net && !namesUhd($0) }.map { distinct($0, net: net) }
+        var out: [(LibIndex.E, Bool)] = []
+        for e in list {
+            if e.res == .uhd && !wantsUhd { continue }
+            let exact = e.own == own && (!own.isEmpty || e.body == body)
+            var possible = !exact && !own.isEmpty && own.isSubset(of: e.body)
+            if !exact && !possible && wantsUhd && e.res == .uhd {
+                let eOwn = e.own.subtracting(ultraWords)
+                possible = (!eOwn.isEmpty && (eOwn == uhdOwn || sib.contains { !$0.isEmpty && eOwn.isSubset(of: $0) }))
+                    || (eOwn.isEmpty && !e.own.isDisjoint(with: ultraWords))
+            }
+            if !exact && !possible { continue }
+            out.append((e, exact && countryFits(c.country, e.ch.name)))
+        }
+        return out
+    }
+
+    // ---------- manual links ----------
+
+    struct Manual: Codable, Equatable { let matchKey: String; let channelId: String; let name: String; let add: Bool; let at: Int64 }
+
+    static func matchKey(home: String, away: String, audience: Set<String>, at: Int64, tz: TimeZone = .current) -> String {
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = tz; f.dateFormat = "yyyy-MM-dd"
+        return [MatchGuideRule.teamKey(home), MatchGuideRule.teamKey(away)].sorted().joined(separator: " | ")
+            + audience.sorted().map { "#" + $0 }.joined() + " @" + f.string(from: Date(timeIntervalSince1970: Double(at) / 1000))
+    }
+    static func manualSet(_ list: [Manual], _ m: Manual) -> [Manual] { list.filter { !($0.matchKey == m.matchKey && $0.channelId == m.channelId) } + [m] }
+    static func manualClear(_ list: [Manual], key: String, channelId: String) -> [Manual] { list.filter { !($0.matchKey == key && $0.channelId == channelId) } }
+
+    // ---------- merging ----------
+
+    struct Proof: Equatable { let kind: Kind; let source: String; let at: Int64; var detail: String? = nil }
+
+    struct Link: Equatable {
+        let channelId: String; let name: String; var proofs: [Proof]; var possible = false
+        var best: Kind { Kind(rawValue: proofs.map(\.kind.rawValue).min() ?? Kind.candidate.rawValue) ?? .candidate }
+        var confirmed: Bool {
+            proofs.contains { $0.kind != .candidate } && !(possible && !proofs.contains { $0.kind == .manual || $0.kind == .epg })
+        }
+    }
+
+    struct Row {
+        let key: String; let home: String; let away: String; let competition: String?; let audience: Set<String>
+        let kickoff: Int64?; let kickoffFrom: String?
+        let group: MatchGuideRule.Group?
+        let timeConflict: Bool
+        let links: [Link]
+        let missing: [(String, String)]
+        let removed: [Manual]
+        let sources: [String]
+        var sport: MatchGuideRule.SportGuess = MatchGuideRule.SportGuess(sport: .unknown)
+        /// Platforms / whole networks a schedule names (TOD, beIN CONNECT, HBO Max, Canal+…): shown, never linked to a channel.
+        var platforms: [(String, String)] = []
+        var start: Int64 { kickoff ?? group!.start }
+        var stop: Int64 { group?.stop ?? start + 2 * 3_600_000 }
+        func airingAt(_ now: Int64) -> Bool { group?.airingAt(now) == true || (kickoff.map { now >= $0 && now < $0 + 2 * 3_600_000 } ?? false) }
+    }
+
+    private static func teamsMatch(_ a: String, _ b: String) -> Bool {
+        let ka = MatchGuideRule.teamKey(a), kb = MatchGuideRule.teamKey(b)
+        if ka == kb { return true }
+        func split(_ k: String) -> (String, String) {
+            guard let i = k.firstIndex(of: "#") else { return (k, "") }
+            return (String(k[..<i]), String(k[k.index(after: i)...]))
+        }
+        let (wa, ma) = split(ka), (wb, mb) = split(kb)
+        if ma != mb { return false }
+        let sa = Set(wa.split(separator: " ").map(String.init)), sb = Set(wb.split(separator: " ").map(String.init))
+        return !sa.isEmpty && !sb.isEmpty && (sa.isSuperset(of: sb) || sb.isSuperset(of: sa))
+    }
+
+    static func sameMatch(_ g: MatchGuideRule.Group, _ m: ExtMatch) -> Bool {
+        if g.replay { return false }
+        let aud = Set(g.entries.flatMap(\.audience))
+        if !aud.isEmpty && aud != MatchGuideRule.audience(m.home + " " + m.away) { return false }
+        let teams = (teamsMatch(g.home, m.home) && teamsMatch(g.away, m.away)) || (teamsMatch(g.home, m.away) && teamsMatch(g.away, m.home))
+        return teams && m.kickoff >= g.start - 3 * 3_600_000 && m.kickoff <= g.stop + 3_600_000
+    }
+
+    static func timesFit(_ g: MatchGuideRule.Group, _ kickoff: Int64) -> Bool {
+        g.entries.contains { (-15 * 60_000...2 * 3_600_000).contains(kickoff - $0.start) && $0.stop > kickoff }
+    }
+
+    static func merge(_ groups: [MatchGuideRule.Group], sources: [ExtSource], idx: LibIndex, pool: MatchGuideRule.ExtraPool,
+                      manual: [Manual], guideSource: String, guideAt: Int64, from: Int64, to: Int64, tz: TimeZone = .current) -> [Row] {
+        var accs: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)])] = groups.map { ($0, []) }
+        for s in sources {
+            for m in s.matches where m.kickoff >= from - 3 * 3_600_000 && m.kickoff < to {
+                if let i = accs.firstIndex(where: { $0.group != nil && sameMatch($0.group!, m) }) ?? accs.firstIndex(where: { a in
+                    a.group == nil && a.ext.contains { $0.1.kickoff == m.kickoff && teamsMatch($0.1.home, m.home) && teamsMatch($0.1.away, m.away) } }) {
+                    accs[i].ext.append((s, m))
+                } else { accs.append((nil, [(s, m)])) }
+            }
+        }
+        var rows: [Row] = []
+        for a in accs {
+            let g = a.group
+            let first = a.ext.first?.1
+            let home = g?.home ?? first!.home, away = g?.away ?? first!.away
+            let audience = g.map { Set($0.entries.flatMap(\.audience)) } ?? MatchGuideRule.audience(home + " " + away)
+            let sched = a.ext.enumerated().sorted { ($0.element.0.kind.rawValue, $0.offset) < ($1.element.0.kind.rawValue, $1.offset) }.map(\.element)
+            let kickoff = sched.first?.1.kickoff
+            let conflict = (kickoff != nil && g != nil && !timesFit(g!, kickoff!)) || Set(sched.map(\.1.kickoff)).count > 1
+            let key = matchKey(home: home, away: away, audience: audience, at: kickoff ?? g!.start, tz: tz)
+            var links: [String: Link] = [:]; var order: [String] = []
+            func add(_ id: String, _ name: String, _ p: Proof, possible: Bool = false) {
+                if var l = links[id] { l.proofs.append(p); l.possible = l.possible && possible; links[id] = l }
+                else { links[id] = Link(channelId: id, name: name, proofs: [p], possible: possible); order.append(id) }
+            }
+            for e in g?.entries ?? [] { add(e.channelId, e.channel, Proof(kind: .epg, source: guideSource, at: guideAt, detail: "«\(e.title)» · \(e.kind.label)")) }
+            var missing: [(String, String)] = []
+            var platforms: [(String, String)] = []
+            for (s, m) in a.ext {
+                for c in m.channels {
+                    if channelType(c.name) != .channel {
+                        if !platforms.contains(where: { $0.0 == c.name && $0.1 == s.name }) { platforms.append((c.name, s.name)) }
+                        continue
+                    }
+                    let hits = libraryMatches(c, idx, siblings: m.channels.map(\.name))
+                    if hits.isEmpty { if !missing.contains(where: { $0.0 == c.name && $0.1 == s.name }) { missing.append((c.name, s.name)) }; continue }
+                    for (e, exact) in hits {
+                        add(e.ch.id, e.ch.name, Proof(kind: s.kind, source: s.name, at: s.fetchedAt, detail: c.name + (c.country.map { " · " + $0 } ?? "")), possible: !exact)
+                    }
+                }
+            }
+            let mine = manual.filter { $0.matchKey == key }
+            for mm in mine where mm.add { add(mm.channelId, mm.name, Proof(kind: .manual, source: "أنت", at: mm.at)) }
+            let removed = mine.filter { !$0.add }
+            for r in removed { links[r.channelId] = nil; order.removeAll { $0 == r.channelId } }
+            var named: [String] = []
+            for id in order { if let l = links[id], !named.contains(l.name) { named.append(l.name) } }
+            for (_, m) in a.ext { for c in m.channels where !named.contains(c.name) { named.append(c.name) } }
+            for it in pool.forNames(named) where links[it.id] == nil && !removed.contains(where: { $0.channelId == it.id }) {
+                add(it.id, it.name, Proof(kind: .candidate, source: "اقتراح", at: guideAt, detail: "نفس الشبكة واسم قريب، بلا دليل"))
+            }
+            let comp = g?.competition ?? sched.compactMap(\.1.competition).first
+            var sport = g?.sport ?? MatchGuideRule.SportGuess(sport: .unknown)
+            if sport.sport == .unknown {
+                let said = sched.compactMap(\.1.sport).first
+                if let said, ["football", "soccer", "كره القدم"].contains(MatchGuideRule.words(said)) {
+                    sport = MatchGuideRule.SportGuess(sport: .football, evidence: "الجدول: \(said)")
+                } else {
+                    let s2 = MatchGuideRule.sport(title: sched.compactMap(\.1.competition).first ?? "", description: said)
+                    if s2.sport != .unknown { sport = s2 }
+                }
+            }
+            var srcs: [String] = g != nil ? [guideSource] : []
+            for (s, _) in a.ext where !srcs.contains(s.name) { srcs.append(s.name) }
+            var row = Row(key: key, home: home, away: away, competition: comp, audience: audience, kickoff: kickoff, kickoffFrom: sched.first?.0.name,
+                          group: g, timeConflict: conflict, links: order.compactMap { links[$0] }, missing: missing, removed: removed, sources: srcs)
+            row.sport = sport
+            row.platforms = platforms
+            rows.append(row)
+        }
+        return rows.sorted { ($0.start, $0.home) < ($1.start, $1.home) }
+    }
+
+    static func compare(_ rows: [Row], fmt: (Int64) -> String) -> String {
+        var s = ""
+        func line(_ x: String) { s += x + "\n" }
+        let withExt = rows.filter { $0.sources.count > ($0.group != nil ? 1 : 0) }
+        let added = rows.filter { $0.group == nil }
+        line("— مقارنة المصادر (كاملة)")
+        line("مباريات من الجداول المستوردة: \(withExt.count) · منها موجودة في EPG: \(withExt.filter { $0.group != nil }.count) · أضافتها الجداول (غير موجودة في EPG): \(added.count)")
+        line("تعارض في الموعد بين الجدول وEPG أو بين جدولين: \(rows.filter(\.timeConflict).count)")
+        line("")
+        line("— مباريات أضافتها الجداول")
+        for r in added {
+            line("   \(fmt(r.start)) · \(r.home) × \(r.away)\(r.competition.map { " · " + $0 } ?? "") · من \(r.kickoffFrom ?? "") · قنوات في مكتبتك: \(r.links.filter(\.confirmed).count) (محتملة \(r.links.filter(\.possible).count))")
+        }
+        line("")
+        line("— قنوات طابقت مكتبتك (لكل مباراة)")
+        for r in withExt {
+            let ext = r.links.filter { $0.proofs.contains { $0.kind == .broadcaster || $0.kind == .guide } }
+            if ext.isEmpty && r.missing.isEmpty { continue }
+            line("\(fmt(r.start)) · \(r.home) × \(r.away)")
+            for l in ext {
+                let ps = l.proofs.filter { $0.kind == .broadcaster || $0.kind == .guide }.map { "\($0.detail ?? "") (\($0.source))" }.joined(separator: " / ")
+                line("   \(l.possible ? "محتملة" : "مطابقة"): \(l.name) ← \(ps)" + (l.proofs.contains { $0.kind == .epg } ? " · وفي EPG أيضًا" : " · ليست في EPG"))
+            }
+            for (n, src) in r.missing { line("   غير موجودة في مكتبتك: \(n) (\(src))") }
+        }
+        line("")
+        line("— قنوات 4K في الجداول وما يقابلها في مكتبتك")
+        for r in withExt {
+            let uhd = r.links.filter { l in l.proofs.contains { ($0.kind == .broadcaster || $0.kind == .guide) && namesUhd($0.detail ?? "") } }
+            if uhd.isEmpty { continue }
+            line("   \(r.home) × \(r.away): " + uhd.map { l in
+                "\(l.name) (\(l.possible ? "محتملة" : "مطابقة") ← \(l.proofs.first { namesUhd($0.detail ?? "") }?.detail ?? ""))" }.joined(separator: " · "))
+        }
+        line("")
+        line("— منصات وشبكات عامة ذكرتها الجداول (لا تُربط بقناة)")
+        for r in withExt where !r.platforms.isEmpty {
+            line("   \(r.home) × \(r.away): " + r.platforms.map { "\($0.0) (\(channelType($0.0).label))" }.joined(separator: "، "))
+        }
+        line("")
+        line("— تعارضات الموعد")
+        for r in rows where r.timeConflict {
+            let epg = r.group?.entries.map { "\($0.channel) \(fmt($0.start))" }.joined(separator: " / ") ?? "-"
+            line("   \(r.home) × \(r.away): الجدول \(r.kickoff.map(fmt) ?? "-") (\(r.kickoffFrom ?? "")) · برامج EPG: \(epg)")
+        }
+        return s
+    }
+
+    // ---------- the screen ----------
+
+    static func rowsFor(_ rows: [Row], now: Int64, dayStart: Int64, tomorrow: Int64, end: Int64, day: Int, nowOnly: Bool, sport: MatchScreenRule.SportFilter) -> [Row] {
+        rows.filter { r in
+            let s = r.sport.sport
+            let sportOk: Bool
+            switch sport { case .football: sportOk = s == .football; case .unknown: sportOk = s == .unknown; case .other: sportOk = s == .other }
+            let dayOk = nowOnly ? r.airingAt(now) : day == 0 ? (r.stop > dayStart && r.start < tomorrow) : (r.start >= tomorrow && r.start < end)
+            return sportOk && dayOk
+        }
+    }
+
+    struct Sections { let confirmed: [Link]; let possible: [Link]; let suggested: [Link]; let hidden: Int }
+
+    static func sections(_ r: Row, versionOf: (String) -> MatchGuideRule.Version, hideHd: Bool, hideSd: Bool) -> Sections {
+        func ok(_ l: Link) -> Bool { let x = versionOf(l.name).res; return !(hideHd && x == .hd) && !(hideSd && x == .sd) }
+        func sorted(_ l: [Link]) -> [Link] {
+            l.sorted { (versionOf($0.name).res.rawValue, $0.best.rawValue, $0.name, $0.channelId) < (versionOf($1.name).res.rawValue, $1.best.rawValue, $1.name, $1.channelId) }
+        }
+        let confirmed = r.links.filter(\.confirmed)
+        let possible = r.links.filter { !$0.confirmed && $0.proofs.contains { $0.kind != .candidate } }
+        let suggested = r.links.filter { $0.proofs.allSatisfy { $0.kind == .candidate } }
+        let all = confirmed + possible + suggested
+        return Sections(confirmed: sorted(confirmed.filter(ok)), possible: sorted(possible.filter(ok)), suggested: sorted(suggested.filter(ok)),
+                        hidden: all.filter { !ok($0) }.count)
+    }
+
+    static func proofText(_ l: Link, fmt: (Int64) -> String) -> String {
+        var parts: [String] = []
+        for k in Kind.allCases {
+            let ps = l.proofs.filter { $0.kind == k }
+            if ps.isEmpty { continue }
+            switch k {
+            case .epg, .candidate: parts.append(k.label)
+            case .manual: parts.append(k.label + " (\(fmt(ps.map(\.at).max() ?? 0)))")
+            default:
+                var seen: [String] = []
+                for p in ps { let x = "\(p.source)، \(fmt(p.at))"; if !seen.contains(x) { seen.append(x) } }
+                parts.append(k.label + " (" + seen.joined(separator: " / ") + ")")
+            }
+        }
+        return parts.joined(separator: " · ") + (l.possible && !l.proofs.contains { $0.kind == .manual || $0.kind == .epg } ? " · مطابقة محتملة بالاسم" : "")
     }
 }
 
