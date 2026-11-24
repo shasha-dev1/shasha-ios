@@ -2247,3 +2247,75 @@ final class ReviewBatch2Tests: XCTestCase {
         XCTAssertTrue(p.confirmed)
     }
 }
+
+/// 1.10.4 (owner 20:50): competition → country → rights holder, apart from the broadcasters of a match (TV RightsTest vectors).
+final class RightsTests: XCTestCase {
+    typealias S = MatchSourcesRule
+    var dir: URL { URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples/rights").standardizedFileURL }
+    func ucl() throws -> RightsRule.Rights { try RightsRule.parse(Data(contentsOf: dir.appendingPathComponent("uefa-champions-league-2026-27.json"))) }
+    func uel() throws -> RightsRule.Rights { try RightsRule.parse(Data(contentsOf: dir.appendingPathComponent("uefa-europa-league-2026-27.json"))) }
+    let ko: Int64 = 1_795_542_300_000   // 2026-11-24 17:45 UTC
+
+    func testTheOfficialFilesCarryTheirSourceSeasonAndPeriod() throws {
+        let u = try ucl()
+        XCTAssertEqual(u.season, "2026/27"); XCTAssertEqual(u.kind, "official"); XCTAssertEqual(u.publisher, "UEFA")
+        XCTAssertTrue(u.sourceUrl.hasPrefix("https://www.uefa.com/uefachampionsleague/"))
+        XCTAssertEqual(u.territories.count, 96)
+        XCTAssertEqual(u.territories.first { $0.territory == "Netherlands" }?.holders.map(\.name), ["Ziggo Sport"])
+        XCTAssertEqual(u.territories.first { $0.territory == "France" }?.holders.map(\.name), ["Canal+"])
+        let at = u.territories.first { $0.territory == "Austria" }!.holders
+        XCTAssertEqual(at.filter(\.highlightsOnly).map(\.name), ["ORF", "Servus TV"])
+    }
+
+    func testRightsApplyToTheirCompetitionAndSeasonOnly() throws {
+        let u = try ucl(), e = try uel()
+        XCTAssertTrue(RightsRule.appliesTo(u, competition: "UEFA Champions League", kickoff: ko))
+        XCTAssertTrue(RightsRule.appliesTo(u, competition: "دوري أبطال أوروبا", kickoff: ko))
+        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Youth League", kickoff: ko))
+        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Women's Champions League", kickoff: ko))
+        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Europa League", kickoff: ko))
+        XCTAssertTrue(RightsRule.appliesTo(e, competition: "UEFA Europa League", kickoff: ko))
+        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Champions League", kickoff: 1_816_624_800_000))   // 2027-07-26: another season
+    }
+
+    func epgLink(_ id: String, _ name: String) -> S.Link { S.Link(channelId: id, name: name, proofs: [S.Proof(kind: .epg, source: "EPG", at: 0, detail: "«Bodø/Glimt v LASK»")]) }
+
+    func testHoldersAreListedNeverTurnedIntoBroadcasters() throws {
+        let lib = [S.LibCh(id: "1", name: "NL: ZIGGO SPORT 1 HD"), S.LibCh(id: "2", name: "NL: ZIGGO SPORT 2 HD"), S.LibCh(id: "3", name: "NL: ZIGGO SPORT 3 FHD"),
+                   S.LibCh(id: "4", name: "FR: BEIN SPORTS MAX 4"), S.LibCh(id: "5", name: "FR: CANAL+ SPORT 360"), S.LibCh(id: "6", name: "AR: beIN SPORTS 4 HD"), S.LibCh(id: "7", name: "ZIGGO SPORT 5")]
+        let idx = S.LibIndex(lib)
+        let row = S.Row(key: "k", home: "Bodø/Glimt", away: "LASK", competition: "UEFA Champions League", audience: [], kickoff: ko, kickoffFrom: "LiveSoccerTV", group: nil,
+                        timeConflict: false, links: [epgLink("2", "NL: ZIGGO SPORT 2 HD"), epgLink("4", "FR: BEIN SPORTS MAX 4"), epgLink("6", "AR: beIN SPORTS 4 HD")],
+                        missing: [], removed: [], sources: ["LiveSoccerTV"])
+        let r = RightsRule.annotate([row], [try ucl(), try uel()], idx: idx)[0]
+        XCTAssertEqual(r.links.map(\.channelId), ["2", "4", "6"])                       // rights add no channel
+        XCTAssertTrue(r.links.allSatisfy(\.confirmed))
+        let by = Dictionary(uniqueKeysWithValues: r.links.map { ($0.channelId, $0) })
+        XCTAssertTrue(by["2"]?.rightsNote?.hasPrefix("صاحب حقوق البطولة في Netherlands: Ziggo Sport") == true)
+        XCTAssertTrue(by["6"]?.rightsNote?.contains("beIN") == true)
+        XCTAssertTrue(by["4"]?.rightsNote?.contains("ليست منهم") == true && by["4"]?.rightsNote?.contains("Canal+") == true)
+        XCTAssertTrue(r.rights.allSatisfy { $0.rights.competition == "UEFA Champions League" })
+        let terr = Set(r.rights.map(\.territory.territory))
+        XCTAssertTrue(terr.isSuperset(of: ["Netherlands", "France", "United States of America", "Australia", "Middle East/North Africa"]))
+        XCTAssertEqual(r.rights.filter { $0.holder.name == "beIN" && $0.territory.countries.contains("عربي") }.count, 1)
+        XCTAssertEqual(r.rights.first { $0.holder.name == "Ziggo Sport" }?.inLibrary, 3)
+        XCTAssertEqual(r.rights.filter { RightsRule.passes($0, country: "هولندا") }.map(\.holder.name), ["Ziggo Sport"])
+    }
+
+    func testAMatchWithoutKnownRightsIsUnchanged() throws {
+        let row = S.Row(key: "k", home: "A", away: "B", competition: "Italy - Serie A", audience: [], kickoff: ko, kickoffFrom: "x", group: nil, timeConflict: false,
+                        links: [epgLink("1", "IT: DAZN 1")], missing: [], removed: [], sources: [])
+        let r = RightsRule.annotate([row], [try ucl(), try uel()], idx: nil)[0]
+        XCTAssertTrue(r.rights.isEmpty); XCTAssertNil(r.links[0].rightsNote)
+    }
+
+    func testAnotherChannelOfTheSameNetworkIsNotANearMatch() {
+        let idx = S.LibIndex([.init(id: "1", name: "FR: BEIN MAX 4 HD"), .init(id: "2", name: "FR: BEIN CINEMA COMEDY 4 RAW"), .init(id: "3", name: "FR: BEIN SPORTS MAX 4"),
+                              .init(id: "4", name: "AR: beIN SPORTS 4 HD"), .init(id: "5", name: "AR: beIN SPORTS 4 HD 1080")])
+        var rej: [S.Reject] = []
+        let hits = S.libraryHits(.init(name: "beIN SPORTS 4", country: "QA", programmeStart: nil), idx, siblings: [], rejects: &rej)
+        XCTAssertEqual(Set(hits.map(\.e.ch.id)), ["4", "5"]); XCTAssertTrue(rej.isEmpty)
+        let i2 = S.LibIndex([.init(id: "1", name: "UK: SKY SPORTS PREMIER LEAGUE HD")])
+        XCTAssertEqual(S.libraryHits(.init(name: "Sky Sports Premier", country: "GB", programmeStart: nil), i2).count, 1)
+    }
+}

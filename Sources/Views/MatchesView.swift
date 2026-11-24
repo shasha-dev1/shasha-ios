@@ -54,6 +54,13 @@ final class MatchStore: ObservableObject {
     private var libIdx: MatchSourcesRule.LibIndex?
     /// 1.10.3 (owner 19:37): his correction of a channel's country, by channel name (kept after a library refresh); "" = unknown.
     static let countryFixKey = "match.countryFix"
+    /// 1.10.4: the rights files shipped in the app («rights-*.json»), read once.
+    nonisolated static let rights: (ok: [RightsRule.Rights], bad: [String]) = {
+        let b = Bundle.main
+        let urls = (b.urls(forResourcesWithExtension: "json", subdirectory: nil) ?? []) + (b.urls(forResourcesWithExtension: "json", subdirectory: "rights") ?? [])
+        var seen = Set<String>()
+        return RightsRule.load(urls.filter { $0.lastPathComponent.hasPrefix("rights-") && seen.insert($0.lastPathComponent).inserted })
+    }()
     static var countryFix: [String: String] { UserDefaults.standard.dictionary(forKey: countryFixKey) as? [String: String] ?? [:] }
     @Published private(set) var countryFixVersion = 0
     func setCountry(_ name: String, _ country: String?) {
@@ -166,8 +173,9 @@ final class MatchStore: ObservableObject {
         guard let lib = lastLibrary else { return }
         let chans = lib.channels
         let stamp = "\(lib.active?.name ?? "")#\(chans.count)#\(chans.first?.id ?? "")#\(chans.last?.id ?? "")#\(countryFixVersion)"
-        // the library index is needed only to match imported schedules: not built at all without one
-        let needIdx = !files.isEmpty && (libIdx == nil || stamp != libStamp)
+        // the library index matches imported schedules and (1.10.4) counts the rights holders' versions: built once per library change
+        let rts = Self.rights.ok
+        let needIdx = (!files.isEmpty || !rts.isEmpty) && (libIdx == nil || stamp != libStamp)
         let cats = Dictionary(lib.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
         let fix = Self.countryFix
         let libList = needIdx ? chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId, manualCountry: fix[$0.name]) } : []
@@ -182,8 +190,10 @@ final class MatchStore: ObservableObject {
         Perf.shared.memory("مباريات اليوم: قبل الدمج")
         Task {
             let (idx, out) = await Task.detached(priority: .userInitiated) { () -> (MatchSourcesRule.LibIndex, [MatchSourcesRule.Row]) in
-                let idx = needIdx ? MatchSourcesRule.LibIndex(libList) : (srcs.isEmpty ? MatchSourcesRule.LibIndex([]) : oldIdx!)
-                return (idx, MatchSourcesRule.merge(gs, sources: srcs, idx: idx, pool: pl, manual: man, guideSource: guideSource, guideAt: guideAt, from: from, to: to))
+                let idx = needIdx ? MatchSourcesRule.LibIndex(libList) : (oldIdx ?? MatchSourcesRule.LibIndex([]))
+                let merged = MatchSourcesRule.merge(gs, sources: srcs, idx: idx, pool: pl, manual: man, guideSource: guideSource, guideAt: guideAt, from: from, to: to)
+                // 1.10.4 (owner 20:50): rights holders per competition and country — never added as channels of the match
+                return (idx, RightsRule.annotate(merged, rts, idx: idx))
             }.value
             guard gen == mergeGen else { return }
             if needIdx { libIdx = idx; libStamp = stamp }
@@ -216,6 +226,7 @@ final class MatchStore: ObservableObject {
             let focus = libList.filter { focusIds.contains($0.id) }
             return "\n— الجداول المستوردة\n" + names.joined(separator: "\n") + "\n\n" + MatchSourcesRule.compare(rows, fmt: MatchIndexBuilder.fmt)
                 + "\n" + MatchSourcesRule.guideVsLibrary(srcs, idx: idx, focus: focus)
+                + "\n" + MatchStore.rightsReport(RightsRule.annotate(rows, MatchStore.rights.ok, idx: idx))
         }.value)
     }
 
@@ -239,6 +250,28 @@ final class MatchStore: ObservableObject {
         saveManual(MatchSourcesRule.manualSetFor(manual, row: row, channelId: channelId, name: name, add: add, at: MatchIndexBuilder.ms(Date())))
     }
     func clearManual(row: MatchSourcesRule.Row, channelId: String) { saveManual(MatchSourcesRule.manualClearFor(manual, row: row, channelId: channelId)) }
+
+    /// 1.10.4: the rights part of the report (same lines as the TV's).
+    nonisolated static func rightsReport(_ rows: [MatchSourcesRule.Row]) -> String {
+        var s = "— حقوق البطولات (صاحب الحقوق ليس ناقلًا للمباراة؛ الناقل من جدول المباريات أو EPG فقط)\n"
+        for x in rights.ok {
+            s += "   \(x.competition) · \(x.label) · سريان \(MatchIndexBuilder.fmt(x.validFrom)) – \(MatchIndexBuilder.fmt(x.validTo))" + (x.validityNote.map { " (\($0))" } ?? "")
+                + " · \(x.territories.count) منطقة · \(x.territories.reduce(0) { $0 + $1.holders.count }) صاحب حقوق · \(RedactRule.link(x.sourceUrl))\n"
+        }
+        for b in rights.bad { s += "   ملف حقوق لم يُقرأ: \(b)\n" }
+        let with = rows.filter { !$0.rights.isEmpty }
+        s += "   مباريات لها حقوق معروفة: \(with.count) من \(rows.count)\n"
+        for r in with {
+            let linked = r.links.filter(\.confirmed)
+            let fits = linked.filter { $0.rightsNote?.hasPrefix("صاحب حقوق") == true }.count
+            let other = linked.filter { $0.rightsNote?.hasPrefix("أصحاب الحقوق المعلنون") == true }
+            let inLib = r.rights.filter { $0.inLibrary > 0 }.map { "\($0.holder.name) (\($0.territory.territory)، \($0.inLibrary))" }.joined(separator: "، ")
+            s += "   \(MatchIndexBuilder.fmt(r.start)) · \(r.home) × \(r.away): \(Set(r.rights.map(\.territory.territory)).count) منطقة · قنوات مؤكدة \(linked.count)، منها من شبكة صاحب الحقوق في دولتها \(fits)"
+                + (other.isEmpty ? "" : " · لا تطابق صاحب الحقوق المعلن: " + other.map(\.name).joined(separator: "، "))
+                + " · أصحاب حقوق لهم قنوات في مكتبتك (غير محددة للمباراة): " + (inLib.isEmpty ? "—" : inLib) + "\n"
+        }
+        return s
+    }
 
     /// Imported schedules whose coverage has ended.
     var endedSources: [String] {
@@ -523,6 +556,34 @@ struct MatchRowView: View {
                 } header: { Text("متاحة أيضًا على منصات وشبكات") } footer: {
                     Text("منصة أو شبكة كاملة، لا تُربط بقناة من مكتبتك تخمينًا.")
                 }
+            }
+            rightsSection(r)
+        }
+    }
+
+    /// 1.10.4 (owner 20:50): who holds the competition's rights in each country (every country; the country filter narrows it).
+    @ViewBuilder private func rightsSection(_ r: MatchSourcesRule.Row) -> some View {
+        let c: String? = showAll || country.isEmpty ? nil : country
+        let facts = r.rights.filter { RightsRule.passes($0, country: c) }
+        if !facts.isEmpty {
+            let linked = Set(r.links.filter(\.confirmed).map(MatchSourcesRule.linkCountry))
+            let groups = Dictionary(grouping: facts, by: \.territory.territory).values.sorted { a, b in
+                let la = a.reduce(0) { $0 + $1.inLibrary }, lb = b.reduce(0) { $0 + $1.inLibrary }
+                if la != lb { return la > lb }
+                let ma = a[0].territory.countries.contains(where: linked.contains), mb = b[0].territory.countries.contains(where: linked.contains)
+                if ma != mb { return ma }
+                return a[0].territory.territory < b[0].territory.territory
+            }
+            Section {
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, g in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(g[0].territory.territory): " + g.map { $0.holder.name + ($0.holder.highlightsOnly ? " (ملخصات فقط)" : "") }.joined(separator: "، ")).font(.footnote)
+                        Text("صاحب حقوق البطولة — قناة هذه المباراة غير محددة · في مكتبتك \(g.reduce(0) { $0 + $1.inLibrary }) نسخة من هذه الشبكة لتلك الدولة · \(g[0].rights.label)")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+            } header: { Text("أصحاب حقوق البطولة (ليست قنوات هذه المباراة) (\(groups.count))") } footer: {
+                Text("من يملك حقوق البطولة في كل دولة (مصدر رسمي). صاحب الحقوق ليس ناقلًا لهذه المباراة: القناة تأتي فقط من جدول مباريات أو الدليل. فلتر الدولة اختياري.")
             }
         }
     }

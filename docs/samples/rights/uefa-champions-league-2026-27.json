@@ -1,0 +1,1854 @@
+{
+ "format": "shasha-rights",
+ "version": 1,
+ "competition": {
+  "name": "UEFA Champions League",
+  "keys": [
+   "uefa champions league",
+   "champions league",
+   "دوري أبطال أوروبا",
+   "دوري ابطال اوروبا",
+   "ucl"
+  ],
+  "excludes": [
+   "women",
+   "womens",
+   "youth",
+   "u19",
+   "u-19",
+   "futsal",
+   "سيدات",
+   "للشباب"
+  ]
+ },
+ "season": "2026/27",
+ "validFrom": "2026-07-01",
+ "validTo": "2027-06-30",
+ "validityNote": "مشتقة من اسم الموسم في الصفحة الرسمية (2026/27) — الصفحة لا تذكر تواريخ العقود",
+ "source": {
+  "url": "https://www.uefa.com/uefachampionsleague/news/0253-0d82037aaedd-f371c464f919-1000--where-to-watch-the-champions-league-tv-broadcast-partners-li/",
+  "title": "Where to watch the Champions League: TV broadcast partners, live streams (UEFA.com, modified 2026-11-24)",
+  "publisher": "UEFA",
+  "kind": "official",
+  "retrievedAt": "2026-11-24",
+  "note": "* = highlights rights only"
+ },
+ "territories": [
+  {
+   "territory": "Albania",
+   "region": "Europe",
+   "countries": [
+    "ألبانيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Tring",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "TOP Channel",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Armenia",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Fast Media",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Austria",
+   "region": "Europe",
+   "countries": [
+    "النمسا"
+   ],
+   "codes": [
+    "at",
+    "austria"
+   ],
+   "holders": [
+    {
+     "name": "Sky Austria",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "ORF",
+     "highlightsOnly": true,
+     "channels": []
+    },
+    {
+     "name": "Servus TV",
+     "highlightsOnly": true,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Azerbaijan",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "CBC Sport",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "TVNet",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "İçtimai TV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Belarus",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Okko",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "CTV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Belgium",
+   "region": "Europe",
+   "countries": [
+    "بلجيكا"
+   ],
+   "codes": [
+    "be",
+    "belgium"
+   ],
+   "holders": [
+    {
+     "name": "DPG Media",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "RTL Belgium",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Proximus",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Telenet",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Bosnia and Herzegovina",
+   "region": "Europe",
+   "countries": [
+    "البوسنة"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Bulgaria",
+   "region": "Europe",
+   "countries": [
+    "بلغاريا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "bTV",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "A1 Bulgaria",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Croatia",
+   "region": "Europe",
+   "countries": [
+    "كرواتيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "HRT",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Arena Sport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Cyprus",
+   "region": "Europe",
+   "countries": [
+    "قبرص"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "CYTA",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Czechia",
+   "region": "Europe",
+   "countries": [
+    "التشيك"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "TV Nova",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Czech TV",
+     "highlightsOnly": true,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Denmark",
+   "region": "Europe",
+   "countries": [
+    "الدنمارك"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Viaplay",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Estonia",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "TV3",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Finland",
+   "region": "Europe",
+   "countries": [
+    "فنلندا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "MTV Oy",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "France",
+   "region": "Europe",
+   "countries": [
+    "فرنسا"
+   ],
+   "codes": [
+    "fr",
+    "france"
+   ],
+   "holders": [
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Georgia",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Setanta",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Silknet",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Germany",
+   "region": "Europe",
+   "countries": [
+    "ألمانيا"
+   ],
+   "codes": [
+    "de",
+    "germany"
+   ],
+   "holders": [
+    {
+     "name": "DAZN",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Amazon Prime",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "ZDF",
+     "highlightsOnly": true,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Gibraltar",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Gibtelecom",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Greece",
+   "region": "Europe",
+   "countries": [
+    "اليونان"
+   ],
+   "codes": [
+    "gr",
+    "greece"
+   ],
+   "holders": [
+    {
+     "name": "MagentaTV platform",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "AlterEgo",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Hungary",
+   "region": "Europe",
+   "countries": [
+    "المجر"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "RTL",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Sport 1",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Iceland",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Syn",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Viaplay",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Israel",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "The Sports Channel",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Italy",
+   "region": "Europe",
+   "countries": [
+    "إيطاليا"
+   ],
+   "codes": [
+    "it",
+    "italy"
+   ],
+   "holders": [
+    {
+     "name": "Sky",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Amazon Prime",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Kazakhstan",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Qsport",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Qazsport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Kosovo",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "RTK",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Artmotion",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Latvia",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "TV3",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Lithuania",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "TV3",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Luxembourg",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "DPG Media",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "RTL Luxembourg",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "DAZN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Malta",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "PBS",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Melita",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Moldova",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Setanta",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Jurnal TV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Montenegro",
+   "region": "Europe",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Netherlands",
+   "region": "Europe",
+   "countries": [
+    "هولندا"
+   ],
+   "codes": [
+    "nl",
+    "netherlands"
+   ],
+   "holders": [
+    {
+     "name": "Ziggo Sport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "North Macedonia",
+   "region": "Europe",
+   "countries": [
+    "مقدونيا الشمالية"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Norway",
+   "region": "Europe",
+   "countries": [
+    "النرويج"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "TV2 Norway",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Poland",
+   "region": "Europe",
+   "countries": [
+    "بولندا"
+   ],
+   "codes": [
+    "pl",
+    "poland"
+   ],
+   "holders": [
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "TVP",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Portugal",
+   "region": "Europe",
+   "countries": [
+    "البرتغال"
+   ],
+   "codes": [
+    "pt",
+    "portugal"
+   ],
+   "holders": [
+    {
+     "name": "Sport TV",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "DAZN",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "LiveMode",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Republic of Ireland",
+   "region": "Europe",
+   "countries": [
+    "إيرلندا"
+   ],
+   "codes": [
+    "ie",
+    "ireland"
+   ],
+   "holders": [
+    {
+     "name": "RTE",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Premier Sports",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Virgin Media",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Romania",
+   "region": "Europe",
+   "countries": [
+    "رومانيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "DIGI",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Clever Media",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Russia",
+   "region": "Europe",
+   "countries": [
+    "روسيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Okko",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "CTV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Serbia",
+   "region": "Europe",
+   "countries": [
+    "صربيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Slovakia",
+   "region": "Europe",
+   "countries": [
+    "سلوفاكيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "TV Nova",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Slovenia",
+   "region": "Europe",
+   "countries": [
+    "سلوفينيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Pro Plus",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Sportklub",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Spain",
+   "region": "Europe",
+   "countries": [
+    "إسبانيا"
+   ],
+   "codes": [
+    "es",
+    "spain"
+   ],
+   "holders": [
+    {
+     "name": "Telefonica",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Sweden",
+   "region": "Europe",
+   "countries": [
+    "السويد"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Viaplay",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Switzerland",
+   "region": "Europe",
+   "countries": [
+    "سويسرا"
+   ],
+   "codes": [
+    "ch",
+    "switzerland"
+   ],
+   "holders": [
+    {
+     "name": "blue",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "SRG",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Türkiye",
+   "region": "Europe",
+   "countries": [
+    "تركيا"
+   ],
+   "codes": [
+    "tr",
+    "turkey",
+    "türkiye"
+   ],
+   "holders": [
+    {
+     "name": "TRT",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Ukraine",
+   "region": "Europe",
+   "countries": [
+    "أوكرانيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Megogo",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Football TV UA",
+     "highlightsOnly": true,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "United Kingdom",
+   "region": "Europe",
+   "countries": [
+    "بريطانيا"
+   ],
+   "codes": [
+    "gb",
+    "uk",
+    "united kingdom",
+    "england"
+   ],
+   "holders": [
+    {
+     "name": "TNT Sports",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Amazon Prime",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "BBC",
+     "highlightsOnly": true,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Cameroon",
+   "region": "Africa and Middle East",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "CRTV",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "SuperSport",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "New World TV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Ivory Coast",
+   "region": "Africa and Middle East",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "NCI",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "SuperSport",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "New World TV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Mauritius",
+   "region": "Africa and Middle East",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "MBC",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "SuperSport",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "New World TV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Middle East/North Africa",
+   "region": "Africa and Middle East",
+   "countries": [
+    "عربي"
+   ],
+   "codes": [
+    "mena",
+    "qa",
+    "qatar",
+    "sa",
+    "saudi arabia",
+    "ae",
+    "united arab emirates",
+    "bh",
+    "bahrain",
+    "kw",
+    "kuwait",
+    "om",
+    "oman",
+    "eg",
+    "egypt",
+    "jo",
+    "jordan",
+    "lb",
+    "lebanon",
+    "iq",
+    "iraq",
+    "ma",
+    "morocco",
+    "dz",
+    "algeria",
+    "tn",
+    "tunisia",
+    "ly",
+    "libya"
+   ],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Nigeria",
+   "region": "Africa and Middle East",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "SuperSport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "MENA",
+   "region": "Africa and Middle East",
+   "countries": [
+    "عربي"
+   ],
+   "codes": [
+    "mena",
+    "qa",
+    "qatar",
+    "sa",
+    "saudi arabia",
+    "ae",
+    "united arab emirates",
+    "bh",
+    "bahrain",
+    "kw",
+    "kuwait",
+    "om",
+    "oman",
+    "eg",
+    "egypt",
+    "jo",
+    "jordan",
+    "lb",
+    "lebanon",
+    "iq",
+    "iraq",
+    "ma",
+    "morocco",
+    "dz",
+    "algeria",
+    "tn",
+    "tunisia",
+    "ly",
+    "libya"
+   ],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "South Africa",
+   "region": "Africa and Middle East",
+   "countries": [
+    "جنوب أفريقيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "SuperSport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Sub-Saharan Africa",
+   "region": "Africa and Middle East",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "SuperSport",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "New World TV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Argentina",
+   "region": "Americas",
+   "countries": [
+    "الأرجنتين"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "FOX Sports Argentina",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "ESPN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Brazil",
+   "region": "Americas",
+   "countries": [
+    "البرازيل"
+   ],
+   "codes": [
+    "br",
+    "brazil"
+   ],
+   "holders": [
+    {
+     "name": "TNT Sports",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "SBT",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Canada",
+   "region": "Americas",
+   "countries": [
+    "كندا"
+   ],
+   "codes": [
+    "ca",
+    "canada"
+   ],
+   "holders": [
+    {
+     "name": "DAZN",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "OneSoccer",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Caribbean",
+   "region": "Americas",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "CPSL (Flow Sports & Rush Sports)",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "S&T",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Central America",
+   "region": "Americas",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "ESPN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Dominican Republic",
+   "region": "Americas",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Televideo",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "ESPN",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "CPSL",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "S&T",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Haiti",
+   "region": "Americas",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "CPSL",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "S&T",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Mexico",
+   "region": "Americas",
+   "countries": [
+    "المكسيك"
+   ],
+   "codes": [
+    "mx",
+    "mexico"
+   ],
+   "holders": [
+    {
+     "name": "Max",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "FOX",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "South America (excluding Brazil)",
+   "region": "Americas",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "ESPN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Suriname",
+   "region": "Americas",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "ATV",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "CPSL",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "S&T",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "United States of America",
+   "region": "Americas",
+   "countries": [
+    "أمريكا"
+   ],
+   "codes": [
+    "us",
+    "usa",
+    "united states"
+   ],
+   "holders": [
+    {
+     "name": "Paramount+",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "TUDN",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "DAZN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Australia",
+   "region": "Asia and Pacific",
+   "countries": [
+    "أستراليا"
+   ],
+   "codes": [
+    "au",
+    "australia"
+   ],
+   "holders": [
+    {
+     "name": "Stan Sport",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Bangladesh",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Sony",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Tapmad",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Brunei",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Cambodia",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "PR China",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "iQIYI",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Hong Kong SAR",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Indian Sub-Continent",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Sony",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Indonesia",
+   "region": "Asia and Pacific",
+   "countries": [
+    "إندونيسيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "SCTV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Japan",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "WOWOW",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Lemino",
+     "highlightsOnly": true,
+     "channels": []
+    },
+    {
+     "name": "U-NEXT",
+     "highlightsOnly": true,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Kyrgyzstan",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Quest Media",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Laos",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Macau SAR",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "TDM",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Malaysia",
+   "region": "Asia and Pacific",
+   "countries": [
+    "ماليزيا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Mongolia",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Premier Sports",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Myanmar",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Canal+",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "New Zealand",
+   "region": "Asia and Pacific",
+   "countries": [
+    "نيوزيلندا"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "DAZN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Pacific Islands",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Digicel",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Pakistan",
+   "region": "Asia and Pacific",
+   "countries": [
+    "باكستان"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Sony",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Tapmad",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Philippines",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Singapore",
+   "region": "Asia and Pacific",
+   "countries": [
+    "سنغافورة"
+   ],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "South Korea",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "SPO TV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Taiwan/Chinese Tapei",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Elta",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Tajikistan",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Quest Media",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Thailand",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Timor-Leste",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "beIN",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Turkmenistan",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Quest Media",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Uzbekistan",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Z'OR TV",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Quest Media",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "Vietnam",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "VTVCab",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "Viettel",
+     "highlightsOnly": false,
+     "channels": []
+    },
+    {
+     "name": "MyTV",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  },
+  {
+   "territory": "In-flight and in-ship broadcasts",
+   "region": "Asia and Pacific",
+   "countries": [],
+   "codes": [],
+   "holders": [
+    {
+     "name": "Sport24",
+     "highlightsOnly": false,
+     "channels": []
+    }
+   ]
+  }
+ ]
+}
