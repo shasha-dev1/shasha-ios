@@ -650,7 +650,13 @@ struct PlayerScreen: View {
                 DiagLog.shared.note("[التطبيق] صورة داخل صورة mpv غير متاحة: \(msg)")
                 show("صورة داخل صورة ما اشتغلت (\(msg))")
             }
-            start(); Orientation.landscape(); UIApplication.shared.isIdleTimerDisabled = true
+            // 1.9.6 (owner's photos 12:15 / 13:26: picture drawn in a portrait-sized corner, the rest black, on every
+            // channel): mpv's surface was made at the portrait size because playback started before the screen turned,
+            // and it kept that size after. Now the screen turns first; playback starts once it is landscape (≤ 1.5 s).
+            Orientation.landscape(); UIApplication.shared.isIdleTimerDisabled = true
+            weak var opened = model
+            // not if the player was closed while waiting (leaving clears this handler)
+            Orientation.whenLandscape { if opened?.onMPVPiPUnavailable != nil { start() } }
             Perf.shared.memory("فتح المشغّل")
             Perf.shared.add("A/B: تجميد الشاشات خلف المشغّل", ms: 0, UserDefaults.standard.bool(forKey: FreezeBehindPlayer.key) ? "مفعّل" : "متوقف")
             // 1.8.4: the samples hold the model only weakly. They held it (and its mpv engine) for 90 s after the
@@ -1724,6 +1730,18 @@ struct EpisodePickerSheet: View {
 /// Landscape while playing (iOS 16 geometry API).
 enum Orientation {
     static func landscape() { request(.landscape) }
+    /// Runs [then] once the window is landscape and laid out (at most 1.5 s, then anyway).
+    static func whenLandscape(_ then: @escaping () -> Void) {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { then(); return }
+        func check(_ n: Int) {
+            let w = scene.windows.first?.bounds.size ?? .zero
+            if (scene.interfaceOrientation.isLandscape && w.width > w.height) || n >= 60 {
+                Perf.shared.add("فتح: انتظار الدوران قبل التشغيل", ms: Double(n * 25), n >= 60 ? "لم يكتمل — بدأ التشغيل" : "اكتمل")
+                DispatchQueue.main.async { then() }          // one more layout pass, so the video view has its new size
+            } else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.025) { check(n + 1) } }
+        }
+        check(0)
+    }
     static func portrait() { request(.portrait) }
     /// 1.0.6 measurement: the rotation itself happens later; its end is marked so a stall after it is named.
     static func portraitMeasured() {
