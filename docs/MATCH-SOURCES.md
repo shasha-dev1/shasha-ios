@@ -59,6 +59,17 @@ and a library channel with the same 4K name as confirmed; an HD channel alone ne
   conditions) is to be kept in docs/permissions/ without personal data. **LiveSoccerTV: no reply** — it is read on the
   owner's 01:20 decision only, within its disclaimer's personal use, with the limits below.
 
+## Other sources evaluated (owner 07:44: «ابحث عن مصادر أخرى ولا تفترض أن النقل ممنوع»)
+
+| Source | What it has | Access found | Terms found | Status |
+|---|---|---|---|---|
+| **beIN SPORTS MENA official TV guide** (beinsports.com/en-mena/tv-guide) | The broadcaster's own schedule per channel: beIN 1–9, **beIN SPORTS 4K**, EN/FR channels, XTRA, «Live» marks | Public page | not yet read | **Best next source** for the owner's region: official, names the 4K channel; to read and test |
+| Kooora (kooora.com, FootballCo) | Today's matches with tvChannels per match (Arabic names, beIN MENA, TOD, Shahid…) in the page data (`__NEXT_DATA__`); the list follows the visitor's country | robots.txt allows all | Terms §11 «No text or data mining, or web scraping … any "robot", "bot", "spider", "scraper"…» (kooora.com/سياسة-الاستخدام) — an explicit ban | Not built; owner's decision |
+| SofaScore (sofascore.com/tv-schedule) | Per-event TV channels by country | robots.txt disallows old dates/standings only; the data is the site's internal JSON | not read; reading its internal JSON was refused by this workspace's tooling | Not built |
+| Sportmonks Football API | `tvStations` per fixture with country — an official API | API key | Paid: plans from €29/month (5 leagues) | Needs the owner's approval (paid) |
+| 365Scores where-to-watch | TV listings per event | — | terms page found, not read in full | To evaluate |
+| Yallakora | Today's matches + channel articles | — | not read | To evaluate |
+
 ## Automatic reading (owner 01:20–01:22: «جيب من الكل… شخصي، أنا أتحمل المسؤولية») — TV 0.9.39 / iPhone 1.8.8
 
 The apps now read both sites themselves, on the device, for the owner's personal use (no redistribution):
