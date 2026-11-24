@@ -70,36 +70,59 @@ final class MemoryDiagnosisTests: XCTestCase {
         return url
     }
 
-    func testGuideReadInPiecesKeepsMemoryFlat() throws {
-        let n = 800_000                                                    // ~230 MB
+    /// Measured (CI, 212 MB guide, 800 000 programmes): one XMLParser over the stream grew +0 MB — the guide read is not what filled
+    /// the phone's memory; kept as a guard.
+    func testReadingALargeGuideDoesNotGrowWithTheFile() throws {
+        let n = 800_000
         let url = try Self.makeGuide(programmes: n)
         let mb = ((try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.doubleValue ?? 0) / 1_048_576
-
-        let whole = Mirror()
-        let gWhole = Self.peakGrowth {
-            let xp = XMLParser(stream: InputStream(url: url)!); xp.delegate = whole; _ = xp.parse()
-        }
-        let pieces = Mirror()
-        let gPieces = Self.peakGrowth {
-            XMLTVChunks.read(url) { d in let xp = XMLParser(data: d); xp.delegate = pieces; return xp.parse() }
-        }
-        print(String(format: "MEMORY guide %.0f MB, %d programmes: one XMLParser over the stream +%.0f MB · in pieces +%.0f MB", mb, n, gWhole, gPieces))
-        XCTAssertEqual(whole.total, n); XCTAssertEqual(pieces.total, n)
-        XCTAssertEqual(whole.kept, pieces.kept); XCTAssertEqual(pieces.names, 3000)
-        XCTAssertLessThan(gPieces, 150, "reading in pieces must not grow with the file")
+        let m = Mirror()
+        let before = Self.footprintMB()
+        let g = Self.peakGrowth { let xp = XMLParser(stream: InputStream(url: url)!); xp.delegate = m; _ = xp.parse() }
+        print(String(format: "MEMORY guide %.0f MB, %d programmes: one XMLParser over the stream +%.0f MB (footprint before %.0f MB)", mb, n, g, before))
+        XCTAssertEqual(m.total, n); XCTAssertEqual(m.names, 3000)
+        XCTAssertLessThan(g, 200)
     }
 
-    /// Pieces cut at every size still give every element once, header and closing tag included, entities kept.
-    func testPiecesGiveTheSameElementsAtAnyChunkSize() throws {
-        let url = try Self.makeGuide(programmes: 2000)
-        let ref = Mirror(); let xp = XMLParser(stream: InputStream(url: url)!); xp.delegate = ref; XCTAssertTrue(xp.parse())
-        for size in [97, 1000, 4096, 65_536, 1 << 22] {
-            let m = Mirror(); var ok = true
-            XCTAssertTrue(XMLTVChunks.read(url, chunkBytes: size) { d in let p = XMLParser(data: d); p.delegate = m; ok = ok && p.parse(); return ok })
-            XCTAssertTrue(ok, "chunk \(size)")
-            XCTAssertEqual(m.total, ref.total, "chunk \(size)"); XCTAssertEqual(m.kept, ref.kept); XCTAssertEqual(m.names, ref.names)
+    /// The owner's day at its size: 3484 guide cards on a 56 000-channel library, merged then given the rights — the merge in 1.10.5
+    /// never reached «بعد الدمج» before the phone ran out.
+    func testAFullDayMergeAtTheOwnersSize() throws {
+        typealias R = MatchGuideRule; typealias S = MatchSourcesRule
+        let dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples/rights").standardizedFileURL
+        let all = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil).filter { $0.pathExtension == "json" }
+            .map { try RightsRule.parse(Data(contentsOf: $0)) }
+        let nets = ["beIN SPORTS", "SKY SPORTS", "CANAL+ SPORT", "DAZN", "ZIGGO SPORT", "TNT SPORTS", "ARENA SPORT", "ESPN", "MOVISTAR LIGA", "SPORT TV",
+                    "SPORT KLUB", "ELEVEN SPORTS", "SUPERSPORT", "STARZPLAY SPORTS", "SSC", "AD SPORTS", "NOVA SPORTS", "CYTAVISION SPORTS"]
+        let prefixes = ["AR", "UK", "FR", "NL", "DE", "ES", "IT", "PT", "TR", "US", "8K", "4K", "HR", "RS", "GR", "CY", "PL", "SA"]
+        let res = ["HD", "FHD", "4K", "SD", "RAW", "HEVC"]
+        let lib = (0..<56_103).map { i in S.LibCh(id: "\(i)", name: "\(prefixes[i % prefixes.count]): \(nets[i % nets.count]) \(i % 9 + 1) \(res[i % res.count])") }
+        let comps = ["UEFA Champions League", "England - Premier League", "Spain - LaLiga", "Italy - Serie A", "Turkey - Süper Lig", "Saudi Pro League",
+                     "UEFA Europa League", "Germany - Bundesliga", "France - Ligue 1", "Italy - Coppa Italia"]
+        let ko: Int64 = 1_795_542_300_000, m: Int64 = 60_000
+        let entries = (0..<3484).map { i -> R.Entry in
+            let match = i % 1200
+            let t = "Team\(match) vs Other\(match) - \(comps[match % comps.count])"
+            let ch = lib[(i * 37) % lib.count]
+            return R.Entry(channel: ch.name, source: "S1", start: ko + Int64(match % 40) * 15 * m, stop: ko + Int64(match % 40) * 15 * m + 120 * m, title: t,
+                           teams: R.teams(t)!, kind: R.kind(title: t, description: nil, minutes: 120), channelId: ch.id)
         }
-        XCTAssertEqual(ref.total, 2000); XCTAssertEqual(ref.names, 3000)
+        let q = { (n: String) in S.quality(R.version(n)) }
+        var idx: S.LibIndex!, groups: [R.Group] = [], rows: [S.Row] = [], out: [S.Row] = []
+        let pool = R.ExtraPool(lib.prefix(5000).map { .init(id: $0.id, name: $0.name, source: "S1") })
+        let gIdx = Self.peakGrowth { idx = S.LibIndex(lib) }
+        let gGroup = Self.peakGrowth { groups = R.group(entries) }
+        let t0 = Date()
+        let gMerge = Self.peakGrowth { rows = S.merge(groups, sources: [], idx: idx, pool: pool, manual: [], guideSource: "EPG", guideAt: 1,
+                                                      from: ko - 20 * 3_600_000, to: ko + 28 * 3_600_000) }
+        let tMerge = Date().timeIntervalSince(t0)
+        let gRights = Self.peakGrowth { out = RightsRule.annotate(rows, all, idx: idx, quality: q) }
+        var copied: [S.Row] = []
+        let gCopy = Self.peakGrowth { copied = out.map { var x = $0; x.rights = $0.rights.map { $0 }; return x } }
+        let facts = out.reduce(0) { $0 + $1.rights.count }
+        print(String(format: "MEMORY full day (%d cards, %d groups, %d rows, %d facts): library index +%.0f MB · groups +%.0f MB · merge +%.0f MB (%.1f s) · rights shared +%.0f MB · rights copied per match (1.10.5) +%.0f MB",
+                     entries.count, groups.count, rows.count, facts, gIdx, gGroup, gMerge, tMerge, gRights, gCopy))
+        XCTAssertEqual(copied.count, out.count)
+        XCTAssertLessThan(gRights, 150, "rows must share the rights facts")
     }
 
     func testRightsFactsOfAFullDay() throws {

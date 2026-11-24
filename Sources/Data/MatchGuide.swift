@@ -146,18 +146,10 @@ enum MatchIndexBuilder {
         p.diag = withStats; p.now = nowMs
         p.wantedNames = Set(channels.map { nameKey($0.name) })
         var readError: String?
-        // 1.10.8 (owner's report 23:04: 3.2 GB while «قراءة الدليل», then closed): in pieces of ~4 MB, each released before the next —
-        // one parser over the whole stream kept what it made until the end of the file (MemoryDiagnosisTests measures both)
-        var piece = 0
-        let opened = XMLTVChunks.read(file) { d in
-            piece += 1
-            let xp = XMLParser(data: d); xp.delegate = p
-            if xp.parse() { return !cancel.isSet }
-            if !cancel.isSet { readError = "توقفت القراءة في الجزء \(piece) سطر \(xp.lineNumber): \(xp.parserError.map { ($0 as NSError).code } ?? 0)" }
-            else { readError = "أُلغي" }
-            return false
-        }
-        if !opened { readError = "تعذّر فتح الدليل" }
+        if let stream = InputStream(url: file) {
+            let xp = XMLParser(stream: stream); xp.delegate = p
+            if !xp.parse() { readError = cancel.isSet ? "أُلغي" : "توقفت القراءة عند سطر \(xp.lineNumber): \(xp.parserError.map { ($0 as NSError).code } ?? 0)" }
+        } else { readError = "تعذّر فتح الدليل" }
         mark("قراءة الدليل (\(size / 1_048_576) MB، \(p.total) برنامج)")
         // channels → guide id: the provider's guide id first, then the name (as the report did)
         var lowerIds: [String: String] = [:]
