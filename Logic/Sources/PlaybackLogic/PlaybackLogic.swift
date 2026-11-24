@@ -316,6 +316,12 @@ enum RightsRule {
         func qualityOf(_ n: String) -> Int { if let v = q[n] { return v }; let v = quality(n); q[n] = v; return v }
         func words(_ s: String) -> String { if let v = w[s] { return v }; let v = " " + MatchGuideRule.words(s) + " "; w[s] = v; return v }
         func base(_ i: Int, _ r: Rights) -> [Fact] { if let v = byFile[i] { return v }; let v = RightsRule.baseFacts(r, cache: self); byFile[i] = v; return v }
+        /// The same facts flagged «خارج موسم المصدر» — kept once per file too (1.10.7: this was copied per match).
+        private var outsideByFile: [Int: [Fact]] = [:]
+        func outside(_ i: Int, _ r: Rights) -> [Fact] {
+            if let v = outsideByFile[i] { return v }
+            let v = base(i, r).map { var f = $0; f.outsideSeason = true; return f }; outsideByFile[i] = v; return v
+        }
     }
 
     static func appliesToWords(_ r: Rights, _ w: String) -> Bool {
@@ -334,8 +340,7 @@ enum RightsRule {
         for (i, r) in all.enumerated() where ws.contains(where: { appliesToWords(r, $0) }) {
             var outside = false
             if let a = r.windowFrom, let b = r.windowTo { outside = kickoff < a || kickoff > b }
-            let base = cache.base(i, r)
-            out.append(outside ? base.map { var f = $0; f.outsideSeason = true; return f } : base)
+            out.append(outside ? cache.outside(i, r) : cache.base(i, r))
         }
         return out
     }
