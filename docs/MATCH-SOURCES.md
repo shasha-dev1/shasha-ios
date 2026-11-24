@@ -42,6 +42,18 @@ only. Commentary language only when the name says it (English / French…). A na
 «TNT Sports Ultimate») matches the library's 4K versions of the channels listed with it for that match as **possible**,
 and a library channel with the same 4K name as confirmed; an HD channel alone never brings a 4K one.
 
+## Decision record — using the two sites (what changed since the evaluation)
+
+- 23:57 evaluation: LiveSoccerTV — the disclaimer allows copying «only for the purposes of personal use … acknowledge
+  the source»; no API or licence; robots.txt disallows `/xloadday.php` and `/xaddchannel.php`. Live-FootballOnTV — no
+  terms or reuse statement found; robots.txt disallows nothing. Conclusion then: files imported by hand; automatic
+  reading only with the sites' permission (drafts in PERMISSION-REQUESTS.md, not sent).
+- 01:20–01:22 the owner decided: read both automatically, for his personal use only, nothing redistributed, he takes the
+  responsibility. That decision — not robots.txt — is what allows it: avoiding a path robots.txt disallows only respects
+  the site's crawling rules; it says nothing on whether the data may be reused. The terms found remain as quoted above
+  (personal use, source named), the permission drafts remain valid if the use ever goes beyond the owner, and the apps
+  do not work around a refusal (403/429, bot checks): they stop and say so.
+
 ## Automatic reading (owner 01:20–01:22: «جيب من الكل… شخصي، أنا أتحمل المسؤولية») — TV 0.9.39 / iPhone 1.8.8
 
 The apps now read both sites themselves, on the device, for the owner's personal use (no redistribution):
@@ -59,6 +71,31 @@ The apps now read both sites themselves, on the device, for the owner's personal
 - Not testable from the build machine (its network can't reach the sites): parsers are tested on page excerpts saved
   on 24/11 (`docs/samples/pages/`); the real fetch on the device shows its result in the import dialog / files sheet
   and in the report («الجلب التلقائي»). If a site refuses the app's requests (e.g. bot protection), it says so there.
+
+### Owner 05:55 — protections (TV 0.9.40 / iPhone 1.8.9; tests MatchFetchCoreTest / MatchFetchRuleTests)
+1. A failed page, a refusal, or an unexpected page returned with 200 (bot check, changed layout — recognised by the
+   markers each page must have) never replaces a good schedule. A partial LiveSoccerTV run keeps, for each match whose
+   page it could not read, the older coverage **with its own time** (the proofs show it), and keeps a failed day page's
+   matches; the source then says «جلب جزئي…» with what was missing and the last complete fetch.
+2. Counted apart, per source: transmission entries (country × channel), distinct channels named, and distinct library
+   channels they lead to (fetch line, imported-sources list, report). «400» on Man City–Napoli is entries, not channels.
+3. A LiveSoccerTV run reads up to 80 match pages 1.5 s apart: about 2–4 min with the network. It runs in the app's own
+   scope (TV) / in the background of the screen (iPhone), shows «n/N» on the matches screen, and browsing and video go on.
+4. One run at a time: app start, opening the screen and Refresh join the running one instead of starting another. Per
+   site: last attempt, last success, last complete fetch; any site at most every 15 min even when forced; 429/403 wait
+   for Retry-After (seconds or date) or 6 h, and the site is not asked before.
+5. Match pages are read in a stable order (kickoff, then the site's id); those past 80 stay in the schedule with the day
+   page's channel names only and are listed by name in the result line. A run is never called complete: competitions
+   the day page shows collapsed (loaded by the disallowed day loader) are not read.
+6. A new local day makes a site due at once (not 6 h after the last success). UK times tested both sides of the March
+   and October clock changes, and in November (GMT).
+7. iPhone, actual behaviour: no start timer; a run starts when the matches screen opens (if due) or on Refresh / «fetch
+   now», only while the app is in the foreground; backgrounded, iOS suspends it and it continues on return (requests
+   that failed meanwhile count as not read, so the older data stays); nothing is fetched while the app is closed. The TV
+   also starts one 45 s after the app starts.
+
+Still not verified: a real fetch from the owner's network (this build machine cannot reach the sites). The first real
+result is in the report («الجلب التلقائي») — including a refusal if a site blocks the app.
 
 ## Status (owner 00:38): import and merge of fixed files — not an automatic integration
 
