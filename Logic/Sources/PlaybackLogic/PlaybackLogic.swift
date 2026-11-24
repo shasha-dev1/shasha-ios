@@ -2477,7 +2477,7 @@ enum MatchFetchRule {
 
     /// The "shasha-matches" v1 file, so a fetched schedule goes through the same checks and merge as an import.
     static func toJSON(_ s: MatchSourcesRule.ExtSource) -> Data {
-        let f = ISO8601DateFormatter()
+        let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]   // milliseconds kept, as on the TV
         func iso(_ ms: Int64) -> String { f.string(from: Date(timeIntervalSince1970: Double(ms) / 1000)) }
         let ms: [[String: Any]] = s.matches.map { m in
             var o: [String: Any] = ["home": m.home, "away": m.away, "kickoff": iso(m.kickoff)]
