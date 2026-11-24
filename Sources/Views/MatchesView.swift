@@ -13,8 +13,31 @@ final class MatchStore: ObservableObject {
     @Published private(set) var busy = false
     /// 1.9.7: each status is also the last step on disk (named in an unclean-exit report) with a memory sample.
     @Published var status = "" { didSet { if !status.isEmpty && status != oldValue && !status.contains(" MB") { Perf.shared.mark("مباريات اليوم: " + status); Perf.shared.memory("مباريات اليوم: " + status) } } }
-    @Published var day = 0
-    @Published var nowOnly = false
+    @Published var day = 0 { didSet { if day != oldValue { reshow() } } }
+    @Published var nowOnly = false { didSet { if nowOnly != oldValue { reshow() } } }
+    /// 1.9.9 (owner's report 17:02: the screen froze 0.8–2.4 s every second or two, also behind the player and after
+    /// closing it): the list was filtered and sorted from all the merged rows (2191) twice on every screen update —
+    /// and the screen updates on every fetch step and every library change. Now it is worked out once per change of
+    /// rows / day / filters, off the main thread, and the screen only reads it.
+    @Published private(set) var shown: [MatchSourcesRule.Row] = []
+    var importantOnly = UserDefaults.standard.object(forKey: "match.importantOnly") as? Bool ?? true { didSet { if importantOnly != oldValue { reshow() } } }
+    private var showGen = 0
+    func reshow() {
+        showGen += 1; let gen = showGen
+        let rs = rows, d = day, n = nowOnly, sp = sport, imp = importantOnly, resTo = result?.to ?? 0
+        Task {
+            let t0 = Perf.now()
+            let out = await Task.detached(priority: .userInitiated) { () -> [MatchSourcesRule.Row] in
+                let from = MatchIndexBuilder.ms(MatchIndexBuilder.dayStart(Date()))
+                let tomorrow = MatchIndexBuilder.ms(Calendar.current.date(byAdding: .day, value: 1, to: Date(timeIntervalSince1970: Double(from) / 1000)) ?? Date())
+                return MatchSourcesRule.rowsFor(rs, now: MatchIndexBuilder.ms(Date()), dayStart: from, tomorrow: tomorrow, end: max(resTo, tomorrow + 86_400_000),
+                                                day: d, nowOnly: n, sport: sp, importantOnly: imp)
+            }.value
+            guard gen == showGen else { return }
+            Perf.shared.record("مباريات اليوم: تصفية القائمة", since: t0, "\(out.count) من \(rs.count) [خلفية]")
+            shown = out
+        }
+    }
     @Published var sport: MatchScreenRule.SportFilter = .football
     /// The card last opened (key@start), to land on it again.
     var selectedKey: String?
@@ -151,6 +174,7 @@ final class MatchStore: ObservableObject {
             if needIdx { libIdx = idx; libStamp = stamp }
             Perf.shared.record("مباريات اليوم: الدمج", since: t0, "\(out.count) مباراة · فهرس المكتبة \(needIdx ? "بُني" : "محفوظ أو غير لازم")")
             rows = out
+            reshow()
             Perf.shared.memory("مباريات اليوم: بعد الدمج")
         }
     }
@@ -223,14 +247,8 @@ struct MatchesView: View {
     /// Owner 07:51: FIFA, big five + cups, Turkey, Saudi, UEFA only (default); Italy → Spain → England first.
     @AppStorage("match.importantOnly") private var importantOnly = true
 
-    private var shown: [MatchSourcesRule.Row] {
-        // "today" is the device's today, also while yesterday's kept index is shown after midnight
-        let from = MatchIndexBuilder.ms(MatchIndexBuilder.dayStart(Date()))
-        let tomorrow = MatchIndexBuilder.ms(Calendar.current.date(byAdding: .day, value: 1, to: Date(timeIntervalSince1970: Double(from) / 1000)) ?? Date())
-        let end = max(store.result?.to ?? 0, tomorrow + 86_400_000)
-        return MatchSourcesRule.rowsFor(store.rows, now: MatchIndexBuilder.ms(Date()), dayStart: from, tomorrow: tomorrow, end: end,
-                                        day: store.day, nowOnly: store.nowOnly, sport: store.sport, importantOnly: importantOnly)
-    }
+    private var shown: [MatchSourcesRule.Row] { store.shown }
+    private static let hhmm: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "ar"); f.dateFormat = "HH:mm"; return f }()
 
     private var footerText: String {
         var t = "التغطية جزئية: دليل برامج المزوّد"
@@ -280,6 +298,7 @@ struct MatchesView: View {
                         .pickerStyle(.segmented).disabled(store.nowOnly)
                     Toggle("تلعب الآن حسب الدليل أو الجدول", isOn: $store.nowOnly)
                     Toggle("البطولات المهمة فقط", isOn: $importantOnly)
+                        .onChange(of: importantOnly) { v in store.importantOnly = v }
 
                 } footer: { Text(footerText) }
                 if store.busy || !store.status.isEmpty {
@@ -299,7 +318,7 @@ struct MatchesView: View {
                 }
             }
             .onAppear {
-                store.appear(library)
+                store.appear(library); store.reshow()
                 if let k = store.selectedKey { DispatchQueue.main.async { proxy.scrollTo(k, anchor: .center) } }
             }
             .onChange(of: library.channels.count) { _ in store.remerge(library) }
@@ -308,8 +327,7 @@ struct MatchesView: View {
 
     private func rowLabel(_ r: MatchSourcesRule.Row) -> some View {
         let now = MatchIndexBuilder.ms(Date())
-        let f = DateFormatter(); f.locale = Locale(identifier: "ar"); f.dateFormat = "HH:mm"
-        let time = f.string(from: Date(timeIntervalSince1970: Double(r.start) / 1000))
+        let time = Self.hhmm.string(from: Date(timeIntervalSince1970: Double(r.start) / 1000))
         let confirmed = r.links.filter(\.confirmed).count
         let state: String? = r.group.map { MatchScreenRule.state($0, now: now) } ?? (r.airingAt(now) ? "بدأت حسب الجدول" : nil)
         var parts: [String] = []
