@@ -2079,6 +2079,48 @@ enum MatchSourcesRule {
     private static let delayedRe = try! NSRegularExpression(pattern: "\\b(delayed|deferred|highlights|replay|re-?air|repeat|catch ?up)\\b|\\((d|r|rpt|delayed)\\)|اعادة|إعادة|ملخص|مؤجل", options: [.caseInsensitive])
     static func delayedName(_ n: String) -> Bool { delayedRe.firstMatch(in: n, range: NSRange(location: 0, length: (n as NSString).length)) != nil }
 
+    // ---------- owner 07:51–07:52: the competitions that matter, Italy → Spain → England first (same as the TV) ----------
+    private static let importantParts: [String] = [// FIFA
+        "\\bfifa\\b", "world cup", "club world cup", "arab cup", "كأس العالم", "مونديال", "كأس العرب", "كأس القارات",
+        // UEFA clubs + national
+        "champions league", "europa league", "conference league", "uefa super cup", "\\buefa\\b", "nations league", "\\beuro 20", "european championship",
+        "دوري أبطال أوروبا", "دوري ابطال اوروبا", "الدوري الأوروبي", "الدوري الاوروبي", "دوري المؤتمر", "كأس السوبر الأوروبي", "كأس الأمم الأوروبية", "دوري الأمم",
+        // England
+        "premier league", "\\bepl\\b", "fa cup", "efl cup", "carabao", "league cup", "community shield", "الدوري الإنجليزي", "الدوري الانجليزي", "كأس الاتحاد الإنجليزي", "كأس الرابطة الإنجليزية", "كأس إنجلترا",
+        // Spain
+        "la ?liga", "primera divisi[oó]n", "copa del rey", "supercopa", "الدوري الإسباني", "الدوري الاسباني", "كأس ملك إسبانيا", "كأس الملك الإسباني", "السوبر الإسباني",
+        // Italy
+        "serie a", "coppa italia", "supercoppa", "الدوري الإيطالي", "الدوري الايطالي", "كأس إيطاليا", "السوبر الإيطالي",
+        // Germany
+        "bundesliga", "dfb[ -]?pokal", "supercup", "الدوري الألماني", "الدوري الالماني", "كأس ألمانيا", "السوبر الألماني",
+        // France
+        "ligue 1", "coupe de france", "troph[ée]e des champions", "الدوري الفرنسي", "كأس فرنسا", "السوبر الفرنسي",
+        // Turkey
+        "s[üu]per lig", "turkish super league", "t[üu]rkiye kupas[ıi]", "turkish cup", "الدوري التركي", "كأس تركيا",
+        // Saudi Arabia
+        "saudi pro league", "roshn", "saudi professional league", "king'?s cup", "king cup", "saudi super cup", "الدوري السعودي", "دوري روشن", "كأس الملك", "كأس خادم الحرمين", "السوبر السعودي"]
+    private static let importantRe = try! NSRegularExpression(pattern: importantParts.map { "(?:\($0))" }.joined(separator: "|"), options: [.caseInsensitive])
+    private static let notImportantRe = try! NSRegularExpression(pattern: "\\b(egypt|egyptian|scottish|scotland|welsh|wales|northern ireland|irish|russian|russia|ukrain|kazakh|armenian|israeli|maltese|malta|bangladesh|kenyan|kuwait|bahrain|qatar|oman|iraq|jordan|lebanon|syria|ghana|nigeria|south africa|zambia|uganda|tanzania|ethiopia|hong kong|singapore|malaysia|indonesia|vietnam|thai|indian|pakistan|nepal|myanmar|cambodia|belarus|azerbaijan|georgia|moldova|estonia|latvia|lithuania|austria|austrian|swiss|switzerland|belgian|dutch|portuguese|greek|cypriot|romanian|bulgarian|serbian|croatian|slovenian|slovak|czech|polish|hungarian|danish|swedish|norwegian|finnish|icelandic|faroe|brazil|argentin|chile|colombia|peru|ecuador|uruguay|paraguay|bolivia|venezuela|mexic|usa|mls|canadian|australia|a-league|japan|j1|korea|k league|china|chinese|2\\. bundesliga|bundesliga 2|serie b|ligue 2|segunda|la liga 2|hypermotion|1\\. lig|primeira|youth|women|u-?\\d\\d)\\b|المصري|الكويتي|البحريني|القطري|الإماراتي|العماني|العراقي|الأردني|المغربي|التونسي|الجزائري|الليبي|السوداني|المصرية|الدرجة الثانية|الدرجة الأولى|للسيدات|للشباب|للناشئين", options: [.caseInsensitive])
+    private static let italyRe = try! NSRegularExpression(pattern: "serie a|coppa italia|supercoppa|\\bital|الإيطالي|الايطالي|إيطاليا", options: [.caseInsensitive])
+    private static let spainRe = try! NSRegularExpression(pattern: "la ?liga|primera divisi|copa del rey|supercopa|\\bspain|\\bspanish|الإسباني|الاسباني|إسبانيا", options: [.caseInsensitive])
+    private static let englandRe = try! NSRegularExpression(pattern: "premier league|\\bepl\\b|fa cup|efl cup|carabao|league cup|community shield|\\bengland|\\benglish|الإنجليزي|الانجليزي|إنجلترا", options: [.caseInsensitive])
+    private static func has(_ r: NSRegularExpression, _ s: String) -> Bool { r.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil }
+
+    static func important(_ competition: String?) -> Bool {
+        guard let c = competition else { return false }
+        return has(importantRe, c) && !has(notImportantRe, c)
+    }
+    static func important(_ r: Row) -> Bool {
+        important(r.competition) || (r.group?.entries.contains { important($0.competition) || important($0.title) } ?? false)
+    }
+    static func rank(_ competition: String?) -> Int {
+        guard important(competition), let c = competition else { return 4 }
+        return has(italyRe, c) ? 0 : has(spainRe, c) ? 1 : has(englandRe, c) ? 2 : 3
+    }
+    static func rank(_ r: Row) -> Int {
+        ([r.competition] + (r.group?.entries ?? []).flatMap { [$0.competition, $0.title] }).map { rank($0) }.min() ?? 4
+    }
+
     private static let youthWomenRe = try! NSRegularExpression(pattern: "\\b(youth|junior|juniors|juvenil|primavera|reserves?|women'?s?|womens|feminine|f[ée]minin[e]?|femenin[oa]|frauen|damen|wsl|nwsl|liga f|u-?(1[5-9]|2[0-3]))\\b|سيدات|نسائي|للناشئين|ناشئين|للشباب|تحت ?(17|19|20|21|23)", options: [.caseInsensitive])
     /// Owner 07:45: youth and women's matches are not wanted (team markers, or such a competition). Same as the TV.
     static func youthOrWomen(_ r: Row) -> Bool {
@@ -2088,13 +2130,15 @@ enum MatchSourcesRule {
     }
 
     /// Live men's senior football only (owner 07:38–07:45): replays, youth and women's matches, other sports and unclassified cards are not listed.
-    static func rowsFor(_ rows: [Row], now: Int64, dayStart: Int64, tomorrow: Int64, end: Int64, day: Int, nowOnly: Bool, sport: MatchScreenRule.SportFilter) -> [Row] {
+    static func rowsFor(_ rows: [Row], now: Int64, dayStart: Int64, tomorrow: Int64, end: Int64, day: Int, nowOnly: Bool, sport: MatchScreenRule.SportFilter,
+                        importantOnly: Bool = false) -> [Row] {
         rows.filter { r in
             if r.replay || youthOrWomen(r) || (r.links.isEmpty && r.missing.isEmpty && r.platforms.isEmpty) { return false }
+            if importantOnly && !important(r) { return false }
             let sportOk = r.sport.sport == .football
             let dayOk = nowOnly ? r.airingAt(now) : day == 0 ? (r.stop > dayStart && r.start < tomorrow) : (r.start >= tomorrow && r.start < end)
             return sportOk && dayOk
-        }
+        }.sorted { (rank($0), $0.start) < (rank($1), $1.start) }
     }
 
     struct Sections { let confirmed: [Link]; let possible: [Link]; let suggested: [Link]; let hidden: Int; var alternatives: [Link] = [] }
@@ -2366,8 +2410,7 @@ enum MatchFetchRule {
         for g in groups(re("class=\"r_complink\"><span class=\"[^\"]*\">(.*?)</span>|<tr id=\"(\\d+)\" class=\"matchrow\"(.*?)</tr>"), html) {
             if let c = g[1] {
                 let t = decode(c)
-                comp = t.components(separatedBy: " - ").dropFirst().joined(separator: " - ")
-                if comp?.isEmpty == true { comp = nil }
+                comp = t.isEmpty ? nil : t          // the country stays («England - Premier League»)
                 continue
             }
             guard let id = g[2], let row = g[3],
@@ -2443,7 +2486,9 @@ enum MatchFetchRule {
     static func looksLikeLstvDay(_ h: String) -> Bool { h.contains("class=\"schedules\"") && (h.contains("r_comprow") || h.contains("matchrow")) }
     static func looksLikeLstvMatch(_ h: String) -> Bool { h.contains("SportsEvent") || h.contains("ichannels") }
 
-    static func priority(_ days: [DayMatch]) -> [DayMatch] { days.sorted { ($0.kickoff, $0.id) < ($1.kickoff, $1.id) } }
+    static func priority(_ days: [DayMatch]) -> [DayMatch] {
+        days.sorted { (MatchSourcesRule.rank($0.competition), $0.kickoff, $0.id) < (MatchSourcesRule.rank($1.competition), $1.kickoff, $1.id) }
+    }
 
     static func mergeLstv(previous: MatchSourcesRule.ExtSource?, days: [DayMatch], dayPagesFailed: Int, pages: [String: MatchPage],
                           notRead: [DayMatch], fetchedAt: Int64, from: Int64, to: Int64, lastFull: String?) -> MatchSourcesRule.ExtSource {

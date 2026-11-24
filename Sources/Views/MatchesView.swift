@@ -213,6 +213,8 @@ struct MatchesView: View {
     @AppStorage("match.hideSd") private var hideSd = false
     @State private var importing = false
     @State private var showFiles = false
+    /// Owner 07:51: FIFA, big five + cups, Turkey, Saudi, UEFA only (default); Italy → Spain → England first.
+    @AppStorage("match.importantOnly") private var importantOnly = true
 
     private var shown: [MatchSourcesRule.Row] {
         // "today" is the device's today, also while yesterday's kept index is shown after midnight
@@ -220,7 +222,7 @@ struct MatchesView: View {
         let tomorrow = MatchIndexBuilder.ms(Calendar.current.date(byAdding: .day, value: 1, to: Date(timeIntervalSince1970: Double(from) / 1000)) ?? Date())
         let end = max(store.result?.to ?? 0, tomorrow + 86_400_000)
         return MatchSourcesRule.rowsFor(store.rows, now: MatchIndexBuilder.ms(Date()), dayStart: from, tomorrow: tomorrow, end: end,
-                                        day: store.day, nowOnly: store.nowOnly, sport: store.sport)
+                                        day: store.day, nowOnly: store.nowOnly, sport: store.sport, importantOnly: importantOnly)
     }
 
     private var footerText: String {
@@ -270,6 +272,7 @@ struct MatchesView: View {
                     Picker("اليوم", selection: $store.day) { Text("اليوم").tag(0); Text("غدًا").tag(1) }
                         .pickerStyle(.segmented).disabled(store.nowOnly)
                     Toggle("تلعب الآن حسب الدليل أو الجدول", isOn: $store.nowOnly)
+                    Toggle("البطولات المهمة فقط", isOn: $importantOnly)
 
                 } footer: { Text(footerText) }
                 if store.busy || !store.status.isEmpty {

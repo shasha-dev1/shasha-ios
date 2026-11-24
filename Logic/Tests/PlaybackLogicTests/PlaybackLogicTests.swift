@@ -1661,7 +1661,7 @@ final class MatchFetchRuleTests: XCTestCase {
     func testLiveSoccerTvDayPageAndMatchPage() throws {
         let days = F.parseLstvDay(try page("lstv-day-2026-11-24.html"))
         XCTAssertEqual(days.count, 60)
-        XCTAssertTrue(days.contains { $0.competition == "Major League Soccer" })
+        XCTAssertTrue(days.contains { $0.competition == "USA/Canada - Major League Soccer" })
         let p = F.parseLstvMatch(try page("lstv-match-manchester-city-vs-napoli.html"))
         XCTAssertEqual(p.home, "Manchester City"); XCTAssertEqual(p.away, "Napoli")
         XCTAssertEqual(p.start, 1_795_550_400_000)
@@ -1787,5 +1787,23 @@ extension MatchSourcesUpdateTests {
         let rows = S.merge([], sources: [s], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: from, to: to, tz: bahrain)
         let shown = S.rowsFor(rows, now: ko, dayStart: from, tomorrow: from + 86_400_000, end: to, day: 0, nowOnly: false, sport: .football)
         XCTAssertEqual(Set(shown.map(\.home)), ["Arsenal", "Al Shabab"])
+    }
+
+    func testTheCompetitionsThatMatterAndTheirOrder() {
+        for c in ["England - Premier League", "Premier League", "UEFA Champions League", "Europe - UEFA Europa League", "UEFA Conference League",
+                  "Spanish LaLiga 2026/2027 - Week 13", "Italy - Serie A", "Bundesliga", "French Ligue 1 2026/2027 - Week 11", "Turkey - Süper Lig",
+                  "Saudi Pro League", "دوري روشن السعودي", "الدوري الإنجليزي الممتاز", "دوري أبطال أوروبا", "FIFA World Cup", "FIFA Club World Cup",
+                  "England - FA Cup", "Spain - Copa del Rey", "Coppa Italia", "DFB-Pokal", "Coupe de France", "كأس خادم الحرمين الشريفين", "كأس العالم"] {
+            XCTAssertTrue(S.important(c), c)
+        }
+        for c in ["Egypt - Premier League", "Scottish Premiership", "2. Bundesliga", "Serie B", "Ligue 2 - J13 - FOOTBALL 2026-2027",
+                  "USA/Canada - Major League Soccer", "England - Championship", "UEFA Youth League", "الدوري المصري", "Kuwait Premier League", "Division 1 Féminine"] {
+            XCTAssertFalse(S.important(c), c)
+        }
+        XCTAssertEqual(["Italy - Serie A", "Spanish LaLiga", "England - Premier League", "UEFA Champions League", "Egypt - Premier League"].map { S.rank($0) }, [0, 1, 2, 3, 4])
+        let xs = [MatchFetchRule.DayMatch(id: "1", url: "u1", home: "A", away: "B", kickoff: 1, competition: "England - Premier League", channels: []),
+                  MatchFetchRule.DayMatch(id: "2", url: "u2", home: "C", away: "D", kickoff: 5, competition: "Italy - Serie A", channels: []),
+                  MatchFetchRule.DayMatch(id: "3", url: "u3", home: "E", away: "F", kickoff: 3, competition: "Spain - LaLiga", channels: [])]
+        XCTAssertEqual(MatchFetchRule.priority(xs).map(\.id), ["2", "3", "1"])
     }
 }
