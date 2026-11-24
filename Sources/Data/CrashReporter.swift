@@ -94,6 +94,16 @@ final class CrashReporter: NSObject, ObservableObject, MXMetricManagerSubscriber
         if !payloads.isEmpty { refresh() }
     }
 
+    /// 1.9.8: a report the owner sends himself (the performance report from Settings), in the same mail.
+    func attach(_ text: String, name: String) {
+        try? (header(name) + "\n" + text).write(to: dir.appendingPathComponent("\(stamp())-\(name).txt"), atomically: true, encoding: .utf8)
+        let l = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+        pending = l.filter { $0.pathExtension == "txt" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
+    /// A crash or unclean exit among the files (not only a report the owner attached himself).
+    var hasCrash: Bool { pending.contains { !$0.lastPathComponent.hasSuffix("-perf.txt") } }
+
     func joined() -> String { pending.compactMap { try? String(contentsOf: $0, encoding: .utf8) }.joined(separator: "\n\n==========\n\n") }
     func clear() { for u in pending { try? FileManager.default.removeItem(at: u) }; refresh() }
 }
@@ -113,7 +123,7 @@ struct CrashSendView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         let r = CrashReporter.shared
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-        let subject = "Shasha crash report \(v)"
+        let subject = "Shasha report \(v)"
         if MFMailComposeViewController.canSendMail() {
             let m = MFMailComposeViewController()
             m.mailComposeDelegate = context.coordinator

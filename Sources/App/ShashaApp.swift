@@ -102,8 +102,8 @@ struct RootView: View {
             }
         }
         .onChange(of: library.activeId) { _ in epg.clear() }
-        .onAppear { Perf.shared.startMonitor(); if !crashes.pending.isEmpty { askCrash = true } }
-        .onChange(of: crashes.pending.count) { n in if n > 0 && play == nil { askCrash = true } }
+        .onAppear { Perf.shared.startMonitor(); if crashes.hasCrash { askCrash = true } }
+        .onChange(of: crashes.pending.count) { _ in if crashes.hasCrash && play == nil && !sendCrash { askCrash = true } }
         .alert("التطبيق انغلق بشكل غير طبيعي", isPresented: $askCrash) {
             TextField("بريدك (يُحفظ على الجهاز فقط)", text: $crashEmail).keyboardType(.emailAddress).textInputAutocapitalization(.never)
             Button("إرسال التقرير") { sendCrash = true }

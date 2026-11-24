@@ -278,6 +278,8 @@ struct PerfView: View {
     @AppStorage(FreezeBehindPlayer.key) private var freezeBehind = false
     @State private var text = ""
     @State private var copied = false
+    @State private var mail = false          // 1.9.8: the report by e-mail (same sheet as the crash report)
+    @AppStorage(CrashReporter.emailKey) private var email = ""
 
     var body: some View {
         ScrollView {
@@ -286,6 +288,8 @@ struct PerfView: View {
                     Button { UIPasteboard.general.string = text; copied = true } label: { Label(copied ? "تم النسخ" : "نسخ", systemImage: "doc.on.doc") }
                         .buttonStyle(.borderedProminent)
                     Button { text = Perf.shared.report(library: library.sizeText) } label: { Label("تحديث", systemImage: "arrow.clockwise") }
+                        .buttonStyle(.bordered)
+                    Button { text = Perf.shared.report(library: library.sizeText); CrashReporter.shared.attach(text, name: "perf"); mail = true } label: { Label("بريد", systemImage: "envelope") }
                         .buttonStyle(.bordered)
                     Button(role: .destructive) { Perf.shared.clear(); text = Perf.shared.report(library: library.sizeText) } label: { Label("مسح", systemImage: "trash") }
                         .buttonStyle(.bordered)
@@ -303,6 +307,7 @@ struct PerfView: View {
         }
         .navigationTitle("قياسات الأداء")
         .onAppear { text = Perf.shared.report(library: library.sizeText); copied = false }
+        .sheet(isPresented: $mail) { CrashSendView(to: email) { sent in mail = false; if sent { CrashReporter.shared.clear() } } }
     }
 }
 
