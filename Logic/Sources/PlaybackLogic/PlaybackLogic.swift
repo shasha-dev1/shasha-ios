@@ -2079,10 +2079,18 @@ enum MatchSourcesRule {
     private static let delayedRe = try! NSRegularExpression(pattern: "\\b(delayed|deferred|highlights|replay|re-?air|repeat|catch ?up)\\b|\\((d|r|rpt|delayed)\\)|اعادة|إعادة|ملخص|مؤجل", options: [.caseInsensitive])
     static func delayedName(_ n: String) -> Bool { delayedRe.firstMatch(in: n, range: NSRange(location: 0, length: (n as NSString).length)) != nil }
 
-    /// Live football only (owner 07:38–07:39): replays, other sports and unclassified cards are not listed.
+    private static let youthWomenRe = try! NSRegularExpression(pattern: "\\b(youth|junior|juniors|juvenil|primavera|reserves?|women'?s?|womens|feminine|f[ée]minin[e]?|femenin[oa]|frauen|damen|wsl|nwsl|liga f|u-?(1[5-9]|2[0-3]))\\b|سيدات|نسائي|للناشئين|ناشئين|للشباب|تحت ?(17|19|20|21|23)", options: [.caseInsensitive])
+    /// Owner 07:45: youth and women's matches are not wanted (team markers, or such a competition). Same as the TV.
+    static func youthOrWomen(_ r: Row) -> Bool {
+        if !r.audience.isEmpty || !MatchGuideRule.audience(r.home + " " + r.away).isEmpty { return true }
+        guard let c = r.competition else { return false }
+        return youthWomenRe.firstMatch(in: c, range: NSRange(location: 0, length: (c as NSString).length)) != nil
+    }
+
+    /// Live men's senior football only (owner 07:38–07:45): replays, youth and women's matches, other sports and unclassified cards are not listed.
     static func rowsFor(_ rows: [Row], now: Int64, dayStart: Int64, tomorrow: Int64, end: Int64, day: Int, nowOnly: Bool, sport: MatchScreenRule.SportFilter) -> [Row] {
         rows.filter { r in
-            if r.replay || (r.links.isEmpty && r.missing.isEmpty && r.platforms.isEmpty) { return false }
+            if r.replay || youthOrWomen(r) || (r.links.isEmpty && r.missing.isEmpty && r.platforms.isEmpty) { return false }
             let sportOk = r.sport.sport == .football
             let dayOk = nowOnly ? r.airingAt(now) : day == 0 ? (r.stop > dayStart && r.start < tomorrow) : (r.start >= tomorrow && r.start < end)
             return sportOk && dayOk

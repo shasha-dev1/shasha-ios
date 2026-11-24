@@ -1779,4 +1779,13 @@ extension MatchSourcesUpdateTests {
         XCTAssertFalse(r.missing.contains { $0.0.contains("Delayed") || $0.0.contains("Highlights") })
         XCTAssertTrue(S.delayedName("TVP Sport (D)") && S.delayedName("beIN Sports 1 (Delayed)") && !S.delayedName("Sky Sports Main Event"))
     }
+
+    func testYouthAndWomensMatchesAreNotListed() throws {
+        let ko: Int64 = 1_795_550_400_000
+        var s = try S.parse(file(ko, [("Arsenal", "Dortmund", ko), ("Arsenal U19", "Dortmund U19", ko + 1), ("Chelsea Women", "Arsenal Women", ko + 2), ("Al Shabab", "Al Nassr", ko + 3)]), now: 1)
+        s.matches.append(S.ExtMatch(home: "Lyon", away: "PSG", kickoff: ko + 4, competition: "Division 1 Féminine", sport: "football", channels: s.matches[0].channels))
+        let rows = S.merge([], sources: [s], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: from, to: to, tz: bahrain)
+        let shown = S.rowsFor(rows, now: ko, dayStart: from, tomorrow: from + 86_400_000, end: to, day: 0, nowOnly: false, sport: .football)
+        XCTAssertEqual(Set(shown.map(\.home)), ["Arsenal", "Al Shabab"])
+    }
 }
