@@ -1,0 +1,4155 @@
+{
+  "retrieved_at_utc": "2026-11-24T18:41:13.356763+00:00",
+  "source_url": "https://en.legaseriea.it/serie-a/broadcasters",
+  "page_title": "Broadcasters | Where to Watch the Serie A Enilive 2025/26 | legaseriea.it",
+  "page_season_label": "2025/26",
+  "current_contract_season_verified": false,
+  "country_territory_count": 198,
+  "broadcaster_record_count": 73,
+  "notes": [
+    "This is a snapshot of broadcaster listings embedded in the official Serie A page, not a verified 2026/27 rights register.",
+    "Many records have update dates in 2026, but a CMS update date is not a contract validity period.",
+    "All extracted records carry the serie-a tag; some additionally carry coppa-italia. These tags do not establish rights for any specific match.",
+    "Country codes were split, trimmed and deduplicated within each record. No territories were added from other sources.",
+    "The records do not specify full/selected match coverage, exclusivity, live/highlights or terrestrial/digital rights. Unknown values remain null."
+  ],
+  "issues": [
+    {
+      "broadcaster_id": "230fe739-b24d-4967-91c3-9296a9eba385",
+      "issue": "Source label is Cookies; preserved verbatim and needs review before matching."
+    }
+  ],
+  "countries": [
+    {
+      "country_code": "IS",
+      "country_ar": "آيسلندا",
+      "country_en": "Iceland",
+      "broadcasters": [
+        "Livey"
+      ],
+      "broadcaster_ids": [
+        "e56fa2b1-45b2-4137-8a5e-bc3f2a72c17a"
+      ]
+    },
+    {
+      "country_code": "AZ",
+      "country_ar": "أذربيجان",
+      "country_en": "Azerbaijan",
+      "broadcasters": [
+        "Sport TV",
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "fb72a16f-2de2-4946-b4f3-fc2c6d2c66a5",
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "AM",
+      "country_ar": "أرمينيا",
+      "country_en": "Armenia",
+      "broadcasters": [
+        "Fast Media",
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "d9477399-69d1-40d1-b342-daaf7f8e6ff4",
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "AW",
+      "country_ar": "أروبا",
+      "country_en": "Aruba",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "AU",
+      "country_ar": "أستراليا",
+      "country_en": "Australia",
+      "broadcasters": [
+        "beIN"
+      ],
+      "broadcaster_ids": [
+        "e558a4a0-aab4-45e3-81b5-37380ad73358"
+      ]
+    },
+    {
+      "country_code": "AF",
+      "country_ar": "أفغانستان",
+      "country_en": "Afghanistan",
+      "broadcasters": [
+        "Unite8",
+        "Zee TV"
+      ],
+      "broadcaster_ids": [
+        "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+        "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954"
+      ]
+    },
+    {
+      "country_code": "AL",
+      "country_ar": "ألبانيا",
+      "country_en": "Albania",
+      "broadcasters": [
+        "Tring"
+      ],
+      "broadcaster_ids": [
+        "dab71978-ceef-4417-907f-da25489c15ef"
+      ]
+    },
+    {
+      "country_code": "DE",
+      "country_ar": "ألمانيا",
+      "country_en": "Germany",
+      "broadcasters": [
+        "DAZN Dach"
+      ],
+      "broadcaster_ids": [
+        "d4d4249b-8e78-4db2-955f-2c5e088a2c10"
+      ]
+    },
+    {
+      "country_code": "AG",
+      "country_ar": "أنتيغوا وبربودا",
+      "country_en": "Antigua & Barbuda",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "AD",
+      "country_ar": "أندورا",
+      "country_en": "Andorra",
+      "broadcasters": [
+        "DAZN Andorra"
+      ],
+      "broadcaster_ids": [
+        "2e6b69ed-2050-48ea-811c-c181bccb500d"
+      ]
+    },
+    {
+      "country_code": "AO",
+      "country_ar": "أنغولا",
+      "country_en": "Angola",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Zap"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "99e9f5e3-f431-40d7-8204-d0ff3fc61778"
+      ]
+    },
+    {
+      "country_code": "AI",
+      "country_ar": "أنغويلا",
+      "country_en": "Anguilla",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "UY",
+      "country_ar": "أورغواي",
+      "country_en": "Uruguay",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "UZ",
+      "country_ar": "أوزبكستان",
+      "country_en": "Uzbekistan",
+      "broadcasters": [
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "UG",
+      "country_ar": "أوغندا",
+      "country_en": "Uganda",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "UA",
+      "country_ar": "أوكرانيا",
+      "country_en": "Ukraine",
+      "broadcasters": [
+        "Megogo"
+      ],
+      "broadcaster_ids": [
+        "ddaea571-e847-4a7a-a097-425d35c4a7be"
+      ]
+    },
+    {
+      "country_code": "IE",
+      "country_ar": "أيرلندا",
+      "country_en": "Ireland",
+      "broadcasters": [
+        "BBC",
+        "TNT"
+      ],
+      "broadcaster_ids": [
+        "574598e8-2c7b-4f30-8b50-cfe7522bdf1d",
+        "8b0b4668-b2ba-43a1-8595-838fb61b60a4"
+      ]
+    },
+    {
+      "country_code": "ET",
+      "country_ar": "إثيوبيا",
+      "country_en": "Ethiopia",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "ER",
+      "country_ar": "إريتريا",
+      "country_en": "Eritrea",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "ES",
+      "country_ar": "إسبانيا",
+      "country_en": "Spain",
+      "broadcasters": [
+        "DAZN Spain"
+      ],
+      "broadcaster_ids": [
+        "af50dee6-1e87-45d5-9b0a-b2fb567b0204"
+      ]
+    },
+    {
+      "country_code": "EE",
+      "country_ar": "إستونيا",
+      "country_en": "Estonia",
+      "broadcasters": [
+        "Go3",
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "56e18b3d-9f63-4dd4-a398-bedf994e390f",
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "IL",
+      "country_ar": "إسرائيل",
+      "country_en": "Israel",
+      "broadcasters": [
+        "Citynet",
+        "Charlton"
+      ],
+      "broadcaster_ids": [
+        "c0873c80-b040-4830-8f5a-136e131847ca",
+        "efa101f1-c975-4075-85ee-7d7ae3423f05"
+      ]
+    },
+    {
+      "country_code": "SZ",
+      "country_ar": "إسواتيني",
+      "country_en": "Eswatini",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "ID",
+      "country_ar": "إندونيسيا",
+      "country_en": "Indonesia",
+      "broadcasters": [
+        "Emtek"
+      ],
+      "broadcaster_ids": [
+        "3b3eacdb-3778-450c-af2c-45cc7f8a82b8"
+      ]
+    },
+    {
+      "country_code": "IR",
+      "country_ar": "إيران",
+      "country_en": "Iran",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "IT",
+      "country_ar": "إيطاليا",
+      "country_en": "Italy",
+      "broadcasters": [
+        "BAZR",
+        "Sky",
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        "befe9884-6cf7-4c51-927a-35e0580775f6",
+        "214f4a05-85f1-4310-a3f0-bc83904696af",
+        "227f4575-e1c2-4f02-8715-2e4fbe1c9a39"
+      ]
+    },
+    {
+      "country_code": "PS",
+      "country_ar": "الأراضي الفلسطينية",
+      "country_en": "Palestinian Territories",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "AR",
+      "country_ar": "الأرجنتين",
+      "country_en": "Argentina",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "JO",
+      "country_ar": "الأردن",
+      "country_en": "Jordan",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "EC",
+      "country_ar": "الإكوادور",
+      "country_en": "Ecuador",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "AE",
+      "country_ar": "الإمارات العربية المتحدة",
+      "country_en": "United Arab Emirates",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "BH",
+      "country_ar": "البحرين",
+      "country_en": "Bahrain",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "BR",
+      "country_ar": "البرازيل",
+      "country_en": "Brazil",
+      "broadcasters": [
+        "Cazé TV",
+        "ESPN",
+        "Ideal TV"
+      ],
+      "broadcaster_ids": [
+        "c57b5fb5-8dee-4c62-a254-ba5c53e84f3f",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "b3224b8f-29c7-44f1-ab5a-56741a62fae0"
+      ]
+    },
+    {
+      "country_code": "PT",
+      "country_ar": "البرتغال",
+      "country_en": "Portugal",
+      "broadcasters": [
+        "Sport TV"
+      ],
+      "broadcaster_ids": [
+        "81d56df6-8bc1-4f81-a6d3-45952e2988cb"
+      ]
+    },
+    {
+      "country_code": "BA",
+      "country_ar": "البوسنة والهرسك",
+      "country_en": "Bosnia & Herzegovina",
+      "broadcasters": [
+        "Arena TV"
+      ],
+      "broadcaster_ids": [
+        "ce24a896-7775-477e-814e-1281e970d127"
+      ]
+    },
+    {
+      "country_code": "CZ",
+      "country_ar": "التشيك",
+      "country_en": "Czechia",
+      "broadcasters": [
+        "AMC"
+      ],
+      "broadcaster_ids": [
+        "b19926e4-4124-404d-9da5-20262d54ecc1"
+      ]
+    },
+    {
+      "country_code": "ME",
+      "country_ar": "الجبل الأسود",
+      "country_en": "Montenegro",
+      "broadcasters": [
+        "Arena TV"
+      ],
+      "broadcaster_ids": [
+        "ce24a896-7775-477e-814e-1281e970d127"
+      ]
+    },
+    {
+      "country_code": "DZ",
+      "country_ar": "الجزائر",
+      "country_en": "Algeria",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "DK",
+      "country_ar": "الدانمرك",
+      "country_en": "Denmark",
+      "broadcasters": [
+        "TV2"
+      ],
+      "broadcaster_ids": [
+        "b20c81a8-e38b-4ff7-8b07-0137b0594056"
+      ]
+    },
+    {
+      "country_code": "CV",
+      "country_ar": "الرأس الأخضر",
+      "country_en": "Cape Verde",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "SV",
+      "country_ar": "السلفادور",
+      "country_en": "El Salvador",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "SN",
+      "country_ar": "السنغال",
+      "country_en": "Senegal",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "SD",
+      "country_ar": "السودان",
+      "country_en": "Sudan",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "SE",
+      "country_ar": "السويد",
+      "country_en": "Sweden",
+      "broadcasters": [
+        "TV4"
+      ],
+      "broadcaster_ids": [
+        "5f5d23c0-a8c2-4e69-ae20-2b1027cf15ba"
+      ]
+    },
+    {
+      "country_code": "SO",
+      "country_ar": "الصومال",
+      "country_en": "Somalia",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "CN",
+      "country_ar": "الصين",
+      "country_en": "China",
+      "broadcasters": [
+        "Migu"
+      ],
+      "broadcaster_ids": [
+        "f6f4c363-c36c-442c-a970-16b652d79109"
+      ]
+    },
+    {
+      "country_code": "IQ",
+      "country_ar": "العراق",
+      "country_en": "Iraq",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "GA",
+      "country_ar": "الغابون",
+      "country_en": "Gabon",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "CM",
+      "country_ar": "الكاميرون",
+      "country_en": "Cameroon",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "CG",
+      "country_ar": "الكونغو - برازافيل",
+      "country_en": "Congo - Brazzaville",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "CD",
+      "country_ar": "الكونغو - كينشاسا",
+      "country_en": "Congo - Kinshasa",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "KW",
+      "country_ar": "الكويت",
+      "country_en": "Kuwait",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "MA",
+      "country_ar": "المغرب",
+      "country_en": "Morocco",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "MX",
+      "country_ar": "المكسيك",
+      "country_en": "Mexico",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "SA",
+      "country_ar": "المملكة العربية السعودية",
+      "country_en": "Saudi Arabia",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "GB",
+      "country_ar": "المملكة المتحدة",
+      "country_en": "United Kingdom",
+      "broadcasters": [
+        "BBC",
+        "DAZN United Kingdom",
+        "TNT"
+      ],
+      "broadcaster_ids": [
+        "574598e8-2c7b-4f30-8b50-cfe7522bdf1d",
+        "743d366e-ec16-4296-bade-2ed3e30e8d2e",
+        "8b0b4668-b2ba-43a1-8595-838fb61b60a4"
+      ]
+    },
+    {
+      "country_code": "NO",
+      "country_ar": "النرويج",
+      "country_en": "Norway",
+      "broadcasters": [
+        "VG"
+      ],
+      "broadcaster_ids": [
+        "c69117bd-174d-45a0-94b2-7e639dde6242"
+      ]
+    },
+    {
+      "country_code": "AT",
+      "country_ar": "النمسا",
+      "country_en": "Austria",
+      "broadcasters": [
+        "DAZN Dach"
+      ],
+      "broadcaster_ids": [
+        "d4d4249b-8e78-4db2-955f-2c5e088a2c10"
+      ]
+    },
+    {
+      "country_code": "NE",
+      "country_ar": "النيجر",
+      "country_en": "Niger",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "IN",
+      "country_ar": "الهند",
+      "country_en": "India",
+      "broadcasters": [
+        "Unite8",
+        "Zee TV"
+      ],
+      "broadcaster_ids": [
+        "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+        "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954"
+      ]
+    },
+    {
+      "country_code": "US",
+      "country_ar": "الولايات المتحدة",
+      "country_en": "United States",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "CBS",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "90145803-5286-4ea7-a2b3-b55cb46734bc",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "YE",
+      "country_ar": "اليمن",
+      "country_en": "Yemen",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "GR",
+      "country_ar": "اليونان",
+      "country_en": "Greece",
+      "broadcasters": [
+        "Cosmote"
+      ],
+      "broadcaster_ids": [
+        "f7ec6b90-6bf8-43f9-973b-fc9895ecbd5e"
+      ]
+    },
+    {
+      "country_code": "PY",
+      "country_ar": "باراغواي",
+      "country_en": "Paraguay",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "PK",
+      "country_ar": "باكستان",
+      "country_en": "Pakistan",
+      "broadcasters": [
+        "Begin"
+      ],
+      "broadcaster_ids": [
+        "550e6dcc-988d-45a2-8dfd-008d2cd75321"
+      ]
+    },
+    {
+      "country_code": "BB",
+      "country_ar": "بربادوس",
+      "country_en": "Barbados",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "BM",
+      "country_ar": "برمودا",
+      "country_en": "Bermuda",
+      "broadcasters": [
+        "Telemundo",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "BG",
+      "country_ar": "بلغاريا",
+      "country_en": "Bulgaria",
+      "broadcasters": [
+        "A1"
+      ],
+      "broadcaster_ids": [
+        "0ecde661-dd6a-4c1f-a4ec-a1b9b589e615"
+      ]
+    },
+    {
+      "country_code": "BZ",
+      "country_ar": "بليز",
+      "country_en": "Belize",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "BD",
+      "country_ar": "بنغلاديش",
+      "country_en": "Bangladesh",
+      "broadcasters": [
+        "Unite8",
+        "Zee TV"
+      ],
+      "broadcaster_ids": [
+        "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+        "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954"
+      ]
+    },
+    {
+      "country_code": "PA",
+      "country_ar": "بنما",
+      "country_en": "Panama",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "BJ",
+      "country_ar": "بنين",
+      "country_en": "Benin",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "BT",
+      "country_ar": "بوتان",
+      "country_en": "Bhutan",
+      "broadcasters": [
+        "Unite8",
+        "Zee TV"
+      ],
+      "broadcaster_ids": [
+        "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+        "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954"
+      ]
+    },
+    {
+      "country_code": "BW",
+      "country_ar": "بوتسوانا",
+      "country_en": "Botswana",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "PR",
+      "country_ar": "بورتوريكو",
+      "country_en": "Puerto Rico",
+      "broadcasters": [
+        "Telemundo",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "BF",
+      "country_ar": "بوركينا فاسو",
+      "country_en": "Burkina Faso",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "BI",
+      "country_ar": "بوروندي",
+      "country_en": "Burundi",
+      "broadcasters": [
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "PL",
+      "country_ar": "بولندا",
+      "country_en": "Poland",
+      "broadcasters": [
+        "Eleven",
+        "Polsat"
+      ],
+      "broadcaster_ids": [
+        "0711ce7f-b8b1-494b-9b20-b27885eee221",
+        "f0a01f95-ee36-47bd-bb71-c44edb278a49"
+      ]
+    },
+    {
+      "country_code": "BO",
+      "country_ar": "بوليفيا",
+      "country_en": "Bolivia",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "PE",
+      "country_ar": "بيرو",
+      "country_en": "Peru",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "BY",
+      "country_ar": "بيلاروس",
+      "country_en": "Belarus",
+      "broadcasters": [
+        "Sport TV",
+        "Kinopoisk",
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "e438c2b4-7333-4b30-93b8-dc2c154744ee",
+        "7879f660-3281-4f29-9b47-078cc202ddd5",
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "TH",
+      "country_ar": "تايلاند",
+      "country_en": "Thailand",
+      "broadcasters": [
+        "True Vision"
+      ],
+      "broadcaster_ids": [
+        "e5e6e947-4091-4b40-bb96-9a0ba01f2d7d"
+      ]
+    },
+    {
+      "country_code": "TW",
+      "country_ar": "تايوان",
+      "country_en": "Taiwan",
+      "broadcasters": [
+        "ELTA"
+      ],
+      "broadcaster_ids": [
+        "f5448408-9f9c-4179-8daa-f125f5064f93"
+      ]
+    },
+    {
+      "country_code": "TM",
+      "country_ar": "تركمانستان",
+      "country_en": "Turkmenistan",
+      "broadcasters": [
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "TR",
+      "country_ar": "تركيا",
+      "country_en": "Türkiye",
+      "broadcasters": [
+        "TIVIBU",
+        "S Sport"
+      ],
+      "broadcaster_ids": [
+        "4cdd73c3-373c-47a6-ac5b-b1f1ffb6c506",
+        "e5736b10-3c02-4516-b0b5-17ce55cf29bf"
+      ]
+    },
+    {
+      "country_code": "TT",
+      "country_ar": "ترينيداد وتوباغو",
+      "country_en": "Trinidad & Tobago",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "TD",
+      "country_ar": "تشاد",
+      "country_en": "Chad",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "CL",
+      "country_ar": "تشيلي",
+      "country_en": "Chile",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "TZ",
+      "country_ar": "تنزانيا",
+      "country_en": "Tanzania",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "TG",
+      "country_ar": "توغو",
+      "country_en": "Togo",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "TN",
+      "country_ar": "تونس",
+      "country_en": "Tunisia",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "JM",
+      "country_ar": "جامايكا",
+      "country_en": "Jamaica",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "BS",
+      "country_ar": "جزر البهاما",
+      "country_en": "Bahamas",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "KM",
+      "country_ar": "جزر القمر",
+      "country_en": "Comoros",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "MQ",
+      "country_ar": "جزر المارتينيك",
+      "country_en": "Martinique",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "MV",
+      "country_ar": "جزر المالديف",
+      "country_en": "Maldives",
+      "broadcasters": [
+        "Unite8",
+        "Zee TV"
+      ],
+      "broadcaster_ids": [
+        "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+        "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954"
+      ]
+    },
+    {
+      "country_code": "UM",
+      "country_ar": "جزر الولايات المتحدة النائية",
+      "country_en": "U.S. Outlying Islands",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "TC",
+      "country_ar": "جزر توركس وكايكوس",
+      "country_en": "Turks & Caicos Islands",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "FK",
+      "country_ar": "جزر فوكلاند",
+      "country_en": "Falkland Islands",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "VI",
+      "country_ar": "جزر فيرجن الأمريكية",
+      "country_en": "U.S. Virgin Islands",
+      "broadcasters": [
+        "Telemundo",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "VG",
+      "country_ar": "جزر فيرجن البريطانية",
+      "country_en": "British Virgin Islands",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "KY",
+      "country_ar": "جزر كايمان",
+      "country_en": "Cayman Islands",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "MP",
+      "country_ar": "جزر ماريانا الشمالية",
+      "country_en": "Northern Mariana Islands",
+      "broadcasters": [
+        "Telemundo",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "CP",
+      "country_ar": "جزيرة كليبيرتون",
+      "country_en": "Clipperton Island",
+      "broadcasters": [
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "CF",
+      "country_ar": "جمهورية أفريقيا الوسطى",
+      "country_en": "Central African Republic",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "DO",
+      "country_ar": "جمهورية الدومينيكان",
+      "country_en": "Dominican Republic",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "ZA",
+      "country_ar": "جنوب أفريقيا",
+      "country_en": "South Africa",
+      "broadcasters": [
+        "Cookies",
+        "Supersport",
+        "Sporty",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "230fe739-b24d-4967-91c3-9296a9eba385",
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "26211538-45ae-4496-a213-c5aaa06484a7",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "SS",
+      "country_ar": "جنوب السودان",
+      "country_en": "South Sudan",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "GE",
+      "country_ar": "جورجيا",
+      "country_en": "Georgia",
+      "broadcasters": [
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "DJ",
+      "country_ar": "جيبوتي",
+      "country_en": "Djibouti",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "DM",
+      "country_ar": "دومينيكا",
+      "country_en": "Dominica",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "RW",
+      "country_ar": "رواندا",
+      "country_en": "Rwanda",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "RU",
+      "country_ar": "روسيا",
+      "country_en": "Russia",
+      "broadcasters": [
+        "Match TV"
+      ],
+      "broadcaster_ids": [
+        "62bc7974-2ba0-44cf-a4f0-5ce640e2290b"
+      ]
+    },
+    {
+      "country_code": "RO",
+      "country_ar": "رومانيا",
+      "country_en": "Romania",
+      "broadcasters": [
+        "Digi",
+        "Prima"
+      ],
+      "broadcaster_ids": [
+        "cf4e98e3-2ab7-4bfe-a8e9-af6859770770",
+        "99e4b8fd-f84e-43ae-89fa-9f1a696a0175"
+      ]
+    },
+    {
+      "country_code": "ZM",
+      "country_ar": "زامبيا",
+      "country_en": "Zambia",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "ZW",
+      "country_ar": "زيمبابوي",
+      "country_en": "Zimbabwe",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "CI",
+      "country_ar": "ساحل العاج",
+      "country_en": "Côte d’Ivoire",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "WS",
+      "country_ar": "ساموا",
+      "country_en": "Samoa",
+      "broadcasters": [
+        "Telemundo"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0"
+      ]
+    },
+    {
+      "country_code": "AS",
+      "country_ar": "ساموا الأمريكية",
+      "country_en": "American Samoa",
+      "broadcasters": [
+        "Telemundo",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "BL",
+      "country_ar": "سان بارتليمي",
+      "country_en": "St. Barthélemy",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "PM",
+      "country_ar": "سان بيير ومكويلون",
+      "country_en": "St. Pierre & Miquelon",
+      "broadcasters": [
+        "Telemundo",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "MF",
+      "country_ar": "سان مارتن",
+      "country_en": "St. Martin",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "VC",
+      "country_ar": "سانت فنسنت وجزر غرينادين",
+      "country_en": "St. Vincent & Grenadines",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "KN",
+      "country_ar": "سانت كيتس ونيفيس",
+      "country_en": "St. Kitts & Nevis",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "LC",
+      "country_ar": "سانت لوسيا",
+      "country_en": "St. Lucia",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "SH",
+      "country_ar": "سانت هيلينا",
+      "country_en": "St. Helena",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "ST",
+      "country_ar": "ساو تومي وبرينسيبي",
+      "country_en": "São Tomé & Príncipe",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "LK",
+      "country_ar": "سريلانكا",
+      "country_en": "Sri Lanka",
+      "broadcasters": [
+        "Unite8",
+        "Zee TV"
+      ],
+      "broadcaster_ids": [
+        "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+        "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954"
+      ]
+    },
+    {
+      "country_code": "SK",
+      "country_ar": "سلوفاكيا",
+      "country_en": "Slovakia",
+      "broadcasters": [
+        "AMC"
+      ],
+      "broadcaster_ids": [
+        "b19926e4-4124-404d-9da5-20262d54ecc1"
+      ]
+    },
+    {
+      "country_code": "SI",
+      "country_ar": "سلوفينيا",
+      "country_en": "Slovenia",
+      "broadcasters": [
+        "Arena TV"
+      ],
+      "broadcaster_ids": [
+        "ce24a896-7775-477e-814e-1281e970d127"
+      ]
+    },
+    {
+      "country_code": "SY",
+      "country_ar": "سوريا",
+      "country_en": "Syria",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "SR",
+      "country_ar": "سورينام",
+      "country_en": "Suriname",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "CH",
+      "country_ar": "سويسرا",
+      "country_en": "Switzerland",
+      "broadcasters": [
+        "Sky",
+        "DAZN Dach"
+      ],
+      "broadcaster_ids": [
+        "1866bb30-ffab-47b5-9c1c-deecf9d745b4",
+        "d4d4249b-8e78-4db2-955f-2c5e088a2c10"
+      ]
+    },
+    {
+      "country_code": "SL",
+      "country_ar": "سيراليون",
+      "country_en": "Sierra Leone",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "SC",
+      "country_ar": "سيشل",
+      "country_en": "Seychelles",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "RS",
+      "country_ar": "صربيا",
+      "country_en": "Serbia",
+      "broadcasters": [
+        "Arena TV"
+      ],
+      "broadcaster_ids": [
+        "ce24a896-7775-477e-814e-1281e970d127"
+      ]
+    },
+    {
+      "country_code": "TJ",
+      "country_ar": "طاجيكستان",
+      "country_en": "Tajikistan",
+      "broadcasters": [
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "OM",
+      "country_ar": "عُمان",
+      "country_en": "Oman",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "GM",
+      "country_ar": "غامبيا",
+      "country_en": "Gambia",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "GH",
+      "country_ar": "غانا",
+      "country_en": "Ghana",
+      "broadcasters": [
+        "Supersport",
+        "Sporty",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "26211538-45ae-4496-a213-c5aaa06484a7",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "GD",
+      "country_ar": "غرينادا",
+      "country_en": "Grenada",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "GT",
+      "country_ar": "غواتيمالا",
+      "country_en": "Guatemala",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "GP",
+      "country_ar": "غوادلوب",
+      "country_en": "Guadeloupe",
+      "broadcasters": [
+        "Telemundo",
+        "Disney+",
+        "ESPN",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "GU",
+      "country_ar": "غوام",
+      "country_en": "Guam",
+      "broadcasters": [
+        "Telemundo",
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "GF",
+      "country_ar": "غويانا الفرنسية",
+      "country_en": "French Guiana",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "GY",
+      "country_ar": "غيانا",
+      "country_en": "Guyana",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "GN",
+      "country_ar": "غينيا",
+      "country_en": "Guinea",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "GQ",
+      "country_ar": "غينيا الاستوائية",
+      "country_en": "Equatorial Guinea",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "GW",
+      "country_ar": "غينيا بيساو",
+      "country_en": "Guinea-Bissau",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "FR",
+      "country_ar": "فرنسا",
+      "country_en": "France",
+      "broadcasters": [
+        "DAZN France"
+      ],
+      "broadcaster_ids": [
+        "5cf31801-3b90-4a25-a14a-823456b91ea4"
+      ]
+    },
+    {
+      "country_code": "VE",
+      "country_ar": "فنزويلا",
+      "country_en": "Venezuela",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "FI",
+      "country_ar": "فنلندا",
+      "country_en": "Finland",
+      "broadcasters": [
+        "MTV"
+      ],
+      "broadcaster_ids": [
+        "a6e4ede5-d3b9-4974-9a90-22b70823aaef"
+      ]
+    },
+    {
+      "country_code": "CY",
+      "country_ar": "قبرص",
+      "country_en": "Cyprus",
+      "broadcasters": [
+        "Cytavision"
+      ],
+      "broadcaster_ids": [
+        "91e88ff5-533f-492f-a082-011ffdc372c8"
+      ]
+    },
+    {
+      "country_code": "QA",
+      "country_ar": "قطر",
+      "country_en": "Qatar",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "KG",
+      "country_ar": "قيرغيزستان",
+      "country_en": "Kyrgyzstan",
+      "broadcasters": [
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "KZ",
+      "country_ar": "كازاخستان",
+      "country_en": "Kazakhstan",
+      "broadcasters": [
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "HR",
+      "country_ar": "كرواتيا",
+      "country_en": "Croatia",
+      "broadcasters": [
+        "Arena TV"
+      ],
+      "broadcaster_ids": [
+        "ce24a896-7775-477e-814e-1281e970d127"
+      ]
+    },
+    {
+      "country_code": "CA",
+      "country_ar": "كندا",
+      "country_en": "Canada",
+      "broadcasters": [
+        "Fubo",
+        "TLN"
+      ],
+      "broadcaster_ids": [
+        "f5160ed2-c7a3-46ab-b399-22f9cc5685c7",
+        "341a84d9-4855-4ac7-9615-28a385a558ba"
+      ]
+    },
+    {
+      "country_code": "CU",
+      "country_ar": "كوبا",
+      "country_en": "Cuba",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "CW",
+      "country_ar": "كوراساو",
+      "country_en": "Curaçao",
+      "broadcasters": [
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "KR",
+      "country_ar": "كوريا الجنوبية",
+      "country_en": "South Korea",
+      "broadcasters": [
+        "Spotv"
+      ],
+      "broadcaster_ids": [
+        "5653fff6-4506-4056-bf4a-2838f576b0c7"
+      ]
+    },
+    {
+      "country_code": "CR",
+      "country_ar": "كوستاريكا",
+      "country_en": "Costa Rica",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "XK",
+      "country_ar": "كوسوفو",
+      "country_en": "Kosovo",
+      "broadcasters": [
+        "Artmotion"
+      ],
+      "broadcaster_ids": [
+        "a3575bb7-9e35-4d9f-a611-b03c359ed96d"
+      ]
+    },
+    {
+      "country_code": "CO",
+      "country_ar": "كولومبيا",
+      "country_en": "Colombia",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "KE",
+      "country_ar": "كينيا",
+      "country_en": "Kenya",
+      "broadcasters": [
+        "Supersport",
+        "Sporty",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "26211538-45ae-4496-a213-c5aaa06484a7",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "LV",
+      "country_ar": "لاتفيا",
+      "country_en": "Latvia",
+      "broadcasters": [
+        "Go3",
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "56e18b3d-9f63-4dd4-a398-bedf994e390f",
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "LB",
+      "country_ar": "لبنان",
+      "country_en": "Lebanon",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "LY",
+      "country_ar": "ليبيا",
+      "country_en": "Libya",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "LR",
+      "country_ar": "ليبيريا",
+      "country_en": "Liberia",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "LT",
+      "country_ar": "ليتوانيا",
+      "country_en": "Lithuania",
+      "broadcasters": [
+        "Go3",
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "56e18b3d-9f63-4dd4-a398-bedf994e390f",
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "LI",
+      "country_ar": "ليختنشتاين",
+      "country_en": "Liechtenstein",
+      "broadcasters": [
+        "DAZN Liechtenstein"
+      ],
+      "broadcaster_ids": [
+        "f966df80-cdfa-4c45-92cb-2738a0b8a037"
+      ]
+    },
+    {
+      "country_code": "LS",
+      "country_ar": "ليسوتو",
+      "country_en": "Lesotho",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "MT",
+      "country_ar": "مالطا",
+      "country_en": "Malta",
+      "broadcasters": [
+        "Melita"
+      ],
+      "broadcaster_ids": [
+        "5dd7cd4d-c3a5-45de-add1-9a54b5afdd7a"
+      ]
+    },
+    {
+      "country_code": "ML",
+      "country_ar": "مالي",
+      "country_en": "Mali",
+      "broadcasters": [
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "MY",
+      "country_ar": "ماليزيا",
+      "country_en": "Malaysia",
+      "broadcasters": [
+        "Astro"
+      ],
+      "broadcaster_ids": [
+        "ef2184fa-fc40-4f73-a294-4d0310263a50"
+      ]
+    },
+    {
+      "country_code": "YT",
+      "country_ar": "مايوت",
+      "country_en": "Mayotte",
+      "broadcasters": [
+        "Supersport"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a"
+      ]
+    },
+    {
+      "country_code": "MG",
+      "country_ar": "مدغشقر",
+      "country_en": "Madagascar",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "EG",
+      "country_ar": "مصر",
+      "country_en": "Egypt",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "MK",
+      "country_ar": "مقدونيا الشمالية",
+      "country_en": "North Macedonia",
+      "broadcasters": [
+        "Arena TV"
+      ],
+      "broadcaster_ids": [
+        "ce24a896-7775-477e-814e-1281e970d127"
+      ]
+    },
+    {
+      "country_code": "MW",
+      "country_ar": "ملاوي",
+      "country_en": "Malawi",
+      "broadcasters": [
+        "Supersport",
+        "NWTV",
+        "Azam"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "c82f1265-6b29-4a7c-80bf-bc22316c8608"
+      ]
+    },
+    {
+      "country_code": "MO",
+      "country_ar": "منطقة ماكاو الإدارية الخاصة",
+      "country_en": "Macao SAR China",
+      "broadcasters": [
+        "Macau"
+      ],
+      "broadcaster_ids": [
+        "0e9bf89c-9f56-427f-b866-19cdbda6d91f"
+      ]
+    },
+    {
+      "country_code": "MR",
+      "country_ar": "موريتانيا",
+      "country_en": "Mauritania",
+      "broadcasters": [
+        "Starzplay"
+      ],
+      "broadcaster_ids": [
+        "6453e28c-558c-407f-8d31-3d6880893062"
+      ]
+    },
+    {
+      "country_code": "MU",
+      "country_ar": "موريشيوس",
+      "country_en": "Mauritius",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "MZ",
+      "country_ar": "موزمبيق",
+      "country_en": "Mozambique",
+      "broadcasters": [
+        "Supersport",
+        "Miramar TV",
+        "NWTV",
+        "Zap"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "9fd1b285-979c-4330-8574-3f578a0aef5a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+        "99e9f5e3-f431-40d7-8204-d0ff3fc61778"
+      ]
+    },
+    {
+      "country_code": "MD",
+      "country_ar": "مولدوفا",
+      "country_en": "Moldova",
+      "broadcasters": [
+        "Setanta"
+      ],
+      "broadcaster_ids": [
+        "93fc5bec-e862-4a07-8705-9a039c3732a6"
+      ]
+    },
+    {
+      "country_code": "MS",
+      "country_ar": "مونتسرات",
+      "country_en": "Montserrat",
+      "broadcasters": [
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "MM",
+      "country_ar": "ميانمار (بورما)",
+      "country_en": "Myanmar (Burma)",
+      "broadcasters": [
+        "M Entertainement"
+      ],
+      "broadcaster_ids": [
+        "93621b5a-5f77-44fa-87ca-9a0b3df12f6e"
+      ]
+    },
+    {
+      "country_code": "NA",
+      "country_ar": "ناميبيا",
+      "country_en": "Namibia",
+      "broadcasters": [
+        "Supersport",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "NP",
+      "country_ar": "نيبال",
+      "country_en": "Nepal",
+      "broadcasters": [
+        "Unite8",
+        "Zee TV"
+      ],
+      "broadcaster_ids": [
+        "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+        "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954"
+      ]
+    },
+    {
+      "country_code": "NG",
+      "country_ar": "نيجيريا",
+      "country_en": "Nigeria",
+      "broadcasters": [
+        "Supersport",
+        "Sporty",
+        "NWTV"
+      ],
+      "broadcaster_ids": [
+        "689b686e-4dd9-4cad-b300-ae6c8385128a",
+        "26211538-45ae-4496-a213-c5aaa06484a7",
+        "72826346-13eb-409a-a7fb-3b5f8d9ee363"
+      ]
+    },
+    {
+      "country_code": "NI",
+      "country_ar": "نيكاراغوا",
+      "country_en": "Nicaragua",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "NZ",
+      "country_ar": "نيوزيلندا",
+      "country_en": "New Zealand",
+      "broadcasters": [
+        "beIN"
+      ],
+      "broadcaster_ids": [
+        "e558a4a0-aab4-45e3-81b5-37380ad73358"
+      ]
+    },
+    {
+      "country_code": "HT",
+      "country_ar": "هايتي",
+      "country_en": "Haiti",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "HN",
+      "country_ar": "هندوراس",
+      "country_en": "Honduras",
+      "broadcasters": [
+        "Disney+",
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        "741132b6-74b9-4013-9c3b-e3d6f4344391",
+        "81ac7be7-f061-4c1f-a660-c2512905b079"
+      ]
+    },
+    {
+      "country_code": "HU",
+      "country_ar": "هنغاريا",
+      "country_en": "Hungary",
+      "broadcasters": [
+        "Network 4"
+      ],
+      "broadcaster_ids": [
+        "5ffbe9e9-2e16-43a0-be92-a176a87dff8d"
+      ]
+    },
+    {
+      "country_code": "NL",
+      "country_ar": "هولندا",
+      "country_en": "Netherlands",
+      "broadcasters": [
+        "Ziggo"
+      ],
+      "broadcaster_ids": [
+        "57ae645e-7faa-49f8-8832-3417ef9360e1"
+      ]
+    },
+    {
+      "country_code": "BQ",
+      "country_ar": "هولندا الكاريبية",
+      "country_en": "Caribbean Netherlands",
+      "broadcasters": [
+        "CBS / Paramount+"
+      ],
+      "broadcaster_ids": [
+        "c5b69a5e-9f8b-4974-891a-f6076a862af6"
+      ]
+    },
+    {
+      "country_code": "HK",
+      "country_ar": "هونغ كونغ الصينية (منطقة إدارية خاصة)",
+      "country_en": "Hong Kong SAR China",
+      "broadcasters": [
+        "beIN"
+      ],
+      "broadcaster_ids": [
+        "e558a4a0-aab4-45e3-81b5-37380ad73358"
+      ]
+    }
+  ],
+  "broadcasters": [
+    {
+      "id": "574598e8-2c7b-4f30-8b50-cfe7522bdf1d",
+      "name": "BBC",
+      "source_name_raw": "BBC",
+      "country_codes": [
+        "GB",
+        "IE"
+      ],
+      "country_codes_raw": "GB, IE",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.bbc.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/bbc",
+      "record_updated_at": "2026-08-25T22:00:47.717Z",
+      "content_date": "2026-08-25T22:00:47.717Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "8a1c4990-b7b3-4c15-85fe-1a2d164f9024",
+      "name": "Unite8",
+      "source_name_raw": "Unite8",
+      "country_codes": [
+        "AF",
+        "BD",
+        "BT",
+        "IN",
+        "MV",
+        "NP",
+        "LK"
+      ],
+      "country_codes_raw": "AF, BD, BT, IN, MV, NP, LK",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://unite8sports.live/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/unite8",
+      "record_updated_at": "2026-08-25T20:47:27.211Z",
+      "content_date": "2026-08-25T20:47:27.211Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "2bdd7ce7-8816-4cb4-9b33-e0a7ac506954",
+      "name": "Zee TV",
+      "source_name_raw": "Zee TV",
+      "country_codes": [
+        "AF",
+        "BD",
+        "BT",
+        "IN",
+        "MV",
+        "NP",
+        "LK"
+      ],
+      "country_codes_raw": "AF, BD, BT, IN, MV, NP, LK",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.zee5.com/global",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/zee-tv",
+      "record_updated_at": "2026-08-25T20:46:46.57Z",
+      "content_date": "2026-08-25T20:46:46.57Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "550e6dcc-988d-45a2-8dfd-008d2cd75321",
+      "name": "Begin",
+      "source_name_raw": "Begin",
+      "country_codes": [
+        "PK"
+      ],
+      "country_codes_raw": "PK",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "www.begin.watch",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/begin",
+      "record_updated_at": "2026-08-25T20:41:54.793Z",
+      "content_date": "2026-08-25T20:41:54.793Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "fd71a31a-e802-4cde-9ca1-e9db3de01da0",
+      "name": "Telemundo",
+      "source_name_raw": "Telemundo",
+      "country_codes": [
+        "AS",
+        "AI",
+        "AG",
+        "AW",
+        "BS",
+        "BB",
+        "BM",
+        "KY",
+        "DM",
+        "GD",
+        "GP",
+        "GU",
+        "MQ",
+        "MP",
+        "PR",
+        "BL",
+        "KN",
+        "LC",
+        "MF",
+        "PM",
+        "VC",
+        "WS",
+        "TT",
+        "TC",
+        "UM",
+        "US",
+        "VI"
+      ],
+      "country_codes_raw": "AS, AI, AG, AW, BS, BB, BM, KY, DM, GD, GP, GU, MQ, MP, PR, BL, KN, LC, MF, PM, VC, WS, TT, TC, UM, US, VI",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.telemundo.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/telemundo",
+      "record_updated_at": "2026-08-27T08:57:22.939Z",
+      "content_date": "2026-08-25T17:16:07.06Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "741132b6-74b9-4013-9c3b-e3d6f4344391",
+      "name": "Disney+",
+      "source_name_raw": "Disney+",
+      "country_codes": [
+        "AI",
+        "AG",
+        "AR",
+        "AW",
+        "BS",
+        "BB",
+        "BZ",
+        "BO",
+        "VG",
+        "KY",
+        "CL",
+        "CO",
+        "CR",
+        "CU",
+        "DM",
+        "DO",
+        "EC",
+        "SV",
+        "FK",
+        "GF",
+        "GD",
+        "GP",
+        "GT",
+        "GY",
+        "HT",
+        "HN",
+        "JM",
+        "MQ",
+        "MX",
+        "NI",
+        "PA",
+        "PY",
+        "PE",
+        "BL",
+        "KN",
+        "LC",
+        "MF",
+        "VC",
+        "SR",
+        "TT",
+        "TC",
+        "UM",
+        "US",
+        "UY",
+        "VE"
+      ],
+      "country_codes_raw": "AI, AG, AR, AW, BS, BB, BZ, BO, VG, KY, CL, CO, CR, CU, DM, DO, EC, SV, FK, GF, GD, GP, GT, GY, HT, HN, JM, MQ, MX, NI, PA, PY, PE, BL, KN, LC, MF, VC, SR, TT, TC, UM, US, UY, VE",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.disneyplus.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/disney",
+      "record_updated_at": "2026-08-26T13:00:52.664Z",
+      "content_date": "2026-08-25T17:11:46.894Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "befe9884-6cf7-4c51-927a-35e0580775f6",
+      "name": "BAZR",
+      "source_name_raw": "BAZR",
+      "country_codes": [
+        "IT"
+      ],
+      "country_codes_raw": "IT",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://bazr.go.link/96BzY",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/bazr",
+      "record_updated_at": "2026-09-03T15:08:40.768Z",
+      "content_date": "2026-08-21T13:49:44.423Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "90145803-5286-4ea7-a2b3-b55cb46734bc",
+      "name": "CBS",
+      "source_name_raw": "CBS",
+      "country_codes": [
+        "US"
+      ],
+      "country_codes_raw": "US",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/cbs-serie-a",
+      "record_updated_at": "2026-02-20T09:59:26.786Z",
+      "content_date": "2026-02-20T09:59:26.786Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "f966df80-cdfa-4c45-92cb-2738a0b8a037",
+      "name": "DAZN Liechtenstein",
+      "source_name_raw": "DAZN Liechtenstein",
+      "country_codes": [
+        "LI"
+      ],
+      "country_codes_raw": "LI",
+      "competition_tags": [
+        "coppa-italia",
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.dazn.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/dazn-liechtenstein",
+      "record_updated_at": "2026-08-25T20:37:34.64Z",
+      "content_date": "2026-01-22T11:00:32.694Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "e438c2b4-7333-4b30-93b8-dc2c154744ee",
+      "name": "Sport TV",
+      "source_name_raw": "Sport TV",
+      "country_codes": [
+        "BY"
+      ],
+      "country_codes_raw": "BY",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.sport-tv.by/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/sport-tv-bielorussia",
+      "record_updated_at": "2026-01-22T10:56:39.552Z",
+      "content_date": "2026-01-22T10:32:47.187Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "fb72a16f-2de2-4946-b4f3-fc2c6d2c66a5",
+      "name": "Sport TV",
+      "source_name_raw": "Sport TV",
+      "country_codes": [
+        "AZ"
+      ],
+      "country_codes_raw": "AZ",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/sport-tv-azerbaigian",
+      "record_updated_at": "2026-01-22T10:56:03.487Z",
+      "content_date": "2026-01-22T10:31:38.516Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "743d366e-ec16-4296-bade-2ed3e30e8d2e",
+      "name": "DAZN United Kingdom",
+      "source_name_raw": "DAZN United Kingdom",
+      "country_codes": [
+        "GB"
+      ],
+      "country_codes_raw": "GB",
+      "competition_tags": [
+        "coppa-italia",
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.dazn.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/dazn-united-kingdom",
+      "record_updated_at": "2026-08-25T20:38:10.041Z",
+      "content_date": "2026-01-19T11:26:44.451Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "2e6b69ed-2050-48ea-811c-c181bccb500d",
+      "name": "DAZN Andorra",
+      "source_name_raw": "DAZN Andorra",
+      "country_codes": [
+        "AD"
+      ],
+      "country_codes_raw": "AD",
+      "competition_tags": [
+        "coppa-italia",
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.dazn.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/dazn-andorra",
+      "record_updated_at": "2026-08-25T20:38:17.983Z",
+      "content_date": "2026-01-19T11:16:27.827Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "dab71978-ceef-4417-907f-da25489c15ef",
+      "name": "Tring",
+      "source_name_raw": "Tring ",
+      "country_codes": [
+        "AL"
+      ],
+      "country_codes_raw": "AL",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://tring.al",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/tring-x5880",
+      "record_updated_at": "2026-08-25T20:32:14.28Z",
+      "content_date": "2025-12-23T09:06:53.905Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "214f4a05-85f1-4310-a3f0-bc83904696af",
+      "name": "Sky",
+      "source_name_raw": "Sky",
+      "country_codes": [
+        "IT"
+      ],
+      "country_codes_raw": "IT",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.sky.it/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/sky-italy",
+      "record_updated_at": "2025-12-16T17:33:09.513Z",
+      "content_date": "2025-12-16T17:28:46.221Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "227f4575-e1c2-4f02-8715-2e4fbe1c9a39",
+      "name": "DAZN",
+      "source_name_raw": "DAZN",
+      "country_codes": [
+        "IT"
+      ],
+      "country_codes_raw": "IT",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.dazn.com/it-IT/l/serie-a/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/dazn-italy",
+      "record_updated_at": "2026-03-03T16:09:54.273Z",
+      "content_date": "2025-12-16T17:26:48.695Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "ef2184fa-fc40-4f73-a294-4d0310263a50",
+      "name": "Astro",
+      "source_name_raw": "Astro",
+      "country_codes": [
+        "MY"
+      ],
+      "country_codes_raw": "MY",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.astro.com.my/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/astro",
+      "record_updated_at": "2026-01-19T11:05:10.133Z",
+      "content_date": "2025-12-09T09:54:55.327Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "e558a4a0-aab4-45e3-81b5-37380ad73358",
+      "name": "beIN",
+      "source_name_raw": "beIN",
+      "country_codes": [
+        "AU",
+        "HK",
+        "NZ"
+      ],
+      "country_codes_raw": "AU,HK,NZ",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://connect-au.beinsports.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/bein",
+      "record_updated_at": "2026-01-22T10:41:26.24Z",
+      "content_date": "2025-12-09T09:53:50.766Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "c57b5fb5-8dee-4c62-a254-ba5c53e84f3f",
+      "name": "Cazé TV",
+      "source_name_raw": "Cazé TV",
+      "country_codes": [
+        "BR"
+      ],
+      "country_codes_raw": "BR",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.youtube.com/cazetv",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/caze-tv",
+      "record_updated_at": "2026-01-19T11:08:21.326Z",
+      "content_date": "2025-12-09T09:48:35.854Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "230fe739-b24d-4967-91c3-9296a9eba385",
+      "name": "Cookies",
+      "source_name_raw": "Cookies",
+      "country_codes": [
+        "ZA"
+      ],
+      "country_codes_raw": "ZA",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/cookies",
+      "record_updated_at": "2026-01-19T11:10:46.897Z",
+      "content_date": "2025-12-09T09:46:48.968Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "f7ec6b90-6bf8-43f9-973b-fc9895ecbd5e",
+      "name": "Cosmote",
+      "source_name_raw": "Cosmote",
+      "country_codes": [
+        "GR"
+      ],
+      "country_codes_raw": "GR",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.cosmote.gr/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/cosmote",
+      "record_updated_at": "2026-01-19T11:11:09.687Z",
+      "content_date": "2025-12-09T09:41:35.338Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "8b0b4668-b2ba-43a1-8595-838fb61b60a4",
+      "name": "TNT",
+      "source_name_raw": "TNT",
+      "country_codes": [
+        "GB",
+        "IE"
+      ],
+      "country_codes_raw": "GB, IE",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.tntsports.co.uk/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/tnt",
+      "record_updated_at": "2026-01-22T10:36:24.546Z",
+      "content_date": "2025-12-09T09:41:07.231Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "4cdd73c3-373c-47a6-ac5b-b1f1ffb6c506",
+      "name": "TIVIBU",
+      "source_name_raw": "TIVIBU\n",
+      "country_codes": [
+        "TR"
+      ],
+      "country_codes_raw": "TR",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.tivibu.com.tr/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/tivibu",
+      "record_updated_at": "2026-01-22T10:35:44.69Z",
+      "content_date": "2025-12-09T09:40:29.034Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "cf4e98e3-2ab7-4bfe-a8e9-af6859770770",
+      "name": "Digi",
+      "source_name_raw": "Digi",
+      "country_codes": [
+        "RO"
+      ],
+      "country_codes_raw": "RO",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.digisport.ro/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/digi",
+      "record_updated_at": "2026-01-19T11:28:28.605Z",
+      "content_date": "2025-12-09T09:39:59.524Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "0711ce7f-b8b1-494b-9b20-b27885eee221",
+      "name": "Eleven",
+      "source_name_raw": "Eleven",
+      "country_codes": [
+        "PL"
+      ],
+      "country_codes_raw": "PL",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://elevensports.pl/start",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/eleven",
+      "record_updated_at": "2026-01-19T11:30:12.043Z",
+      "content_date": "2025-12-09T09:39:28.526Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "f5448408-9f9c-4179-8daa-f125f5064f93",
+      "name": "ELTA",
+      "source_name_raw": "ELTA",
+      "country_codes": [
+        "TW"
+      ],
+      "country_codes_raw": "TW",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://eltaott.tv/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/elta",
+      "record_updated_at": "2026-01-19T11:29:29.402Z",
+      "content_date": "2025-12-09T09:38:59.934Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "3b3eacdb-3778-450c-af2c-45cc7f8a82b8",
+      "name": "Emtek",
+      "source_name_raw": "Emtek",
+      "country_codes": [
+        "ID"
+      ],
+      "country_codes_raw": "ID",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.vidio.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/emtek",
+      "record_updated_at": "2026-01-19T11:30:26.426Z",
+      "content_date": "2025-12-09T09:38:23.004Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "689b686e-4dd9-4cad-b300-ae6c8385128a",
+      "name": "Supersport",
+      "source_name_raw": "Supersport",
+      "country_codes": [
+        "AO",
+        "BW",
+        "ER",
+        "ET",
+        "GM",
+        "GH",
+        "KE",
+        "LS",
+        "LR",
+        "YT",
+        "MG",
+        "MW",
+        "MU",
+        "MZ",
+        "NA",
+        "NG",
+        "RW",
+        "SH",
+        "SC",
+        "ST",
+        "SL",
+        "ZA",
+        "SZ",
+        "TZ",
+        "UG",
+        "ZM",
+        "ZW"
+      ],
+      "country_codes_raw": "AO, BW, ER, ET, GM, GH, KE, LS, LR, YT, MG, MW, MU, MZ, NA, NG, RW, SH, SC, ST, SL, ZA, SZ, TZ, UG, ZM, ZW",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://supersport.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/supersport",
+      "record_updated_at": "2026-01-22T11:04:27.418Z",
+      "content_date": "2025-12-09T09:36:44.022Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "81ac7be7-f061-4c1f-a660-c2512905b079",
+      "name": "ESPN",
+      "source_name_raw": "ESPN",
+      "country_codes": [
+        "AI",
+        "AG",
+        "AR",
+        "AW",
+        "BS",
+        "BB",
+        "BZ",
+        "BO",
+        "BR",
+        "VG",
+        "KY",
+        "CL",
+        "CO",
+        "CR",
+        "CU",
+        "DM",
+        "DO",
+        "EC",
+        "SV",
+        "FK",
+        "GF",
+        "GD",
+        "GP",
+        "GT",
+        "GY",
+        "HT",
+        "HN",
+        "JM",
+        "MQ",
+        "MX",
+        "NI",
+        "PA",
+        "PY",
+        "PE",
+        "BL",
+        "KN",
+        "LC",
+        "MF",
+        "VC",
+        "SR",
+        "TT",
+        "TC",
+        "UM",
+        "US",
+        "UY",
+        "VE"
+      ],
+      "country_codes_raw": "AI, AG, AR, AW, BS, BB, BZ, BO, BR, VG, KY, CL, CO, CR, CU, DM, DO, EC, SV, FK, GF, GD, GP, GT, GY, HT, HN, JM, MQ, MX, NI, PA, PY, PE, BL, KN, LC, MF, VC, SR, TT, TC, UM, US, UY, VE",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.espn.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/espn",
+      "record_updated_at": "2026-08-26T13:02:14.667Z",
+      "content_date": "2025-12-09T09:36:05.22Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "d9477399-69d1-40d1-b342-daaf7f8e6ff4",
+      "name": "Fast Media",
+      "source_name_raw": "Fast Media",
+      "country_codes": [
+        "AM"
+      ],
+      "country_codes_raw": "AM",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://fastmedia.am/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/fast-media",
+      "record_updated_at": "2026-01-19T11:30:46.074Z",
+      "content_date": "2025-12-09T09:35:21.374Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "56e18b3d-9f63-4dd4-a398-bedf994e390f",
+      "name": "Go3",
+      "source_name_raw": "Go3",
+      "country_codes": [
+        "EE",
+        "LV",
+        "LT"
+      ],
+      "country_codes_raw": "EE,LV,LT",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://go3.ee/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/go3",
+      "record_updated_at": "2026-01-19T11:32:04.24Z",
+      "content_date": "2025-12-09T09:34:36.516Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "26211538-45ae-4496-a213-c5aaa06484a7",
+      "name": "Sporty",
+      "source_name_raw": "Sporty",
+      "country_codes": [
+        "GH",
+        "KE",
+        "NG",
+        "ZA"
+      ],
+      "country_codes_raw": "GH, KE, NG, ZA",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://sporty.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/sporty",
+      "record_updated_at": "2026-08-27T09:18:21.818Z",
+      "content_date": "2025-12-09T09:32:51.337Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "b3224b8f-29c7-44f1-ab5a-56741a62fae0",
+      "name": "Ideal TV",
+      "source_name_raw": "Ideal TV",
+      "country_codes": [
+        "BR"
+      ],
+      "country_codes_raw": "BR",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://idealtv.com.br/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/ideal-tv",
+      "record_updated_at": "2026-01-19T11:32:23.521Z",
+      "content_date": "2025-12-09T09:31:55.982Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "7879f660-3281-4f29-9b47-078cc202ddd5",
+      "name": "Kinopoisk",
+      "source_name_raw": "Kinopoisk",
+      "country_codes": [
+        "BY"
+      ],
+      "country_codes_raw": "BY",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.kinopoisk.ru/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/kinopoisk",
+      "record_updated_at": "2026-01-19T11:32:51.382Z",
+      "content_date": "2025-12-09T09:31:11.748Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "1866bb30-ffab-47b5-9c1c-deecf9d745b4",
+      "name": "Sky",
+      "source_name_raw": "Sky",
+      "country_codes": [
+        "CH"
+      ],
+      "country_codes_raw": "CH",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.sky.ch/en",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/sky",
+      "record_updated_at": "2026-01-22T10:30:22.837Z",
+      "content_date": "2025-12-09T09:30:26.026Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "93621b5a-5f77-44fa-87ca-9a0b3df12f6e",
+      "name": "M Entertainement",
+      "source_name_raw": "M Entertainement",
+      "country_codes": [
+        "MM"
+      ],
+      "country_codes_raw": "MM",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://bebeetv.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/m-entertainement",
+      "record_updated_at": "2026-01-22T10:24:49.499Z",
+      "content_date": "2025-12-09T09:29:45.759Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "0e9bf89c-9f56-427f-b866-19cdbda6d91f",
+      "name": "Macau",
+      "source_name_raw": "Macau",
+      "country_codes": [
+        "MO"
+      ],
+      "country_codes_raw": "MO",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.macaucabletv.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/macau",
+      "record_updated_at": "2026-01-22T10:25:34.698Z",
+      "content_date": "2025-12-09T09:28:46.896Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "9fd1b285-979c-4330-8574-3f578a0aef5a",
+      "name": "Miramar TV",
+      "source_name_raw": "Miramar TV",
+      "country_codes": [
+        "MZ"
+      ],
+      "country_codes_raw": "MZ",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://miramar.co.mz/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/miramar-tv",
+      "record_updated_at": "2026-01-22T10:27:13.691Z",
+      "content_date": "2025-12-09T09:27:58.353Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "a6e4ede5-d3b9-4974-9a90-22b70823aaef",
+      "name": "MTV",
+      "source_name_raw": "MTV",
+      "country_codes": [
+        "FI"
+      ],
+      "country_codes_raw": "FI",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.mtv.fi/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/mtv",
+      "record_updated_at": "2026-01-22T10:25:08.276Z",
+      "content_date": "2025-12-09T09:26:26.596Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "93fc5bec-e862-4a07-8705-9a039c3732a6",
+      "name": "Setanta",
+      "source_name_raw": "Setanta",
+      "country_codes": [
+        "AM",
+        "AZ",
+        "BY",
+        "EE",
+        "GE",
+        "KZ",
+        "KG",
+        "LV",
+        "LT",
+        "MD",
+        "TJ",
+        "TM",
+        "UZ"
+      ],
+      "country_codes_raw": "AM, AZ, BY, EE, GE, KZ, KG, LV, LT, MD, TJ, TM, UZ",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://setantasports.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/setanta",
+      "record_updated_at": "2026-01-22T10:29:39.139Z",
+      "content_date": "2025-12-09T09:25:08.631Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "e5736b10-3c02-4516-b0b5-17ce55cf29bf",
+      "name": "S Sport",
+      "source_name_raw": "S Sport\n",
+      "country_codes": [
+        "TR"
+      ],
+      "country_codes_raw": "TR",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://ssport.tv/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/s-sport",
+      "record_updated_at": "2026-01-22T10:29:09.613Z",
+      "content_date": "2025-12-09T09:24:40.296Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "99e4b8fd-f84e-43ae-89fa-9f1a696a0175",
+      "name": "Prima",
+      "source_name_raw": "Prima\n",
+      "country_codes": [
+        "RO"
+      ],
+      "country_codes_raw": "RO",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.primasport.ro/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/prima",
+      "record_updated_at": "2026-01-22T10:28:51.443Z",
+      "content_date": "2025-12-09T09:22:57.324Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "6453e28c-558c-407f-8d31-3d6880893062",
+      "name": "Starzplay",
+      "source_name_raw": "Starzplay\n",
+      "country_codes": [
+        "DZ",
+        "SA",
+        "BH",
+        "TD",
+        "EG",
+        "AE",
+        "DJ",
+        "JO",
+        "IR",
+        "IQ",
+        "KW",
+        "LB",
+        "MA",
+        "MR",
+        "OM",
+        "PS",
+        "QA",
+        "SY",
+        "SO",
+        "SD",
+        "SS",
+        "TN",
+        "YE",
+        "LY"
+      ],
+      "country_codes_raw": "DZ, SA, BH, TD, EG, AE, DJ, JO, IR, IQ, KW, LB, MA, MR, OM, PS, QA, SY, SO, SD, SS, TN, YE, LY",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://starzplay.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/starzplay",
+      "record_updated_at": "2026-01-22T10:35:05.779Z",
+      "content_date": "2025-12-09T09:20:04.496Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "c5b69a5e-9f8b-4974-891a-f6076a862af6",
+      "name": "CBS / Paramount+",
+      "source_name_raw": "CBS / Paramount+",
+      "country_codes": [
+        "AI",
+        "AG",
+        "AW",
+        "UM",
+        "BS",
+        "BB",
+        "BM",
+        "BQ",
+        "KY",
+        "CW",
+        "DM",
+        "JM",
+        "GD",
+        "GP",
+        "GU",
+        "CP",
+        "MP",
+        "VI",
+        "MQ",
+        "MS",
+        "PR",
+        "BL",
+        "KN",
+        "MF",
+        "PM",
+        "VC",
+        "AS",
+        "LC",
+        "TT",
+        "TC"
+      ],
+      "country_codes_raw": "AI,AG,AW,UM,UM,BS,BB,BM,BQ,KY,CW,DM,JM,GD,GP,GU,UM,UM,UM,UM,CP,MP,UM,VI,UM,MQ,MS,PR,BQ,BL,KN,MF,PM,VC,AS,LC,BQ,TT,TC",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.cbs.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/paramount-x0297",
+      "record_updated_at": "2026-01-14T16:36:31.392Z",
+      "content_date": "2025-12-05T14:40:34.966Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "af50dee6-1e87-45d5-9b0a-b2fb567b0204",
+      "name": "DAZN Spain",
+      "source_name_raw": "DAZN Spain",
+      "country_codes": [
+        "ES"
+      ],
+      "country_codes_raw": "ES",
+      "competition_tags": [
+        "coppa-italia",
+        "serie-a"
+      ],
+      "broadcaster_url": "",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/dazn-spain",
+      "record_updated_at": "2026-08-25T20:37:52.228Z",
+      "content_date": "2025-12-05T14:20:39.078Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "5cf31801-3b90-4a25-a14a-823456b91ea4",
+      "name": "DAZN France",
+      "source_name_raw": "DAZN France",
+      "country_codes": [
+        "FR"
+      ],
+      "country_codes_raw": "FR",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.dazn.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/dazn-france",
+      "record_updated_at": "2026-08-25T20:33:40.051Z",
+      "content_date": "2025-12-05T14:18:50.579Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "d4d4249b-8e78-4db2-955f-2c5e088a2c10",
+      "name": "DAZN Dach",
+      "source_name_raw": "DAZN Dach",
+      "country_codes": [
+        "AT",
+        "DE",
+        "CH"
+      ],
+      "country_codes_raw": "AT,DE,CH",
+      "competition_tags": [
+        "coppa-italia",
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.dazn.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/dazn-dach",
+      "record_updated_at": "2026-08-25T20:37:43.587Z",
+      "content_date": "2025-12-05T14:17:03.581Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "f0a01f95-ee36-47bd-bb71-c44edb278a49",
+      "name": "Polsat",
+      "source_name_raw": "Polsat",
+      "country_codes": [
+        "PL"
+      ],
+      "country_codes_raw": "PL",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.polsat.pl/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/polsat",
+      "record_updated_at": "2026-01-22T11:05:27.884Z",
+      "content_date": "2025-12-05T12:25:08.543Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "72826346-13eb-409a-a7fb-3b5f8d9ee363",
+      "name": "NWTV",
+      "source_name_raw": "NWTV",
+      "country_codes": [
+        "AO",
+        "BJ",
+        "BW",
+        "BF",
+        "BI",
+        "CM",
+        "CV",
+        "KM",
+        "CG",
+        "CI",
+        "ER",
+        "ET",
+        "GA",
+        "GM",
+        "GH",
+        "GN",
+        "GQ",
+        "GW",
+        "KE",
+        "LS",
+        "LR",
+        "MG",
+        "MW",
+        "ML",
+        "MU",
+        "MZ",
+        "NA",
+        "NE",
+        "NG",
+        "CF",
+        "CD",
+        "RW",
+        "SH",
+        "ST",
+        "SN",
+        "SC",
+        "SL",
+        "ZA",
+        "SZ",
+        "TG",
+        "TZ",
+        "UG",
+        "ZM",
+        "ZW"
+      ],
+      "country_codes_raw": "AO,BJ,BW,BF,BI,CM,CV,KM,CG,CI,ER,ET,GA,GM,GH,GN,GQ,GW,KE,LS,LR,MG,MW,ML,MU,MZ,NA,NE,NG,CF,CD,RW,SH,ST,SN,SC,SL,ZA,SZ,TG,TZ,UG,ZM,ZW",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.newworldtv.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/nwtv",
+      "record_updated_at": "2026-01-22T10:27:43.292Z",
+      "content_date": "2025-12-05T12:22:34.101Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "5ffbe9e9-2e16-43a0-be92-a176a87dff8d",
+      "name": "Network 4",
+      "source_name_raw": "Network 4",
+      "country_codes": [
+        "HU"
+      ],
+      "country_codes_raw": "HU",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://net4plus.network4.hu/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/network-4",
+      "record_updated_at": "2026-01-22T10:28:18.01Z",
+      "content_date": "2025-12-05T12:21:30.892Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "f6f4c363-c36c-442c-a970-16b652d79109",
+      "name": "Migu",
+      "source_name_raw": "Migu",
+      "country_codes": [
+        "CN"
+      ],
+      "country_codes_raw": "CN",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.miguvideo.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/migu",
+      "record_updated_at": "2026-01-22T10:26:54.652Z",
+      "content_date": "2025-12-05T12:17:44.144Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "5dd7cd4d-c3a5-45de-add1-9a54b5afdd7a",
+      "name": "Melita",
+      "source_name_raw": "Melita",
+      "country_codes": [
+        "MT"
+      ],
+      "country_codes_raw": "MT",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.melita.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/melita",
+      "record_updated_at": "2026-01-22T10:26:33.205Z",
+      "content_date": "2025-12-05T12:16:12.469Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "ddaea571-e847-4a7a-a097-425d35c4a7be",
+      "name": "Megogo",
+      "source_name_raw": "Megogo",
+      "country_codes": [
+        "UA"
+      ],
+      "country_codes_raw": "UA",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://megogo.net/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/megogo",
+      "record_updated_at": "2026-01-22T10:26:16.034Z",
+      "content_date": "2025-12-05T12:15:18.17Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "62bc7974-2ba0-44cf-a4f0-5ce640e2290b",
+      "name": "Match TV",
+      "source_name_raw": "Match TV",
+      "country_codes": [
+        "RU"
+      ],
+      "country_codes_raw": "RU",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://matchtv.ru/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/match-tv",
+      "record_updated_at": "2026-01-22T10:25:55.23Z",
+      "content_date": "2025-12-05T12:14:08.779Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "e56fa2b1-45b2-4137-8a5e-bc3f2a72c17a",
+      "name": "Livey",
+      "source_name_raw": "Livey",
+      "country_codes": [
+        "IS"
+      ],
+      "country_codes_raw": "IS",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.livey.events/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/livey",
+      "record_updated_at": "2026-01-19T11:33:11.544Z",
+      "content_date": "2025-12-05T12:09:07.77Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "81d56df6-8bc1-4f81-a6d3-45952e2988cb",
+      "name": "Sport TV",
+      "source_name_raw": "Sport TV",
+      "country_codes": [
+        "PT"
+      ],
+      "country_codes_raw": "PT",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.sporttv.pt/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/sport-tv-portogallo",
+      "record_updated_at": "2026-01-22T10:33:33.315Z",
+      "content_date": "2025-12-05T12:06:13.052Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "f5160ed2-c7a3-46ab-b399-22f9cc5685c7",
+      "name": "Fubo",
+      "source_name_raw": "Fubo",
+      "country_codes": [
+        "CA"
+      ],
+      "country_codes_raw": "CA",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.fubo.tv/stream/canada/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/fubo",
+      "record_updated_at": "2026-01-19T11:31:32.478Z",
+      "content_date": "2025-12-05T12:03:56.663Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "5653fff6-4506-4056-bf4a-2838f576b0c7",
+      "name": "Spotv",
+      "source_name_raw": "Spotv\n",
+      "country_codes": [
+        "KR"
+      ],
+      "country_codes_raw": "KR",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.spotv.net/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/spotv",
+      "record_updated_at": "2026-01-22T10:34:38.081Z",
+      "content_date": "2025-12-05T12:03:31.613Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "91e88ff5-533f-492f-a082-011ffdc372c8",
+      "name": "Cytavision",
+      "source_name_raw": "Cytavision",
+      "country_codes": [
+        "CY"
+      ],
+      "country_codes_raw": "CY",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.cyta.com.cy/tv/en",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/cytavision",
+      "record_updated_at": "2026-01-19T11:11:34.162Z",
+      "content_date": "2025-12-05T11:48:56.44Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "341a84d9-4855-4ac7-9615-28a385a558ba",
+      "name": "TLN",
+      "source_name_raw": "TLN\n",
+      "country_codes": [
+        "CA"
+      ],
+      "country_codes_raw": "CA",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.tln.ca/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/tln",
+      "record_updated_at": "2026-01-22T10:36:01.008Z",
+      "content_date": "2025-12-05T11:46:25.11Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "c0873c80-b040-4830-8f5a-136e131847ca",
+      "name": "Citynet",
+      "source_name_raw": "Citynet",
+      "country_codes": [
+        "IL"
+      ],
+      "country_codes_raw": "IL",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/citynet",
+      "record_updated_at": "2026-01-19T11:10:14.189Z",
+      "content_date": "2025-12-05T11:45:13.807Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "efa101f1-c975-4075-85ee-7d7ae3423f05",
+      "name": "Charlton",
+      "source_name_raw": "Charlton",
+      "country_codes": [
+        "IL"
+      ],
+      "country_codes_raw": "IL",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://sport1.maariv.co.il/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/charlton",
+      "record_updated_at": "2026-01-19T11:08:47.748Z",
+      "content_date": "2025-12-05T11:44:07.237Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "e5e6e947-4091-4b40-bb96-9a0ba01f2d7d",
+      "name": "True Vision",
+      "source_name_raw": "True Vision",
+      "country_codes": [
+        "TH"
+      ],
+      "country_codes_raw": "TH",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://truevisions.co.th/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/true-vision",
+      "record_updated_at": "2026-01-22T10:39:04.518Z",
+      "content_date": "2025-12-05T11:43:55.414Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "b20c81a8-e38b-4ff7-8b07-0137b0594056",
+      "name": "TV2",
+      "source_name_raw": "TV2\n",
+      "country_codes": [
+        "DK"
+      ],
+      "country_codes_raw": "DK",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://tv2.dk/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/tv2",
+      "record_updated_at": "2026-01-22T10:36:39.817Z",
+      "content_date": "2025-12-05T11:42:48.928Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "5f5d23c0-a8c2-4e69-ae20-2b1027cf15ba",
+      "name": "TV4",
+      "source_name_raw": "TV4\n",
+      "country_codes": [
+        "SE"
+      ],
+      "country_codes_raw": "SE",
+      "competition_tags": [
+        "serie-a"
+      ],
+      "broadcaster_url": "https://www.tv4.se/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/tv4",
+      "record_updated_at": "2026-01-22T10:37:11.601Z",
+      "content_date": "2025-12-05T11:42:06.226Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "c69117bd-174d-45a0-94b2-7e639dde6242",
+      "name": "VG",
+      "source_name_raw": "VG\n",
+      "country_codes": [
+        "NO"
+      ],
+      "country_codes_raw": "NO",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.vg.no/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/vg",
+      "record_updated_at": "2026-01-22T10:39:19.111Z",
+      "content_date": "2025-12-05T11:36:31.431Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "99e9f5e3-f431-40d7-8204-d0ff3fc61778",
+      "name": "Zap",
+      "source_name_raw": "Zap\n",
+      "country_codes": [
+        "AO",
+        "MZ"
+      ],
+      "country_codes_raw": "AO, MZ",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.zap.co.ao/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/zap",
+      "record_updated_at": "2026-01-22T10:40:29.545Z",
+      "content_date": "2025-12-05T11:32:40.291Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "c82f1265-6b29-4a7c-80bf-bc22316c8608",
+      "name": "Azam",
+      "source_name_raw": "Azam",
+      "country_codes": [
+        "BW",
+        "BI",
+        "KE",
+        "MW",
+        "RW",
+        "TZ",
+        "UG",
+        "ZM",
+        "ZW"
+      ],
+      "country_codes_raw": "BW,BI,KE,MW,RW,TZ,UG,ZM,ZW,",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.azamtv.co.tz/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/azam",
+      "record_updated_at": "2026-01-19T11:05:34.279Z",
+      "content_date": "2025-12-05T11:32:01.757Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "57ae645e-7faa-49f8-8832-3417ef9360e1",
+      "name": "Ziggo",
+      "source_name_raw": "Ziggo",
+      "country_codes": [
+        "NL"
+      ],
+      "country_codes_raw": "NL",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.ziggosport.nl/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/ziggo",
+      "record_updated_at": "2026-01-22T10:40:44.478Z",
+      "content_date": "2025-12-05T11:31:14.731Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "a3575bb7-9e35-4d9f-a611-b03c359ed96d",
+      "name": "Artmotion",
+      "source_name_raw": "Artmotion",
+      "country_codes": [
+        "XK"
+      ],
+      "country_codes_raw": "XK",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://artmotion.net/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/artmotion",
+      "record_updated_at": "2026-01-19T11:04:08.555Z",
+      "content_date": "2025-12-05T11:28:02.494Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "ce24a896-7775-477e-814e-1281e970d127",
+      "name": "Arena TV",
+      "source_name_raw": "Arena TV",
+      "country_codes": [
+        "HR",
+        "SI",
+        "BA",
+        "RS",
+        "ME",
+        "MK"
+      ],
+      "country_codes_raw": "HR,SI,BA,RS,ME,MK",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://tvarenasport.ba/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/arena-tv",
+      "record_updated_at": "2026-01-19T11:03:07.204Z",
+      "content_date": "2025-12-05T11:25:49.62Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "b19926e4-4124-404d-9da5-20262d54ecc1",
+      "name": "AMC",
+      "source_name_raw": "AMC",
+      "country_codes": [
+        "CZ",
+        "SK"
+      ],
+      "country_codes_raw": "CZ,SK",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://ce.amc.com/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/amc",
+      "record_updated_at": "2026-01-19T11:01:20.283Z",
+      "content_date": "2025-12-05T11:20:56.867Z",
+      "contract_season": null,
+      "rights_scope": null
+    },
+    {
+      "id": "0ecde661-dd6a-4c1f-a4ec-a1b9b589e615",
+      "name": "A1",
+      "source_name_raw": "A1",
+      "country_codes": [
+        "BG"
+      ],
+      "country_codes_raw": "BG",
+      "competition_tags": [
+        "serie-a",
+        "coppa-italia"
+      ],
+      "broadcaster_url": "https://www.a1.bg/",
+      "source_entity_url": "https://dapi.legaseriea.it/v2/content/en-gb/broadcasters/a1",
+      "record_updated_at": "2026-01-19T11:01:09.477Z",
+      "content_date": "2025-12-05T11:13:00.778Z",
+      "contract_season": null,
+      "rights_scope": null
+    }
+  ]
+}

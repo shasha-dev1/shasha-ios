@@ -230,6 +230,8 @@ enum RightsRule {
     }
     struct Territory: Equatable {
         let territory: String, region: String?, countries: [String], status: String, source: Source?, contract: String?, note: String?, holders: [Holder]
+        /// 1.10.5: the season this record states when it differs from the file's (Lega Serie A's page says 2025/26).
+        var season: String? = nil
         var verified: Bool { status == "verified" }
     }
     struct Rights: Equatable {
@@ -264,7 +266,7 @@ enum RightsRule {
             }
             return Territory(territory: t["territory"] as? String ?? "", region: str(t["region"]), countries: t["countries"] as? [String] ?? [],
                              status: t["status"] as? String ?? "verified", source: src(t["source"] as? [String: Any]), contract: str(t["contract"]),
-                             note: str(t["note"]), holders: hs)
+                             note: str(t["note"]), holders: hs, season: str(t["season"]))
         }
         let win = o["technicalWindow"] as? [String: Any]
         let wf = (str(win?["from"]) ?? str(o["validFrom"])).flatMap(day)
@@ -342,7 +344,7 @@ enum RightsRule {
         guard let first = here.first else { return nil }
         let net = MatchGuideRule.network(channelName)
         if net != "أخرى", let hit = here.first(where: { holderNetworks($0.holder).contains(net) }) {
-            return "صاحب حقوق البطولة في \(hit.territory.territory): \(hit.holder.name) (\(hit.source.label) · موسم \(hit.rights.season))"
+            return "صاحب حقوق البطولة في \(hit.territory.territory): \(hit.holder.name) (\(hit.source.label) · موسم \(hit.territory.season ?? hit.rights.season))"
         }
         return "لم نجدها ضمن قائمة الحقوق المستخدمة لـ\(first.territory.territory) (\(first.source.label)) — غيابها لا يثبت أنها غير مرخّصة"
     }
@@ -374,7 +376,7 @@ enum RightsRule {
 
     static func holderLine(_ f: Fact) -> String {
         [f.holder.entityLabel, f.holder.rightsLabel.isEmpty ? nil : f.holder.rightsLabel, f.holder.sublicence.map { "ترخيص فرعي: " + $0 }, f.holder.note,
-         f.territory.contract.map { "العقد: " + $0 } ?? "موسم \(f.rights.season)", f.outsideSeason ? "المباراة خارج موسم الملف (تقدير تقني)" : nil,
+         f.territory.contract.map { "العقد: " + $0 } ?? "موسم \(f.territory.season ?? f.rights.season)", f.outsideSeason ? "المباراة خارج موسم الملف (تقدير تقني)" : nil,
          (f.holder.brandsFrom == "shasha" && !f.holder.brands.isEmpty) ? "أسماء القنوات في القوائم: \(f.holder.brands.joined(separator: "، ")) (ربطنا)" : nil,
          f.source.label].compactMap { $0 }.joined(separator: " · ")
     }

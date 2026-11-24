@@ -110,16 +110,7 @@ sa=[terr("United Kingdom",ukh,"Europe",source=dazn_uk,contract="2026/27"),
     terr("Republic of Ireland",[dz("كل المباريات، سبع منها حصرية كل جولة")],"Europe",source=dazn_uk,contract="2026/27"),
     *[terr(c,[dz("حصري، كل المباريات")],"Europe",source=dazn_uk,contract="حتى نهاية 2028/29") for c in ["France","Germany","Austria","Switzerland"]],
     terr("United States of America",[dict(holder("Paramount+",["live","digital"]),note="كل المباريات بثًا عبر Paramount+ (CBS Sports)")],"Americas",source=par,contract="حتى 2026/27"),
-    CYP(),
-    *[terr(c,[],None,status="unverified",note="لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة") for c in ["MENA","Netherlands","Türkiye","Spain","Portugal","Italy"]]]
-lega={"url":"https://www.legaseriea.it/","title":"Lega Serie A","publisher":"Lega Serie A","kind":"official","retrievedAt":"2026-11-24"}
-file('serie-a-2026-27','Serie A',["serie a","italian serie a","الدوري الإيطالي","الدوري الايطالي"],SA_EXC,"2026/27",lega,sa)
-ci=[*[terr(c,[dz("حصري، كل المباريات")],"Europe",source=dazn_uk,contract="حتى نهاية 2028/29") for c in ["France","Germany","Austria","Switzerland"]],CYP()]
-file('coppa-italia-2026-27','Coppa Italia',["coppa italia","كأس إيطاليا"],["primavera","femminile","women","serie c","supercoppa"],"2026/27",lega,ci)
-file('supercoppa-italiana-2026-27','Supercoppa Italiana',["supercoppa italiana","supercoppa","السوبر الإيطالي"],["primavera","femminile","women"],"2026/27",lega,
-     [*[terr(c,[dz("حصري")],"Europe",source=dazn_uk,contract="حتى نهاية 2028/29") for c in ["France","Germany","Austria","Switzerland"]],CYP()])
-# ---- LaLiga: LaLiga's own «where to watch» page per country (extracted by the owner 2026-11-24, 215 countries), plus the
-# beIN MENA announcement (contract) and Cyta. The site's list proves neither the match channel nor exclusivity nor the contract.
+    CYP()]
 ISO={"ar":"عربي","sa":"السعودية","qa":"قطر","ae":"الإمارات","kw":"الكويت","bh":"البحرين","om":"عُمان","eg":"مصر","ma":"المغرب","dz":"الجزائر","tn":"تونس",
 "iq":"العراق","jo":"الأردن","lb":"لبنان","gb":"بريطانيا","ie":"إيرلندا","fr":"فرنسا","es":"إسبانيا","de":"ألمانيا","at":"النمسا","ch":"سويسرا","it":"إيطاليا",
 "pt":"البرتغال","nl":"هولندا","be":"بلجيكا","pl":"بولندا","tr":"تركيا","gr":"اليونان","cy":"قبرص","rs":"صربيا","hr":"كرواتيا","ba":"البوسنة","si":"سلوفينيا",
@@ -130,6 +121,38 @@ BR.update({"movistar laliga":["Movistar"],"dazn laliga":["DAZN"],"canal +sport":
   "setanta sports":["Setanta"],"espn+":["ESPN"],"espn deportes":["ESPN"],"s sport":["S Sport"],"s sport plus":["S Sport"],"sky mexico":["Sky"],"cyta":["Cytavision"],
   "magenta tv":["Magenta Sport"],"tsn canada":["TSN"],"novasport":["Nova Sport"]})
 ENT.update({"disney+":"platform","disney+ uk":"platform","espn+":"platform","s sport plus":"platform","fancode":"platform","go3":"platform","cazé tv":"platform"})
+lega={"url":"https://en.legaseriea.it/serie-a/broadcasters","title":"Broadcasters | Where to Watch the Serie A Enilive 2025/26 | legaseriea.it","publisher":"Lega Serie A","kind":"official","retrievedAt":"2026-11-24"}
+# Lega Serie A's own broadcasters page (extracted by the owner 2026-11-24): 198 countries, 73 broadcaster records. The page title
+# still says 2025/26 and the league does not mark the current season as verified — kept as the page states it, never as 2026/27 proof.
+sea=json.load(open('/tmp/rights/inputs/seriea-official-broadcasters.json',encoding='utf-8'))
+bmap={b["id"]:b for b in sea["broadcasters"]}
+review={i["broadcaster_id"] for i in sea.get("issues",[])}
+SITE_NOTE="كما ينشره موقع الرابطة؛ عنوان الصفحة يذكر 2025/26 — لا يثبت حقوق 2026/27 ولا قناة المباراة ولا الحصرية"
+def site_terrs(tag):
+    out=[]
+    for c in sea["countries"]:
+        hs=[]
+        for bid in c["broadcaster_ids"]:
+            b=bmap[bid]
+            if tag not in b["competition_tags"]: continue
+            h=holder(b["name"],["unspecified"]); h["note"]=SITE_NOTE+f" · سجل الناقل في الموقع حُدّث {b['record_updated_at'][:10]} (ليس مدة عقد)"
+            if bid in review: h.pop("brands",None); h.pop("brandsFrom",None); h["note"]="الاسم «"+b["name"]+"» كما نشره المصدر — يحتاج مراجعة، لا يُطابق بقنوات"
+            hs.append(h)
+        if not hs: continue
+        srcc=dict(lega); srcc["url"]=sea["source_url"]
+        t=terr(c["country_en"],hs,None,source=srcc,note=SITE_NOTE)
+        t["countries"]=[ISO.get(c["country_code"].lower(), c["country_ar"])]; t["code"]=c["country_code"]; t["season"]="2025/26 (عنوان صفحة الرابطة)"
+        out.append(t)
+    return out
+sa+=site_terrs("serie-a")
+file('serie-a-2026-27','Serie A',["serie a","italian serie a","الدوري الإيطالي","الدوري الايطالي"],SA_EXC,"2026/27",lega,sa)
+ci=[*[terr(c,[dz("حصري، كل المباريات")],"Europe",source=dazn_uk,contract="حتى نهاية 2028/29") for c in ["France","Germany","Austria","Switzerland"]],CYP(),
+    *site_terrs("coppa-italia")]
+file('coppa-italia-2026-27','Coppa Italia',["coppa italia","كأس إيطاليا"],["primavera","femminile","women","serie c","supercoppa"],"2026/27",lega,ci)
+file('supercoppa-italiana-2026-27','Supercoppa Italiana',["supercoppa italiana","supercoppa","السوبر الإيطالي"],["primavera","femminile","women"],"2026/27",lega,
+     [*[terr(c,[dz("حصري")],"Europe",source=dazn_uk,contract="حتى نهاية 2028/29") for c in ["France","Germany","Austria","Switzerland"]],CYP()])
+# ---- LaLiga: LaLiga's own «where to watch» page per country (extracted by the owner 2026-11-24, 215 countries), plus the
+# beIN MENA announcement (contract) and Cyta. The site's list proves neither the match channel nor exclusivity nor the contract.
 site=json.load(open('/tmp/rights/inputs/laliga-broadcasters-2026-27.json',encoding='utf-8'))
 lall=[]
 ll={"url":"https://www.laliga.com/en-GB/news/bein-extends-exclusive-laliga-broadcast-rights-across-34-markets-in-mena-and-apac","title":"beIN Extends Exclusive LALIGA Broadcast Rights Across 34 Markets in MENA and APAC (laliga.com)","publisher":"LALIGA","kind":"official","retrievedAt":"2026-11-24"}

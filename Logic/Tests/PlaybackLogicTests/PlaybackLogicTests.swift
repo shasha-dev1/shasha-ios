@@ -2292,8 +2292,8 @@ final class RightsTests: XCTestCase {
         let f = RightsRule.facts(try all(), competitions: ["Italy - Serie A"], kickoff: ko)
         XCTAssertTrue(f.allSatisfy { $0.rights.competition == "Serie A" })
         XCTAssertEqual(f.first { $0.territory.territory == "France" }?.holder.name, "DAZN")
-        let mena = try XCTUnwrap(f.first { $0.territory.territory == "MENA" })
-        XCTAssertFalse(mena.territory.verified); XCTAssertEqual(mena.holder.name, "")
+        XCTAssertTrue(f.filter { $0.territory.countries.contains("قطر") }.allSatisfy { $0.territory.season?.hasPrefix("2025/26") == true })
+        XCTAssertEqual(RightsRule.facts(try all(), competitions: ["Spain - LaLiga"], kickoff: ko).first { $0.territory.territory == "Kosovo" }?.holder.name, "")
         XCTAssertEqual(f.first { $0.territory.territory == "United States of America" }?.source.publisher, "Paramount")
     }
 
@@ -2365,6 +2365,19 @@ final class RightsTests: XCTestCase {
         XCTAssertEqual(f.filter { $0.territory.territory == "Türkiye" }.map(\.holder.name), ["S Sport", "S Sport Plus"])
         XCTAssertEqual(f.filter { $0.territory.countries.contains("قبرص") }.count, 1)
         XCTAssertTrue(RightsRule.holderLine(f.first { $0.territory.territory == "Netherlands" }!).contains("نوع الحقوق غير مذكور"))
+    }
+
+    func testSerieAFromTheLeaguePageKeepsItsOwnSeasonLabel() throws {
+        let f = RightsRule.facts(try all(), competitions: ["Italy - Serie A"], kickoff: ko)
+        let bh = try XCTUnwrap(f.first { $0.territory.territory == "Bahrain" })
+        XCTAssertEqual(bh.holder.name, "Starzplay"); XCTAssertEqual(bh.territory.season, "2025/26 (عنوان صفحة الرابطة)")
+        XCTAssertTrue(RightsRule.holderLine(bh).contains("2025/26")); XCTAssertTrue(bh.holder.note?.contains("لا يثبت حقوق 2026/27") == true)
+        let uk = f.filter { $0.territory.countries.contains("بريطانيا") }
+        XCTAssertEqual(uk.first { $0.holder.name == "DAZN" }?.territory.contract, "2026/27")
+        XCTAssertFalse(uk.contains { $0.holder.name == "DAZN United Kingdom" }); XCTAssertTrue(uk.contains { $0.holder.name == "BBC" })
+        let cookies = try XCTUnwrap(f.first { $0.holder.name == "Cookies" })
+        XCTAssertTrue(cookies.holder.brands.isEmpty); XCTAssertTrue(cookies.holder.note?.contains("يحتاج مراجعة") == true)
+        XCTAssertTrue(RightsRule.facts(try all(), competitions: ["Italy - Coppa Italia"], kickoff: ko).allSatisfy { $0.rights.competition == "Coppa Italia" })
     }
 
     func testAnotherChannelOfTheSameNetworkIsNotANearMatch() {
