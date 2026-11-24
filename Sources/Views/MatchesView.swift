@@ -270,9 +270,7 @@ struct MatchesView: View {
                     Picker("اليوم", selection: $store.day) { Text("اليوم").tag(0); Text("غدًا").tag(1) }
                         .pickerStyle(.segmented).disabled(store.nowOnly)
                     Toggle("تلعب الآن حسب الدليل أو الجدول", isOn: $store.nowOnly)
-                    Picker("الرياضة", selection: $store.sport) {
-                        ForEach(MatchScreenRule.SportFilter.allCases, id: \.self) { Text($0.label).tag($0) }
-                    }
+
                 } footer: { Text(footerText) }
                 if store.busy || !store.status.isEmpty {
                     Section { HStack { if store.busy { ProgressView() }; Text(store.status).font(.footnote).foregroundStyle(.secondary) } }

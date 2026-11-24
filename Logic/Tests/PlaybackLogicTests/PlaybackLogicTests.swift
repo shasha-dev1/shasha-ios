@@ -1755,3 +1755,28 @@ final class MatchFetchRuleTests: XCTestCase {
         XCTAssertEqual(F.priority(xs.reversed()).map(\.id), ["1", "3", "5", "2", "4"])
     }
 }
+
+extension MatchSourcesUpdateTests {
+    // owner 07:38–07:39: live football only (same as the TV's replaysAndLaterAiringsAreNotListed)
+    func testReplaysAndLaterAiringsAreNotListed() throws {
+        let ko: Int64 = 1_795_550_400_000
+        func e(_ ch: String, _ id: String, _ start: Int64, _ title: String) -> MatchGuideRule.Entry {
+            MatchGuideRule.Entry(channel: ch, source: "src", start: start, stop: start + 2 * h, title: title, teams: MatchGuideRule.teams(title)!,
+                                 kind: MatchGuideRule.kind(title: title, description: nil, minutes: 120), channelId: id)
+        }
+        let live = MatchGuideRule.group([e("beIN SPORTS 1", "1", ko, "Live: Manchester City v Napoli"), e("beIN SPORTS 2", "2", ko + 5 * h, "Manchester City v Napoli")])
+        let replay = MatchGuideRule.group([e("beIN SPORTS 3", "3", ko + 26 * h, "Replay: Manchester City v Napoli")])
+        let s = try S.parse(file(ko, [("Manchester City", "Napoli", ko)],
+            channels: #"{"name":"TNT Sports 1","country":"GB"},{"name":"beIN Sports 1 (Delayed)","country":"Bahrain"},{"name":"Sky Sports Highlights","country":"GB"}"#), now: 1)
+        let rows = S.merge(live + replay, sources: [s], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0,
+                           from: from, to: to + 2 * 86_400_000, tz: bahrain)
+        let shown = S.rowsFor(rows, now: ko, dayStart: from, tomorrow: from + 86_400_000, end: to + 2 * 86_400_000, day: 0, nowOnly: false, sport: .football)
+            + S.rowsFor(rows, now: ko, dayStart: from, tomorrow: from + 86_400_000, end: to + 2 * 86_400_000, day: 1, nowOnly: false, sport: .football)
+        XCTAssertFalse(shown.contains { $0.replay })
+        let r = try XCTUnwrap(shown.first { $0.kickoff == ko })
+        XCTAssertFalse(r.links.contains { $0.channelId == "2" })
+        XCTAssertTrue(r.links.contains { $0.channelId == "1" })
+        XCTAssertFalse(r.missing.contains { $0.0.contains("Delayed") || $0.0.contains("Highlights") })
+        XCTAssertTrue(S.delayedName("TVP Sport (D)") && S.delayedName("beIN Sports 1 (Delayed)") && !S.delayedName("Sky Sports Main Event"))
+    }
+}

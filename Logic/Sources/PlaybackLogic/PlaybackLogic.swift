@@ -1884,6 +1884,8 @@ enum MatchSourcesRule {
         var start: Int64 { kickoff ?? group!.start }
         var stop: Int64 { group?.stop ?? start + 2 * 3_600_000 }
         func airingAt(_ now: Int64) -> Bool { group?.airingAt(now) == true || (kickoff.map { now >= $0 && now < $0 + 2 * 3_600_000 } ?? false) }
+        /// Only replays in the guide and no schedule's kickoff: never listed (live only).
+        var replay: Bool { (group?.replay ?? false) && kickoff == nil }
     }
 
     /// Short names schedules use for the same club (Live-FootballOnTV «Wolves», «QPR»). Same as the TV.
@@ -1964,11 +1966,15 @@ enum MatchSourcesRule {
                 if var l = links[id] { l.proofs.append(p); l.possible = l.possible && possible; l.alt4k = l.alt4k && alt; links[id] = l }
                 else { links[id] = Link(channelId: id, name: name, proofs: [p], possible: possible, alt4k: alt); order.append(id) }
             }
-            for e in g?.entries ?? [] { add(e.channelId, e.channel, Proof(kind: .epg, source: guideSource, at: guideAt, detail: "«\(e.title)» · \(e.kind.label)")) }
+            // owner 07:38 — live only: a guide entry tagged replay, or starting over 90 min after the kickoff, is not live
+            for e in g?.entries ?? [] where liveAiring(e, kickoff: kickoff) {
+                add(e.channelId, e.channel, Proof(kind: .epg, source: guideSource, at: guideAt, detail: "«\(e.title)» · \(e.kind.label)"))
+            }
             var missing: [(String, String)] = []
             var platforms: [(String, String)] = []
             for (s, m) in a.ext {
                 for c in m.channels {
+                    if delayedName(c.name) { continue }          // «(Delayed)», highlights, replay: not live
                     if typeOf(c, idx) != .channel {
                         if !platforms.contains(where: { $0.0 == c.name && $0.1 == s.name }) { platforms.append((c.name, s.name)) }
                         continue
@@ -2066,11 +2072,18 @@ enum MatchSourcesRule {
 
     // ---------- the screen ----------
 
+    static func liveAiring(_ e: MatchGuideRule.Entry, kickoff: Int64?) -> Bool {
+        e.kind != .replay && (kickoff.map { e.start - $0 <= 90 * 60_000 } ?? true)
+    }
+
+    private static let delayedRe = try! NSRegularExpression(pattern: "\\b(delayed|deferred|highlights|replay|re-?air|repeat|catch ?up)\\b|\\((d|r|rpt|delayed)\\)|اعادة|إعادة|ملخص|مؤجل", options: [.caseInsensitive])
+    static func delayedName(_ n: String) -> Bool { delayedRe.firstMatch(in: n, range: NSRange(location: 0, length: (n as NSString).length)) != nil }
+
+    /// Live football only (owner 07:38–07:39): replays, other sports and unclassified cards are not listed.
     static func rowsFor(_ rows: [Row], now: Int64, dayStart: Int64, tomorrow: Int64, end: Int64, day: Int, nowOnly: Bool, sport: MatchScreenRule.SportFilter) -> [Row] {
         rows.filter { r in
-            let s = r.sport.sport
-            let sportOk: Bool
-            switch sport { case .football: sportOk = s == .football; case .unknown: sportOk = s == .unknown; case .other: sportOk = s == .other }
+            if r.replay || (r.links.isEmpty && r.missing.isEmpty && r.platforms.isEmpty) { return false }
+            let sportOk = r.sport.sport == .football
             let dayOk = nowOnly ? r.airingAt(now) : day == 0 ? (r.stop > dayStart && r.start < tomorrow) : (r.start >= tomorrow && r.start < end)
             return sportOk && dayOk
         }
