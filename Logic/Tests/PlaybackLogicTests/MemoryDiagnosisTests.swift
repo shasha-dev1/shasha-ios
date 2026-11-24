@@ -109,7 +109,12 @@ final class MemoryDiagnosisTests: XCTestCase {
         let q = { (n: String) in S.quality(R.version(n)) }
         var idx: S.LibIndex!, groups: [R.Group] = [], rows: [S.Row] = [], out: [S.Row] = []
         let pool = R.ExtraPool(lib.prefix(5000).map { .init(id: $0.id, name: $0.name, source: "S1") })
+        let beforeIdx = Self.footprintMB()
         let gIdx = Self.peakGrowth { idx = S.LibIndex(lib) }
+        let keptIdx = Self.footprintMB() - beforeIdx
+        // the same build without draining (what 1.10.5–1.10.7 did), measured for the record
+        let gIdxOld = Self.peakGrowth { _ = S.LibIndex(lib, drain: false) }
+        print(String(format: "MEMORY library index of %d channels: peak +%.0f MB, kept +%.0f MB · without draining peak +%.0f MB", lib.count, gIdx, keptIdx, gIdxOld))
         let gGroup = Self.peakGrowth { groups = R.group(entries) }
         let t0 = Date()
         let gMerge = Self.peakGrowth { rows = S.merge(groups, sources: [], idx: idx, pool: pool, manual: [], guideSource: "EPG", guideAt: 1,
@@ -123,6 +128,7 @@ final class MemoryDiagnosisTests: XCTestCase {
                      entries.count, groups.count, rows.count, facts, gIdx, gGroup, gMerge, tMerge, gRights, gCopy))
         XCTAssertEqual(copied.count, out.count)
         XCTAssertLessThan(gRights, 150, "rows must share the rights facts")
+        XCTAssertLessThan(gIdx, 300, "the library index must not hold the temporary strings of 56 000 channels")
     }
 
     func testRightsFactsOfAFullDay() throws {

@@ -2174,15 +2174,23 @@ enum MatchSourcesRule {
         /// 1.10.0 (TV 0.9.53): group labels of this library («8K:» before beIN SD / ᴴᴰ / ʰᵉᵛᶜ / ᴿᴬᵂ) — without them every
         /// version with no quality after the label (HEVC, RAW) was taken for a 4K channel and left out of the plain channel.
         let labels: Set<String>
-        init(_ lib: [LibCh]) {
+        init(_ lib: [LibCh], drain: Bool = true) {
             var d: [String: [E]] = [:]
             let labels = MatchGuideRule.prefixLabels(lib.map(\.name))
             self.labels = labels
-            for ch in lib {
-                let net = MatchGuideRule.network(ch.name)
-                d[net, default: []].append(E(ch: ch, own: distinct(ch.name, net: net), body: bodyNoCountry(ch.name),
-                                             res: MatchGuideRule.version(ch.name, labelPrefixes: labels).res, ed: edition(ch.name),
-                                             origin: libCountry(ch.name, group: ch.group, tvgId: ch.tvgId, labels: labels, manual: ch.manualCountry)))
+            // 1.10.8 (owner's report 23:04, 3.2 GB): the temporary strings of each channel are released every 256 channels —
+            // without it a 56 000-channel library left ~1.4 GB of them until the whole index was done (MemoryDiagnosisTests)
+            var i = 0
+            while i < lib.count {
+                drainPool(drain) {
+                    for ch in lib[i..<min(i + 256, lib.count)] {
+                        let net = MatchGuideRule.network(ch.name)
+                        d[net, default: []].append(E(ch: ch, own: distinct(ch.name, net: net), body: bodyNoCountry(ch.name),
+                                                     res: MatchGuideRule.version(ch.name, labelPrefixes: labels).res, ed: edition(ch.name),
+                                                     origin: libCountry(ch.name, group: ch.group, tvgId: ch.tvgId, labels: labels, manual: ch.manualCountry)))
+                    }
+                }
+                i += 256
             }
             byNet = d
         }
@@ -3463,4 +3471,15 @@ extension MatchGuideRule {
             }
         }
     }
+}
+
+/// Runs `body` in its own autorelease pool where there is one (Apple systems), so temporary Foundation objects made by a long loop
+/// on a background thread are released as it goes instead of at its end.
+@inline(__always) func drainPool<T>(_ on: Bool = true, _ body: () throws -> T) rethrows -> T {
+    #if canImport(ObjectiveC)
+    if !on { return try body() }
+    return try autoreleasepool { try body() }
+    #else
+    return try body()
+    #endif
 }
