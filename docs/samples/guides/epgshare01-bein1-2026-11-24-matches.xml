@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- excerpt of epg_ripper_BEIN1.xml.gz (epgshare01, origin bein.com) fetched 24/11/2026: only the 24/11 airings of the Champions/Europa League matches in the LiveSoccerTV sample; times as published («+0100») -->
+<tv>
+<channel id="4k_DIGITAL_Mono_AR.bein">
+    <display-name lang="en">4k_DIGITAL_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS1_DIGITAL_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS1_DIGITAL_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS1_DIGITAL_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS1_ENGLISH_Digital_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS1_FRENCH_Digital_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS1_FRENCH_Digital_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS2_ENGLISH_Digital_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS2_ENGLISH_Digital_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS2_ENGLISH_Digital_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS2_FRENCH_Digital_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS2_FRENCH_Digital_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS2_FRENCH_Digital_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS3_DIGITAL_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS3_DIGITAL_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS3_DIGITAL_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS3_DIGITAL_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS4_DIGITAL_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS4_DIGITAL_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS5_DIGITAL_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS5_DIGITAL_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS66_DIGITAL_Mono-01_EN.bein">
+    <display-name lang="en">beIN_SPORTS66_DIGITAL_Mono-01_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS6_DIGITAL_Mono-d-1_AR.bein">
+    <display-name lang="en">beIN_SPORTS6_DIGITAL_Mono-d-1_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="logos-_beINSPORTS8_AR.bein">
+    <display-name lang="en">logos-_beINSPORTS8_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="logos-_beINSPORTS8_EN.bein">
+    <display-name lang="en">logos-_beINSPORTS8_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<programme start="20261124034500 +0100" stop="20261124053000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City v Fulham</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124053000 +0100" stop="20261124072000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Newcastle United v Arsenal</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124111000 +0100" stop="20261124125500 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City v Fulham</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124125500 +0100" stop="20261124144500 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Newcastle United v Arsenal</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124183500 +0100" stop="20261124202000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City v Fulham</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124202000 +0100" stop="20261124221000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Newcastle United v Arsenal</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124020000 +0100" stop="20261124023000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City vs Fulham</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124024500 +0100" stop="20261124030000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Newcastle United vs Arsenal</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124063000 +0100" stop="20261124064300 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="ar">Week 13</sub-title>
+    <category lang="ar">الدوري الإسباني لكرة القدم</category>
+  </programme>
+<programme start="20261124220000 +0100" stop="20261125013000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs PSV Eindhoven</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124020000 +0100" stop="20261124023000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Manchester City vs Fulham</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124024500 +0100" stop="20261124030000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Newcastle United vs Arsenal</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124063000 +0100" stop="20261124064300 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="en">Spanish LaLiga 2026/2027</sub-title>
+    <category lang="en">Spanish League - Primera División</category>
+  </programme>
+<programme start="20261124220000 +0100" stop="20261125013000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Real Madrid vs PSV Eindhoven</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124023000 +0100" stop="20261124030000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Newcastle United vs Arsenal</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124180000 +0100" stop="20261124183000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Manchester City vs Fulham</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124200000 +0100" stop="20261124230000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Galatasaray vs Aston Villa</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124230000 +0100" stop="20261125014500 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs PSV Eindhoven</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124200000 +0100" stop="20261124220000 +0100" channel="beIN_SPORTS1_FRENCH_Digital_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="ar">2027</sub-title>
+    <category lang="ar">الرياضة العام</category>
+  </programme>
+<programme start="20261124225500 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS1_FRENCH_Digital_Mono_AR.bein">
+    <title lang="ar">Arsenal vs Dortmund</title>
+    <sub-title lang="ar">2027</sub-title>
+    <category lang="ar">الرياضة العام</category>
+  </programme>
+<programme start="20261124203000 +0100" stop="20261124224500 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Bodo/Glimt vs Lask</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124224500 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Manchester City vs Napoli</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124203000 +0100" stop="20261124224500 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Bodo/Glimt vs Lask</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124224500 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Manchester City vs Napoli</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261123225500 +0100" stop="20261124010000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs PSV</title>
+    <sub-title lang="ar">2027</sub-title>
+    <category lang="ar">الرياضة العام</category>
+  </programme>
+<programme start="20261124120000 +0100" stop="20261124140000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_AR.bein">
+    <title lang="ar">Galatasaray vs Samsunspor</title>
+    <sub-title lang="ar">2027</sub-title>
+    <category lang="ar">الرياضة العام</category>
+  </programme>
+<programme start="20261124140000 +0100" stop="20261124160000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_AR.bein">
+    <title lang="ar">Arsenal vs Dortmund</title>
+    <sub-title lang="ar">2027</sub-title>
+    <category lang="ar">الرياضة العام</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125003000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="ar">2027</sub-title>
+    <category lang="ar">الرياضة العام</category>
+  </programme>
+<programme start="20261124160000 +0100" stop="20261124180000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="en">Liga</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124203000 +0100" stop="20261124223000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Galatasaray vs Samsunspor</title>
+    <sub-title lang="en">Championnat de Turquie</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124225500 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Real Madrid vs PSV</title>
+    <sub-title lang="en">Champions League J05</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261123233000 +0100" stop="20261124013000 +0100" channel="beIN_SPORTS3_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="ar">Week 13</sub-title>
+    <category lang="ar">الدوري الإسباني لكرة القدم</category>
+  </programme>
+<programme start="20261124071000 +0100" stop="20261124090000 +0100" channel="beIN_SPORTS3_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="ar">Week 13</sub-title>
+    <category lang="ar">الدوري الإسباني لكرة القدم</category>
+  </programme>
+<programme start="20261124203000 +0100" stop="20261124230000 +0100" channel="beIN_SPORTS3_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Galatasaray vs Aston Villa</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124230000 +0100" stop="20261125011500 +0100" channel="beIN_SPORTS3_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City vs Napoli</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261123233000 +0100" stop="20261124013000 +0100" channel="beIN_SPORTS3_DIGITAL_Mono_EN.bein">
+    <title lang="en">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="en">Spanish LaLiga 2026/2027</sub-title>
+    <category lang="en">Spanish League - Primera División</category>
+  </programme>
+<programme start="20261124233000 +0100" stop="20261125013000 +0100" channel="beIN_SPORTS3_DIGITAL_Mono_EN.bein">
+    <title lang="en">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="en">Spanish LaLiga 2026/2027</sub-title>
+    <category lang="en">Spanish League - Primera División</category>
+  </programme>
+<programme start="20261123223000 +0100" stop="20261124010000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Arsenal vs Borussia Dortmund</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124030000 +0100" stop="20261124044500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Bodo/Glimt vs Lask</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124044500 +0100" stop="20261124063000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Arsenal vs Borussia Dortmund</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124103000 +0100" stop="20261124121500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Bodo/Glimt vs Lask</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124121500 +0100" stop="20261124140000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Arsenal vs Borussia Dortmund</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124140000 +0100" stop="20261124143000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City vs Napoli</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124180000 +0100" stop="20261124194500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Bodo/Glimt vs Lask</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124194500 +0100" stop="20261124201500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Arsenal vs Borussia Dortmund</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124201500 +0100" stop="20261124223000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Bodo/Glimt vs Lask</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Arsenal vs Borussia Dortmund</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124155000 +0100" stop="20261124180800 +0100" channel="beIN_SPORTS5_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Arsenal FC vs Borussia Dortmund</title>
+    <sub-title lang="ar">MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا للشباب</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125011500 +0100" channel="beIN_SPORTS5_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Como vs Aek Athens</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124170100 +0100" stop="20261124185200 +0100" channel="beIN_SPORTS66_DIGITAL_Mono-01_EN.bein">
+    <title lang="en">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="en">Spanish LaLiga 2026/2027</sub-title>
+    <category lang="en">Spanish League - Primera División</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125011500 +0100" channel="beIN_SPORTS66_DIGITAL_Mono-01_EN.bein">
+    <title lang="en">Feyenoord vs Porto</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261123223000 +0100" stop="20261124011500 +0100" channel="beIN_SPORTS6_DIGITAL_Mono-d-1_AR.bein">
+    <title lang="ar">Feyenoord vs Porto</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124031500 +0100" stop="20261124051500 +0100" channel="beIN_SPORTS6_DIGITAL_Mono-d-1_AR.bein">
+    <title lang="ar">Feyenoord vs Porto</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124111500 +0100" stop="20261124131500 +0100" channel="beIN_SPORTS6_DIGITAL_Mono-d-1_AR.bein">
+    <title lang="ar">Feyenoord vs Porto</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124164500 +0100" stop="20261124185000 +0100" channel="beIN_SPORTS6_DIGITAL_Mono-d-1_AR.bein">
+    <title lang="ar">Feyenoord vs Porto</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125010000 +0100" channel="logos-_beINSPORTS8_AR.bein">
+    <title lang="ar">Leipzig vs Lens</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125010000 +0100" channel="logos-_beINSPORTS8_EN.bein">
+    <title lang="en">Leipzig vs Lens</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+</tv>

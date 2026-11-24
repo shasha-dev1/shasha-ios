@@ -20,6 +20,8 @@ final class MatchStore: ObservableObject {
     /// and the screen updates on every fetch step and every library change. Now it is worked out once per change of
     /// rows / day / filters, off the main thread, and the screen only reads it.
     @Published private(set) var shown: [MatchSourcesRule.Row] = []
+    /// 1.10.2 (owner §4): guide-only rows no schedule links («من الدليل — غير مرتبطة بجدول مباريات»), listed apart.
+    @Published private(set) var apart: [MatchSourcesRule.Row] = []
     var importantOnly = UserDefaults.standard.object(forKey: "match.importantOnly") as? Bool ?? true { didSet { if importantOnly != oldValue { reshow() } } }
     private var showGen = 0
     func reshow() {
@@ -27,15 +29,16 @@ final class MatchStore: ObservableObject {
         let rs = rows, d = day, n = nowOnly, sp = sport, imp = importantOnly, resTo = result?.to ?? 0
         Task {
             let t0 = Perf.now()
-            let out = await Task.detached(priority: .userInitiated) { () -> [MatchSourcesRule.Row] in
+            let (out, sep) = await Task.detached(priority: .userInitiated) { () -> ([MatchSourcesRule.Row], [MatchSourcesRule.Row]) in
                 let from = MatchIndexBuilder.ms(MatchIndexBuilder.dayStart(Date()))
                 let tomorrow = MatchIndexBuilder.ms(Calendar.current.date(byAdding: .day, value: 1, to: Date(timeIntervalSince1970: Double(from) / 1000)) ?? Date())
-                return MatchSourcesRule.rowsFor(rs, now: MatchIndexBuilder.ms(Date()), dayStart: from, tomorrow: tomorrow, end: max(resTo, tomorrow + 86_400_000),
-                                                day: d, nowOnly: n, sport: sp, importantOnly: imp)
+                let now = MatchIndexBuilder.ms(Date()), end = max(resTo, tomorrow + 86_400_000)
+                return (MatchSourcesRule.rowsFor(rs, now: now, dayStart: from, tomorrow: tomorrow, end: end, day: d, nowOnly: n, sport: sp, importantOnly: imp),
+                        MatchSourcesRule.rowsFor(rs, now: now, dayStart: from, tomorrow: tomorrow, end: end, day: d, nowOnly: n, sport: sp, importantOnly: imp, unlinkedOnly: true))
             }.value
             guard gen == showGen else { return }
-            Perf.shared.record("مباريات اليوم: تصفية القائمة", since: t0, "\(out.count) من \(rs.count) [خلفية]")
-            shown = out
+            Perf.shared.record("مباريات اليوم: تصفية القائمة", since: t0, "\(out.count) من \(rs.count) + \(sep.count) منفصلة [خلفية]")
+            shown = out; apart = sep
         }
     }
     @Published var sport: MatchScreenRule.SportFilter = .football
@@ -155,7 +158,8 @@ final class MatchStore: ObservableObject {
         let stamp = "\(lib.active?.name ?? "")#\(chans.count)#\(chans.first?.id ?? "")#\(chans.last?.id ?? "")"
         // the library index is needed only to match imported schedules: not built at all without one
         let needIdx = !files.isEmpty && (libIdx == nil || stamp != libStamp)
-        let libList = needIdx ? chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name) } : []
+        let cats = Dictionary(lib.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        let libList = needIdx ? chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId) } : []
         let oldIdx = libIdx
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
         let (from, to) = window
@@ -181,7 +185,9 @@ final class MatchStore: ObservableObject {
 
     /// The full comparison for the report (same rows as the screen, computed now).
     func compareText(_ library: Library) async -> String {
-        let libList = library.channels.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name) }
+        let cats = Dictionary(library.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        let libList = library.channels.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId) }
+        let focusIds = Set(result?.stats?.focus.map(\.channelId) ?? [])
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
         let (from, to) = window
         let guideSource = result != nil ? "EPG المزوّد (\(source))" : "EPG المزوّد", guideAt = result?.built ?? 0
@@ -192,10 +198,12 @@ final class MatchStore: ObservableObject {
             let names = srcs.map { s -> String in
                 let c = MatchSourcesRule.counts(s, idx: idx)
                 return "   - \(s.name) · \(s.kind.label) · أُخذ \(MatchIndexBuilder.fmt(s.fetchedAt)) · \(s.matches.count) مباراة · \(c.entries) إدخال نقل · \(c.unique) قناة فريدة · \(c.inLibrary ?? 0) قناة من مكتبتك"
-                    + (s.url.map { " · " + $0 } ?? "") + (s.status.map { "\n      " + $0 } ?? "")
+                    + (s.url.map { " · " + MatchSourcesRule.maskUrl($0) } ?? "") + (s.status.map { "\n      " + $0 } ?? "")
             }
             let rows = MatchSourcesRule.merge(gs, sources: srcs, idx: idx, pool: pl, manual: man, guideSource: guideSource, guideAt: guideAt, from: from, to: to)
+            let focus = libList.filter { focusIds.contains($0.id) }
             return "\n— الجداول المستوردة\n" + names.joined(separator: "\n") + "\n\n" + MatchSourcesRule.compare(rows, fmt: MatchIndexBuilder.fmt)
+                + "\n" + MatchSourcesRule.guideVsLibrary(srcs, idx: idx, focus: focus)
         }.value)
     }
 
@@ -247,6 +255,8 @@ struct MatchesView: View {
     /// Owner 07:51: FIFA, big five + cups, Turkey, Saudi, UEFA only (default); Italy → Spain → England first.
     @AppStorage("match.importantOnly") private var importantOnly = true
     @AppStorage(MatchFetch.beinKey) private var beinGuide = false
+    @AppStorage("match.hideUnknown") private var hideUnknown = false
+    @AppStorage(MatchFetch.beinZoneKey) private var beinZone = true
 
     private var shown: [MatchSourcesRule.Row] { store.shown }
     private static let hhmm: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "ar"); f.dateFormat = "HH:mm"; return f }()
@@ -281,15 +291,17 @@ struct MatchesView: View {
             Menu {
                 Toggle("إخفاء HD (720p)", isOn: $hideHd)
                 Toggle("إخفاء SD", isOn: $hideSd)
+                Toggle("إخفاء الدقة غير المعروفة", isOn: $hideUnknown)
                 Divider()
                 // 1.10.0: the owner's approval for the beIN MENA guide (published file; origin bein.com, relayed by epgshare01)
                 Toggle("دليل beIN الشرق الأوسط (bein.com عبر epgshare01)", isOn: $beinGuide)
+                Toggle("تحقق توقيت دليل beIN (توقيت قطر فقط إذا أثبتته الجداول)", isOn: $beinZone)
                 Text("يضيف قنوات beIN (ومنها 4K) لمباراة معروفة من جدول آخر فقط، مرتين في اليوم على الأكثر.")
-                Text("4K و1080p والنسخ مجهولة الجودة تبقى دائمًا. الجودة مأخوذة من اسم القناة.")
+                Text("الترتيب: 4K ثم 1080p ثم 720p ثم SD ثم غير المعروفة. الدقة من اسم القناة (HEVC وRAW ليست دقة) ولا يتحقق منها المشغّل.")
                 Divider()
                 Button { importing = true } label: { Label("استيراد جدول مباريات…", systemImage: "square.and.arrow.down") }
                 Button { showFiles = true } label: { Label("الجداول المستوردة (\(store.files.count))", systemImage: "doc.text") }
-            } label: { Image(systemName: hideHd || hideSd ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle") }
+            } label: { Image(systemName: hideHd || hideSd || hideUnknown ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle") }
         }
         ToolbarItem(placement: .primaryAction) {
             Button { store.refresh(library) } label: { Image(systemName: "arrow.clockwise") }.disabled(store.busy)
@@ -321,6 +333,15 @@ struct MatchesView: View {
                         MatchRowView(key: MatchStore.key(r), onPlay: onPlay)
                     } label: { rowLabel(r) }
                     .id(MatchStore.key(r))
+                }
+                if !store.apart.isEmpty {
+                    Section {
+                        ForEach(Array(store.apart.enumerated()), id: \.offset) { _, r in
+                            NavigationLink { MatchRowView(key: MatchStore.key(r), onPlay: onPlay) } label: { rowLabel(r) }
+                        }
+                    } header: { Text("من الدليل — غير مرتبطة بجدول مباريات (\(store.apart.count))") } footer: {
+                        Text("برامج يذكرها دليل قناة ولا يربطها أي جدول مباريات بمباراة: قد تكون إعادة أو مباشرة. لا تُحسب ولا يُتنقل إليها تلقائيًا.")
+                    }
                 }
             }
             .onAppear {
@@ -400,6 +421,8 @@ struct MatchRowView: View {
     /// "" = all. Channels of unknown country / language always stay.
     @AppStorage("match.country") private var country = ""
     @AppStorage("match.lang") private var lang = ""
+    @AppStorage("match.source") private var source = ""
+    @AppStorage("match.hideUnknown") private var hideUnknown = false
 
     private var row: MatchSourcesRule.Row? { store.rows.first { MatchStore.key($0) == key } }
 
@@ -419,19 +442,40 @@ struct MatchRowView: View {
     @ViewBuilder private func content(_ r: MatchSourcesRule.Row) -> some View {
         let lp = labelPrefixes
         let sec = MatchSourcesRule.sections(r, versionOf: { MatchGuideRule.version($0, labelPrefixes: lp) }, hideHd: hideHd && !showAll, hideSd: hideSd && !showAll,
-                                            country: showAll || country.isEmpty ? nil : country, lang: showAll || lang.isEmpty ? nil : lang)
+                                            country: showAll || country.isEmpty ? nil : country, lang: showAll || lang.isEmpty ? nil : lang,
+                                            hideUnknown: hideUnknown && !showAll, source: showAll || source.isEmpty ? nil : source)
         List {
             Section { info(r) }
             filters(r)
             linkSection("مؤكدة", sec.confirmed, zap: true, r,
-                        footer: "مؤكدة بدليل: EPG المزوّد، أو اسم مطابق في جدول ناقل/دليل نقل، أو أضفتها يدويًا. الأعلى جودة أولًا: 4K ثم 1080p ثم RAW. التنقل بين القنوات داخل هذه القائمة فقط.")
+                        footer: "مؤكدة بدليل: EPG المزوّد، أو اسم مطابق بنفس الدولة في جدول ناقل/دليل نقل، أو أضفتها يدويًا. الترتيب: 4K ثم 1080p ثم 720p ثم SD ثم غير المعروفة (الدقة من الاسم). التنقل بين القنوات داخل هذه القائمة فقط.")
             linkSection("بدائل 4K محتملة (قد لا تكون نفس البث)", sec.alternatives, zap: false, r,
                         footer: "جدول يذكر قناة 4K (مثل Sky Sports Ultra HDR أو TNT Sports Ultimate)؛ هذه نسخ 4K لقنوات مذكورة معها. غير مؤكدة، وتُشغَّل فقط إذا اخترتها.")
             linkSection("محتملة", sec.possible, zap: false, r,
-                        footer: "اسم قريب أو بلد آخر — غير مؤكدة، وتُشغَّل فقط إذا اخترتها.")
+                        footer: "اسم أطول، أو دولة غير معروفة في أحد الطرفين (السبب تحت القناة) — غير مؤكدة، وتُشغَّل فقط إذا اخترتها.")
+            linkSection("تعارض توقيت / نوع العرض غير محدد", sec.timing, zap: false, r,
+                        footer: "تبدأ بعد الانطلاق بأكثر من 90 دقيقة بلا علامة إعادة: قد تكون إعادة أو تأخرًا في الدليل. لا تُحسب ولا يُتنقل إليها تلقائيًا.")
             linkSection("قنوات بلا دليل قد تنقلها", sec.suggested, zap: false, r,
                         footer: "من نفس الشبكة واسمها قريب؛ لا مصدر يؤكد أنها تعرض المباراة، ولا تُعدّ ضمن المؤكدة.")
-            if sec.hidden > 0 { Section { Button("إظهار المخفي بالجودة أو الدولة أو اللغة (\(sec.hidden))") { showAll = true } } }
+            if sec.hidden > 0 {
+                Section { Button("إظهار باقي النسخ (\(sec.hidden))") { showAll = true } } footer: {
+                    Text(sec.confirmed.isEmpty ? "لا نسخة تطابق اختياراتك — لا يُشغَّل شيء أقل جودة تلقائيًا." : "مخفية بالجودة أو الدولة أو اللغة أو المصدر.")
+                }
+            }
+            if let why = MatchSourcesRule.unlinkedWhy(r, covers: MatchSourcesRule.scheduleCovers(store.rows)) {
+                Section { Text(why).font(.caption) } header: { Text("من الدليل — غير مرتبطة بجدول مباريات") }
+            }
+            if !r.rejected.isEmpty {
+                Section {
+                    ForEach(Array(r.rejected.enumerated()), id: \.offset) { _, x in
+                        Button { store.setManual(row: r, channelId: x.0.id, name: x.0.name, add: true) } label: {
+                            VStack(alignment: .leading, spacing: 2) { Text(x.0.name).lineLimit(1); Text(x.1).font(.caption2).foregroundStyle(.secondary) }
+                        }
+                    }
+                } header: { Text("رُفضت (دولة أو نسخة beIN مختلفة) (\(r.rejected.count))") } footer: {
+                    Text("الاسم مطابق لكن الدولة أو نسخة beIN مختلفة. اخترها لتضيفها لهذه المباراة بنفسك.")
+                }
+            }
             Section { Button { adding = true } label: { Label("إضافة قناة لهذه المباراة يدويًا", systemImage: "plus") } } footer: {
                 Text("الربط اليدوي يُحفظ على الجهاز ويبقى بعد إعادة التشغيل، لهذه المباراة فقط.")
             }
@@ -488,6 +532,7 @@ struct MatchRowView: View {
         let o = MatchSourcesRule.filterOptions(r)
         let cs = Array(NSOrderedSet(array: o.countries + (country.isEmpty ? [] : [country]) + [MatchSourcesRule.unknownCountry])) as? [String] ?? []
         let ls = Array(NSOrderedSet(array: o.languages + (lang.isEmpty ? [] : [lang]) + [MatchSourcesRule.unknownLang])) as? [String] ?? []
+        let srcs = Array(NSOrderedSet(array: r.links.flatMap { MatchSourcesRule.linkSources($0).sorted() } + (source.isEmpty ? [] : [source]))) as? [String] ?? []
         Section {
             Picker("الدولة", selection: $country) {
                 Text("كل الدول").tag("")
@@ -496,6 +541,10 @@ struct MatchRowView: View {
             Picker("لغة التعليق", selection: $lang) {
                 Text("كل اللغات").tag("")
                 ForEach(ls, id: \.self) { Text($0).tag($0) }
+            }
+            Picker("المصدر", selection: $source) {
+                Text("كل المصادر").tag("")
+                ForEach(srcs, id: \.self) { Text($0).tag($0) }
             }
         } footer: { Text("اختيار دولة أو لغة يُبقي القنوات مجهولة الدولة أو اللغة. اللغة من اسم القناة فقط، لا تُخمَّن.") }
     }

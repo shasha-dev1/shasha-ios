@@ -1025,6 +1025,9 @@ enum MatchGuideRule {
         return p.isEmpty ? nil : p
     }
 
+    /// A country code («NL», «fr») → its label, or nil.
+    static func countryOfCode(_ code: String) -> String? { countries[code.lowercased().trimmingCharacters(in: .whitespaces)] }
+
     /// The prefix as a country when it is a known country code, else the label itself (a tier like GOLD / VIP / 8K).
     static func country(_ name: String) -> String {
         guard let p = leadPrefix(name) else { return "بدون بادئة" }
@@ -1745,7 +1748,10 @@ enum MatchSourcesRule {
     /// name states after its prefix — read before the country words are dropped. Same rule as the TV's 0.9.54.
     private static let editionWords: [String: String] = ["french": "fr", "france": "fr", "francais": "fr", "english": "en", "eng": "en",
         "turkiye": "tr", "turkey": "tr", "turk": "tr", "arabic": "ar", "arab": "ar"]
-    static func edition(_ name: String) -> Set<String> { Set(MatchGuideRule.bodyWords(name).compactMap { editionWords[$0] }) }
+    /// 1.10.2 (owner 19:06): only beIN states its edition in the name; for other networks these words are a language or a country.
+    static func edition(_ name: String) -> Set<String> {
+        MatchGuideRule.network(name) != "beIN" ? [] : Set(MatchGuideRule.bodyWords(name).compactMap { editionWords[$0] })
+    }
     private static func toks(_ name: String) -> [String] { MatchGuideRule.words(name).split(separator: " ").map(String.init) }
 
     static func channelType(_ name: String) -> ChType {
@@ -1771,7 +1777,54 @@ enum MatchSourcesRule {
 
     // ---------- the library ----------
 
-    struct LibCh { let id: String; let name: String }
+    struct LibCh { let id: String; let name: String
+        /// 1.10.2: the playlist group and the guide id — they say the country when the name doesn't.
+        var group: String? = nil; var tvgId: String? = nil }
+
+    /// A library channel's country and why we say so (nil = not known; never guessed from the network name).
+    struct Origin: Equatable { let country: String?; let why: String }
+
+    private static let groupCountryWords: [(String, String)] = [("netherlands", "هولندا"), ("nederland", "هولندا"), ("holland", "هولندا"), ("dutch", "هولندا"),
+        ("france", "فرنسا"), ("french", "فرنسا"), ("francais", "فرنسا"), ("belgium", "بلجيكا"), ("belgique", "بلجيكا"),
+        ("germany", "ألمانيا"), ("deutschland", "ألمانيا"), ("spain", "إسبانيا"), ("espana", "إسبانيا"), ("italy", "إيطاليا"), ("italia", "إيطاليا"),
+        ("portugal", "البرتغال"), ("turkey", "تركيا"), ("turkiye", "تركيا"), ("england", "بريطانيا"), ("united kingdom", "بريطانيا"),
+        ("arabic", "عربي"), ("arab", "عربي"), ("usa", "أمريكا"), ("canada", "كندا")]
+    private static let leadCodes: Set<String> = ["nl", "fr", "be", "uk", "gb", "de", "es", "it", "pt", "tr", "us", "ca", "ie", "pl", "ch", "at"]
+
+    /// 1.10.2 (owner 19:06; TV 0.9.55): the country from the prefix, a code right after a group label («8K:»), the playlist
+    /// group, or the guide id suffix («ZiggoSport.nl») — with the reason kept.
+    static func libCountry(_ name: String, group: String? = nil, tvgId: String? = nil, labels: Set<String> = []) -> Origin {
+        let p = MatchGuideRule.leadPrefix(name)
+        if let p {
+            if let c = MatchGuideRule.countryOfCode(p) { return Origin(country: c, why: "بادئة الاسم «\(p)»") }
+            let folded = MatchGuideRule.foldName(name)
+            if let r = folded.rangeOfCharacter(from: CharacterSet(charactersIn: ":|")) {
+                let body = String(folded[r.upperBound...])
+                if let q = MatchGuideRule.leadPrefix(body), let c = MatchGuideRule.countryOfCode(q) { return Origin(country: c, why: "بعد إزالة «\(p):» البادئة «\(q)»") }
+                if let first = MatchGuideRule.words(body).split(separator: " ").first.map(String.init), leadCodes.contains(first) {
+                    return Origin(country: MatchGuideRule.countryOfCode(first), why: "بعد إزالة «\(p):» الاسم يبدأ بـ «\(first.uppercased())»")
+                }
+            }
+        }
+        if let g = group, !g.trimmingCharacters(in: .whitespaces).isEmpty {
+            if let q = MatchGuideRule.leadPrefix(g), let c = MatchGuideRule.countryOfCode(q) { return Origin(country: c, why: "المجموعة «\(g)»") }
+            let gw = " " + MatchGuideRule.words(g) + " "
+            if let hit = groupCountryWords.first(where: { gw.contains(" \($0.0) ") }) { return Origin(country: hit.1, why: "المجموعة «\(g)»") }
+        }
+        if let t = tvgId?.trimmingCharacters(in: .whitespaces), let dot = t.lastIndex(of: ".") {
+            let cc = String(t[t.index(after: dot)...])
+            if cc.count == 2, cc.allSatisfy(\.isLetter), let c = MatchGuideRule.countryOfCode(cc) { return Origin(country: c, why: "معرّف الدليل «\(t)»") }
+        }
+        return Origin(country: nil, why: p != nil ? "«\(p!):» تسمية مجموعة لا دولة، ولا مجموعة أو معرّف دليل يدل على الدولة" : "لا بادئة دولة ولا مجموعة أو معرّف دليل يدل عليها")
+    }
+
+    /// The schedule's country vs a library country: true / false, or nil when either is unknown.
+    static func countryMatch(_ ext: String?, _ lib: String?) -> Bool? {
+        guard let c = ext?.lowercased().trimmingCharacters(in: .whitespaces), let lib else { return nil }
+        if arab.contains(c) { return lib == "عربي" || ["السعودية", "قطر", "الإمارات", "الكويت", "البحرين", "عُمان", "مصر"].contains(lib) }
+        guard let want = countryNames[c] else { return nil }
+        return lib == want
+    }
 
     private static let countryNames: [String: String] = [
         "gb": "بريطانيا", "uk": "بريطانيا", "great britain": "بريطانيا", "england": "بريطانيا", "united kingdom": "بريطانيا",
@@ -1798,7 +1851,8 @@ enum MatchSourcesRule {
     }
 
     final class LibIndex {
-        struct E { let ch: LibCh; let own: Set<String>; let body: Set<String>; let res: MatchGuideRule.Res; var ed: Set<String> = [] }
+        struct E { let ch: LibCh; let own: Set<String>; let body: Set<String>; let res: MatchGuideRule.Res; var ed: Set<String> = []
+            var origin = Origin(country: nil, why: "") }
         let byNet: [String: [E]]
         /// 1.10.0 (TV 0.9.53): group labels of this library («8K:» before beIN SD / ᴴᴰ / ʰᵉᵛᶜ / ᴿᴬᵂ) — without them every
         /// version with no quality after the label (HEVC, RAW) was taken for a 4K channel and left out of the plain channel.
@@ -1810,14 +1864,17 @@ enum MatchSourcesRule {
             for ch in lib {
                 let net = MatchGuideRule.network(ch.name)
                 d[net, default: []].append(E(ch: ch, own: distinct(ch.name, net: net), body: bodyNoCountry(ch.name),
-                                             res: MatchGuideRule.version(ch.name, labelPrefixes: labels).res, ed: edition(ch.name)))
+                                             res: MatchGuideRule.version(ch.name, labelPrefixes: labels).res, ed: edition(ch.name),
+                                             origin: libCountry(ch.name, group: ch.group, tvgId: ch.tvgId, labels: labels)))
             }
             byNet = d
         }
     }
 
     /// Library versions of a channel a schedule names: (version, exact). Same as the TV's libraryMatches.
-    struct Hit { let e: LibIndex.E; let exact: Bool; let alt4k: Bool }
+    struct Hit { let e: LibIndex.E; let exact: Bool; let alt4k: Bool; var why: String? = nil }
+    /// 1.10.2: a library version whose name fits but was refused (another country / beIN edition), with the reason.
+    struct Reject { let e: LibIndex.E; let why: String }
 
     /// A library channel's country is known and is the one the schedule states.
     static func countrySame(_ country: String?, _ libName: String) -> Bool {
@@ -1833,7 +1890,8 @@ enum MatchSourcesRule {
         if let t = c.type { return t }
         let t = channelType(c.name)
         guard t != .channel, let idx else { return t }
-        return rawHits(c, idx, []).contains { $0.exact && countrySame(c.country, $0.e.ch.name) } ? .channel : t
+        var none: [Reject] = []
+        return rawHits(c, idx, [], &none).contains { $0.exact } ? .channel : t
     }
 
     static func libraryMatches(_ c: ExtChannel, _ idx: LibIndex, siblings: [String] = []) -> [(LibIndex.E, Bool)] {
@@ -1841,10 +1899,14 @@ enum MatchSourcesRule {
     }
 
     static func libraryHits(_ c: ExtChannel, _ idx: LibIndex, siblings: [String] = []) -> [Hit] {
-        typeOf(c, idx) == .channel ? rawHits(c, idx, siblings) : []
+        var none: [Reject] = []
+        return libraryHits(c, idx, siblings: siblings, rejects: &none)
+    }
+    static func libraryHits(_ c: ExtChannel, _ idx: LibIndex, siblings: [String] = [], rejects: inout [Reject]) -> [Hit] {
+        typeOf(c, idx) == .channel ? rawHits(c, idx, siblings, &rejects) : []
     }
 
-    private static func rawHits(_ c: ExtChannel, _ idx: LibIndex, _ siblings: [String]) -> [Hit] {
+    private static func rawHits(_ c: ExtChannel, _ idx: LibIndex, _ siblings: [String], _ rejects: inout [Reject]) -> [Hit] {
         let net = MatchGuideRule.network(c.name)
         guard let list = idx.byNet[net] else { return [] }
         let own = distinct(c.name, net: net)
@@ -1858,10 +1920,6 @@ enum MatchSourcesRule {
         let ed = edition(c.name)
         for e in list {
             if e.res == .uhd && !wantsUhd { continue }
-            // 1.10.1: a stated edition must be the same on both sides; a known country on both sides too (ESPN NL ≠ ESPN US)
-            if e.ed != ed { continue }
-            let libCountry = MatchGuideRule.country(e.ch.name)
-            if c.country != nil && libCountry != "بدون بادئة" && !libCountry.hasPrefix("تسمية") && !countryFits(c.country, e.ch.name) { continue }
             let exact = e.own == own && (!own.isEmpty || e.body == body)
             let possible = !exact && !own.isEmpty && own.isSubset(of: e.body)
             var alt = false
@@ -1871,7 +1929,16 @@ enum MatchSourcesRule {
                     || (eOwn.isEmpty && !e.own.isDisjoint(with: ultraWords))
             }
             if !exact && !possible && !alt { continue }
-            out.append(Hit(e: e, exact: exact && countryFits(c.country, e.ch.name), alt4k: alt))
+            // a stated beIN edition must be the same on both sides (French ≠ Arabic beIN of the same number)
+            if e.ed != ed {
+                let a = ed.isEmpty ? "بلا نسخة" : ed.sorted().joined(separator: ","), b = e.ed.isEmpty ? "بلا نسخة" : e.ed.sorted().joined(separator: ",")
+                rejects.append(Reject(e: e, why: "نسخة beIN مختلفة: «\(c.name)» \(a) ≠ \(b)")); continue
+            }
+            // a known country on both sides must be the same; an unknown one is possible at most (owner 19:06)
+            let cm = countryMatch(c.country, e.origin.country)
+            if cm == false { rejects.append(Reject(e: e, why: "دولة مختلفة: الجدول \(c.country ?? "") · مكتبتك \(e.origin.country ?? "") (\(e.origin.why))")); continue }
+            let why: String? = cm == true ? nil : c.country == nil ? "الجدول لا يذكر الدولة" : "دولة القناة في مكتبتك غير معروفة (\(e.origin.why))"
+            out.append(Hit(e: e, exact: exact && cm == true, alt4k: alt, why: exact ? why : nil))
         }
         return out
     }
@@ -1932,9 +1999,12 @@ enum MatchSourcesRule {
         let channelId: String; let name: String; var proofs: [Proof]; var possible = false
         /// Only a 4K alternative (the 4K feed of a channel listed with a named 4K one): never confirmed, never zapped.
         var alt4k = false
+        /// 1.10.2 (owner §4): an airing that doesn't fit the kickoff — «تعارض توقيت / نوع العرض غير محدد»; never confirmed or zapped.
+        var timing: String? = nil
         var best: Kind { Kind(rawValue: proofs.map(\.kind.rawValue).min() ?? Kind.candidate.rawValue) ?? .candidate }
         var confirmed: Bool {
-            proofs.contains { $0.kind != .candidate } && !((possible || alt4k) && !proofs.contains { $0.kind == .manual || $0.kind == .epg })
+            proofs.contains { $0.kind != .candidate } && (timing == nil || proofs.contains { $0.kind == .manual })
+                && !((possible || alt4k) && !proofs.contains { $0.kind == .manual || $0.kind == .epg })
         }
     }
 
@@ -1952,6 +2022,10 @@ enum MatchSourcesRule {
         var platforms: [(String, String)] = []
         /// The manual choices applied to this row (some may carry an older key: the match moved or was renamed).
         var manual: [Manual] = []
+        /// 1.10.2: library versions refused (other country / beIN edition), with the reason.
+        var rejected: [(LibCh, String)] = []
+        /// 1.10.2 (owner §4): known only from a channel guide no schedule links — listed apart, never hidden.
+        var unlinked: String? = nil
         var start: Int64 { kickoff ?? group!.start }
         var stop: Int64 { group?.stop ?? start + 2 * 3_600_000 }
         func airingAt(_ now: Int64) -> Bool { group?.airingAt(now) == true || (kickoff.map { now >= $0 && now < $0 + 2 * 3_600_000 } ?? false) }
@@ -1995,7 +2069,8 @@ enum MatchSourcesRule {
 
     static func merge(_ groups: [MatchGuideRule.Group], sources: [ExtSource], idx: LibIndex, pool: MatchGuideRule.ExtraPool,
                       manual: [Manual], guideSource: String, guideAt: Int64, from: Int64, to: Int64, tz: TimeZone = .current) -> [Row] {
-        var accs: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)])] = dedupeGroups(groups).map { ($0, []) }
+        let (deduped, laterOf) = dedupeWithLater(groups)
+        var accs: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)], later: [MatchGuideRule.Entry])] = deduped.enumerated().map { ($0.element, [], laterOf[$0.offset] ?? []) }
         for s in sources {
             for m in s.matches where m.kickoff >= from - 3 * 3_600_000 && m.kickoff < to { autoreleasepool {
                 if let i = accs.firstIndex(where: { $0.group != nil && sameMatch($0.group!, m) }) ?? accs.firstIndex(where: { a in
@@ -2003,13 +2078,13 @@ enum MatchSourcesRule {
                         abs(o.1.kickoff - m.kickoff) <= ((o.0.programmeTimes || s.programmeTimes) ? 2 * 3_600_000 : 20 * 60_000)
                             && teamsMatch(o.1.home, m.home) && teamsMatch(o.1.away, m.away) } }) {
                     accs[i].ext.append((s, m))
-                } else { accs.append((nil, [(s, m)])) }
+                } else { accs.append((nil, [(s, m)], [])) }
             } }
         }
         // 1.9.3 (owner: the same match listed more than once): schedule-only rows of the same match (same teams after
         // short names, same day, within 3 h) are one row. Same rule as the TV's 0.9.47.
         var seen: [String: Int] = [:]
-        var merged: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)])] = []
+        var merged: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)], later: [MatchGuideRule.Entry])] = []
         for a in accs {
             guard a.group == nil, let m = a.ext.first?.1 else { merged.append(a); continue }
             let k = matchKey(home: m.home, away: m.away, audience: MatchGuideRule.audience(m.home + " " + m.away), at: m.kickoff, tz: tz)
@@ -2043,7 +2118,10 @@ enum MatchSourcesRule {
         var rows: [Row] = []
         for (ai, a) in accs.enumerated() {
             let g = a.group
-            if g == nil && a.ext.allSatisfy({ $0.0.confirmOnly }) { continue }      // nothing confirms it is a live match
+            // nothing confirms it is a live match: listed apart («من الدليل — غير مرتبطة بجدول مباريات»), not dropped
+            var srcNames: [String] = []; for (s, _) in a.ext where !srcNames.contains(s.name) { srcNames.append(s.name) }
+            let unlinked: String? = g == nil && a.ext.allSatisfy({ $0.0.confirmOnly })
+                ? "دليل قناة (\(srcNames.joined(separator: "، "))) لا يربطه جدول مباريات بمباراة — قد تكون إعادة أو مباشرة" : nil
             let first = a.ext.first?.1
             let home = g?.home ?? first!.home, away = g?.away ?? first!.away
             let audience = g.map { Set($0.entries.flatMap(\.audience)) } ?? MatchGuideRule.audience(home + " " + away)
@@ -2053,31 +2131,42 @@ enum MatchSourcesRule {
             let conflict = (kickoff != nil && g != nil && !(sched.first?.0.programmeTimes ?? false) && !timesFit(g!, kickoff!)) || trueKickoffs.count > 1
             let key = keys[ai].0
             var links: [String: Link] = [:]; var order: [String] = []
-            func add(_ id: String, _ name: String, _ p: Proof, possible: Bool = false, alt: Bool = false) {
-                if var l = links[id] { l.proofs.append(p); l.possible = l.possible && possible; l.alt4k = l.alt4k && alt; links[id] = l }
-                else { links[id] = Link(channelId: id, name: name, proofs: [p], possible: possible, alt4k: alt); order.append(id) }
+            func add(_ id: String, _ name: String, _ p: Proof, possible: Bool = false, alt: Bool = false, timing: String? = nil) {
+                if var l = links[id] {
+                    l.proofs.append(p); l.possible = l.possible && possible; l.alt4k = l.alt4k && alt
+                    l.timing = (l.timing != nil && timing != nil) ? l.timing : nil; links[id] = l
+                } else { links[id] = Link(channelId: id, name: name, proofs: [p], possible: possible, alt4k: alt, timing: timing); order.append(id) }
             }
-            // owner 07:38 — live only: a guide entry tagged replay, or starting over 90 min after the kickoff, is not live
-            for e in g?.entries ?? [] where liveAiring(e, kickoff: kickoff) {
-                add(e.channelId, e.channel, Proof(kind: .epg, source: guideSource, at: guideAt, detail: "«\(e.title)» · \(e.kind.label)"))
+            // owner 07:38 — live only: a guide entry the guide marks as a replay is left out; 1.10.2 (§4): one starting well
+            // after the kickoff is not proof of a replay — kept as a timing conflict
+            for e in g?.entries ?? [] where e.kind != .replay {
+                add(e.channelId, e.channel, Proof(kind: .epg, source: guideSource, at: guideAt, detail: "«\(e.title)» · \(e.kind.label)"), timing: lateBy(e.start, kickoff: kickoff))
             }
+            for e in a.later where e.kind != .replay {
+                add(e.channelId, e.channel, Proof(kind: .epg, source: guideSource, at: guideAt, detail: "«\(e.title)» · \(e.kind.label) · \(hm(e.start))"),
+                    timing: lateBy(e.start, kickoff: kickoff ?? g!.start) ?? "عرض لاحق للمباراة نفسها في الدليل — نوع العرض غير محدد")
+            }
+            var rejected: [(LibCh, String)] = []
             var missing: [(String, String)] = []
             var platforms: [(String, String)] = []
             for (s, m) in a.ext {
                 for c in m.channels {
-                    // a channel listing's airing well after the real kickoff is a later showing, not the live one
-                    if s.programmeTimes, let k0 = trueKickoffs.min(), m.kickoff - k0 > 90 * 60_000 { continue }
-                    if delayedName(c.name) { continue }          // «(Delayed)», highlights, replay: not live
+                    // a channel listing's airing well after the real kickoff: a timing conflict, not proof of a replay (§4)
+                    let late: String? = s.programmeTimes ? trueKickoffs.min().flatMap { lateBy(m.kickoff, kickoff: $0) } : nil
+                    if delayedName(c.name) { continue }          // «(Delayed)», highlights, replay: the name says it
                     if typeOf(c, idx) != .channel {
                         if !platforms.contains(where: { $0.0 == c.name && $0.1 == s.name }) { platforms.append((c.name, s.name)) }
                         continue
                     }
-                    let hits = libraryHits(c, idx, siblings: m.channels.map(\.name))
+                    var rej: [Reject] = []
+                    let hits = libraryHits(c, idx, siblings: m.channels.map(\.name), rejects: &rej)
+                    for r in rej where !rejected.contains(where: { $0.0.id == r.e.ch.id }) { rejected.append((r.e.ch, "\(r.why) (\(s.name))")) }
                     if hits.isEmpty { if !missing.contains(where: { $0.0 == c.name && $0.1 == s.name }) { missing.append((c.name, s.name)) }; continue }
                     for h in hits {
                         add(h.e.ch.id, h.e.ch.name, Proof(kind: s.kind, source: s.name, at: m.fetchedAt ?? s.fetchedAt,
-                                                          detail: c.name + (c.country.map { " · " + $0 } ?? "") + (h.alt4k ? " · بديل 4K محتمل" : "")),
-                            possible: !h.exact && !h.alt4k, alt: h.alt4k)
+                                                          detail: c.name + (c.country.map { " · " + $0 } ?? "") + (h.alt4k ? " · بديل 4K محتمل" : "")
+                                                            + (h.why.map { " · " + $0 } ?? "") + (s.programmeTimes ? (m.id.map { " · " + $0 } ?? "") : "")),
+                            possible: !h.exact && !h.alt4k, alt: h.alt4k, timing: late)
                     }
                 }
             }
@@ -2110,6 +2199,8 @@ enum MatchSourcesRule {
             row.sport = sport
             row.platforms = platforms
             row.manual = assigned[ai] ?? []
+            row.rejected = rejected.filter { links[$0.0.id] == nil }
+            row.unlinked = unlinked
             rows.append(row)
         }
         return rows.sorted { ($0.start, $0.home) < ($1.start, $1.home) }
@@ -2160,13 +2251,75 @@ enum MatchSourcesRule {
             let epg = r.group?.entries.map { "\($0.channel) \(fmt($0.start))" }.joined(separator: " / ") ?? "-"
             line("   \(r.home) × \(r.away): الجدول \(r.kickoff.map(fmt) ?? "-") (\(r.kickoffFrom ?? "")) · برامج EPG: \(epg)")
         }
+        line("")
+        // 1.10.2 (owner §4 / §9): every link counted by what it rests on, with the timing and identity reasons
+        let all = rows.flatMap(\.links)
+        line("— الروابط: مؤكدة \(all.filter(\.confirmed).count) · محتملة \(all.filter { !$0.confirmed && $0.timing == nil && $0.proofs.contains { $0.kind != .candidate } }.count)"
+             + " · تعارض توقيت \(all.filter { !$0.confirmed && $0.timing != nil }.count) · اقتراحات \(all.filter { $0.proofs.allSatisfy { $0.kind == .candidate } }.count)")
+        line("— تعارض توقيت / نوع العرض غير محدد (لا يُشغَّل تلقائيًا ولا يُحسب تغطية)")
+        for r in rows { for l in r.links where !l.confirmed && l.timing != nil { line("   \(r.home) × \(r.away) (\(r.kickoff.map(fmt) ?? "-")) · \(l.name) · \(l.timing!)") } }
+        line("— نسخ رُفضت رغم تشابه الاسم (دولة أو نسخة beIN مختلفة) — تقدر تضيفها يدويًا من شاشة المباراة")
+        for r in rows { for (ch, why) in r.rejected { line("   \(r.home) × \(r.away) · \(ch.name) · \(why)") } }
+        line("— مطابقات محتملة لأن الدولة غير معروفة")
+        for r in rows {
+            for l in r.links where l.possible && l.timing == nil {
+                guard let why = l.proofs.compactMap(\.detail).first(where: { $0.contains("غير معروفة") || $0.contains("لا يذكر الدولة") }) else { continue }
+                line("   \(r.home) × \(r.away) · \(l.name) · \(why)")
+            }
+        }
+        line("— من الدليل — غير مرتبطة بجدول مباريات (معروضة في قسم منفصل)")
+        let covers = scheduleCovers(rows)
+        for r in rows { if let w = unlinkedWhy(r, covers: covers) { line("   \(fmt(r.start)) · \(r.home) × \(r.away) · \(w)") } }
         return s
+    }
+
+    /// 1.10.2 (owner 19:06): the kept channel guides' channels vs the library, both ways (same as the TV's guideVsLibrary).
+    static func guideVsLibrary(_ sources: [ExtSource], idx: LibIndex, focus: [LibCh]) -> String {
+        var s = ""; func line(_ x: String) { s += x + "\n" }
+        var reached = Set<String>()
+        line("— قنوات أدلة القنوات الخارجية غير المربوطة بمكتبتك")
+        for src in sources where src.programmeTimes {
+            var seen = Set<String>(); var chans: [ExtChannel] = []
+            for c in src.matches.flatMap(\.channels) where seen.insert(c.name + "|" + (c.country ?? "")).inserted { chans.append(c) }
+            var out: [String] = []
+            for c in chans {
+                var rej: [Reject] = []
+                let hits = libraryHits(c, idx, siblings: [], rejects: &rej)
+                hits.forEach { reached.insert($0.e.ch.id) }
+                if hits.isEmpty { out.append(c.name + (rej.isEmpty ? " (لا نسخة بهذا الاسم في مكتبتك)" : " (رُفض: " + rej.prefix(3).map { "\($0.e.ch.name) — \($0.why)" }.joined(separator: "؛ ") + ")")) }
+            }
+            line("   \(src.name): \(chans.count) قناة · غير مربوطة \(out.count)")
+            for o in out { line("      \(o)") }
+        }
+        line("— قنواتك الهولندية والفرنسية التي لا تصلها أي قناة من الأدلة الخارجية")
+        let miss = focus.filter { !reached.contains($0.id) }
+        line("   \(miss.count) من \(focus.count)")
+        for f in miss { line("      \(f.name)") }
+        return s
+    }
+
+    /// A link for a report: host and path only — a query or user info (tokens, accounts) never shown.
+    static func maskUrl(_ u: String) -> String {
+        guard let c = URLComponents(string: u), let host = c.host else { return "رابط (مخفي)" }
+        return "\(c.scheme ?? "https")://\(host)\(c.path)" + (c.query != nil ? "?…" : "")
+    }
+
+    private static func hm(_ t: Int64) -> String {
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "HH:mm"
+        return f.string(from: Date(timeIntervalSince1970: Double(t) / 1000))
     }
 
     // ---------- the screen ----------
 
     static func liveAiring(_ e: MatchGuideRule.Entry, kickoff: Int64?) -> Bool {
-        e.kind != .replay && (kickoff.map { e.start - $0 <= 90 * 60_000 } ?? true)
+        e.kind != .replay && lateBy(e.start, kickoff: kickoff) == nil
+    }
+
+    /// 1.10.2 (owner §4): over 90 min after the kickoff is not proof of a replay — «تعارض توقيت / نوع العرض غير محدد».
+    static func lateBy(_ start: Int64, kickoff: Int64?) -> String? {
+        guard let k = kickoff else { return nil }
+        let min = (start - k) / 60_000
+        return min > 90 ? "تعارض توقيت: يبدأ بعد الانطلاق بـ \(min) دقيقة — نوع العرض غير محدد (لا علامة إعادة)" : nil
     }
 
     private static let delayedRe = try! NSRegularExpression(pattern: "\\b(delayed|deferred|highlights|replay|re-?air|repeat|catch ?up)\\b|\\((d|r|rpt|delayed)\\)|اعادة|إعادة|ملخص|مؤجل", options: [.caseInsensitive])
@@ -2226,7 +2379,10 @@ enum MatchSourcesRule {
     /// 1.9.4 (owner's photo: «Monza × Fiorentina» four times — 22:39, 22:40, 22:40, 02:00): guide cards of the same match
     /// within 12 h are one: within 90 min of the first they are versions of the same airing, later ones are later showings
     /// (not live) and are dropped. Same as the TV's 0.9.49.
-    static func dedupeGroups(_ groups: [MatchGuideRule.Group]) -> [MatchGuideRule.Group] {
+    static func dedupeGroups(_ groups: [MatchGuideRule.Group]) -> [MatchGuideRule.Group] { dedupeWithLater(groups).0 }
+
+    /// 1.10.2 (§4): the later showings are kept with the card they repeat (timing conflicts, not dropped).
+    static func dedupeWithLater(_ groups: [MatchGuideRule.Group]) -> ([MatchGuideRule.Group], [Int: [MatchGuideRule.Entry]]) {
         func pair(_ g: MatchGuideRule.Group) -> String {
             [canonTeam(MatchGuideRule.teamKey(g.home)), canonTeam(MatchGuideRule.teamKey(g.away))].sorted().joined(separator: "|")
                 + Set(g.entries.flatMap(\.audience)).sorted().map { "#" + $0 }.joined()
@@ -2235,6 +2391,7 @@ enum MatchSourcesRule {
         // cards of the same pair are found by key — 1.9.4 compared every card with every kept one, working out both
         // keys again each time (thousands of cards → millions of name foldings).
         var kept: [MatchGuideRule.Group] = []
+        var later: [Int: [MatchGuideRule.Entry]] = [:]
         var byPair: [String: [Int]] = [:]
         for g in groups.sorted(by: { $0.start < $1.start }) {
             let k = autoreleasepool { pair(g) }
@@ -2242,10 +2399,10 @@ enum MatchSourcesRule {
                 if g.start - kept[i].start <= 90 * 60_000 {
                     let o = kept[i]
                     kept[i] = MatchGuideRule.Group(key: o.key, home: o.home, away: o.away, start: o.start, entries: o.entries + g.entries)
-                }
+                } else { later[i, default: []] += g.entries }            // a later showing of the same match
             } else { byPair[k, default: []].append(kept.count); kept.append(g) }
         }
-        return kept
+        return (kept, later)
     }
 
     /// 1.9.4: LiveSoccerTV lists every televised match of its days; a guide-only card inside the hours it covers is a
@@ -2257,12 +2414,17 @@ enum MatchSourcesRule {
         return { $0 >= lo && $0 <= hi }
     }
 
+    /// 1.10.2: why a row is listed apart («من الدليل — غير مرتبطة بجدول مباريات»), or nil for the main list.
+    static func unlinkedWhy(_ r: Row, covers: (Int64) -> Bool) -> String? {
+        r.unlinked ?? (r.kickoff == nil && covers(r.start) ? "من دليل المزوّد في ساعات يغطيها LiveSoccerTV ولا يذكرها — قد تكون إعادة غير معلَّمة" : nil)
+    }
+
     static func rowsFor(_ rows: [Row], now: Int64, dayStart: Int64, tomorrow: Int64, end: Int64, day: Int, nowOnly: Bool, sport: MatchScreenRule.SportFilter,
-                        importantOnly: Bool = false) -> [Row] {
+                        importantOnly: Bool = false, unlinkedOnly: Bool = false) -> [Row] {
         let covers = scheduleCovers(rows)
         return rows.filter { r in
             if r.replay || youthOrWomen(r) || (r.links.isEmpty && r.missing.isEmpty && r.platforms.isEmpty) { return false }
-            if r.kickoff == nil && covers(r.start) { return false }
+            if (unlinkedWhy(r, covers: covers) != nil) != unlinkedOnly { return false }
             if importantOnly && !important(r) { return false }
             let sportOk = r.sport.sport == .football
             // 1.9.7 (owner 13:44: yesterday's matches still listed, not in time order): today = not ended yet (a match
@@ -2272,7 +2434,12 @@ enum MatchSourcesRule {
         }.sorted { ($0.start, rank($0)) < ($1.start, rank($1)) }
     }
 
-    struct Sections { let confirmed: [Link]; let possible: [Link]; let suggested: [Link]; let hidden: Int; var alternatives: [Link] = [] }
+    struct Sections { let confirmed: [Link]; let possible: [Link]; let suggested: [Link]; let hidden: Int; var alternatives: [Link] = []
+        /// 1.10.2: airings that don't fit the kickoff (timing conflict / showing type unknown).
+        var timing: [Link] = [] }
+
+    /// The sources a link rests on (for the source filter).
+    static func linkSources(_ l: Link) -> Set<String> { Set(l.proofs.filter { $0.kind != .candidate }.map { $0.kind == .manual ? "أنت" : $0.source }) }
 
     static let unknownCountry = "دولة غير معروفة"
     static let unknownLang = "لغة غير معروفة"
@@ -2301,31 +2468,33 @@ enum MatchSourcesRule {
         return cOk && gOk
     }
 
-    /// 1.9.3 (owner: the highest qualities first — UHD, FHD, RAW): 4K, 1080p (RAW first), RAW, unknown, 720p, SD.
+    /// 1.10.2 (owner §5): 4K → 1080p → 720p → SD → unknown, by the resolution the name states; HEVC and RAW are not a
+    /// resolution — they only order versions of one resolution (RAW first). Same as the TV's 0.9.55.
     static func quality(_ v: MatchGuideRule.Version) -> Int {
-        switch v.res {
-        case .uhd: return v.raw ? 0 : 1
-        case .fhd: return v.raw ? 2 : 3
-        default:
-            if v.raw { return 4 }
-            return v.res == .unknown ? 5 : v.res == .hd ? 6 : 7
-        }
+        let r: Int
+        switch v.res { case .uhd: r = 0; case .fhd: r = 1; case .hd: r = 2; case .sd: r = 3; default: r = 4 }
+        return r * 2 + (v.raw ? 0 : 1)
     }
 
     static func sections(_ r: Row, versionOf: (String) -> MatchGuideRule.Version, hideHd: Bool, hideSd: Bool,
-                         country: String? = nil, lang: String? = nil) -> Sections {
-        func ok(_ l: Link) -> Bool { let x = versionOf(l.name).res; return !(hideHd && x == .hd) && !(hideSd && x == .sd) && passes(l, country: country, lang: lang) }
+                         country: String? = nil, lang: String? = nil, hideUnknown: Bool = false, source: String? = nil) -> Sections {
+        func ok(_ l: Link) -> Bool {
+            let x = versionOf(l.name).res
+            return !(hideHd && x == .hd) && !(hideSd && x == .sd) && !(hideUnknown && x == .unknown) && passes(l, country: country, lang: lang)
+                && (source == nil || linkSources(l).contains(source!))
+        }
         func sorted(_ l: [Link]) -> [Link] {
             let q = Dictionary(l.map { ($0.channelId, quality(versionOf($0.name))) }, uniquingKeysWith: { a, _ in a })
             return l.sorted { (q[$0.channelId] ?? 9, $0.best.rawValue, $0.name, $0.channelId) < (q[$1.channelId] ?? 9, $1.best.rawValue, $1.name, $1.channelId) }
         }
         let confirmed = r.links.filter(\.confirmed)
-        let alternatives = r.links.filter { !$0.confirmed && $0.alt4k }
-        let possible = r.links.filter { !$0.confirmed && !$0.alt4k && $0.proofs.contains { $0.kind != .candidate } }
-        let suggested = r.links.filter { !$0.alt4k && $0.proofs.allSatisfy { $0.kind == .candidate } }
-        let all = confirmed + alternatives + possible + suggested
+        let timing = r.links.filter { !$0.confirmed && $0.timing != nil }
+        let alternatives = r.links.filter { !$0.confirmed && $0.timing == nil && $0.alt4k }
+        let possible = r.links.filter { !$0.confirmed && $0.timing == nil && !$0.alt4k && $0.proofs.contains { $0.kind != .candidate } }
+        let suggested = r.links.filter { !$0.alt4k && $0.timing == nil && $0.proofs.allSatisfy { $0.kind == .candidate } }
+        let all = confirmed + alternatives + possible + suggested + timing
         return Sections(confirmed: sorted(confirmed.filter(ok)), possible: sorted(possible.filter(ok)), suggested: sorted(suggested.filter(ok)),
-                        hidden: all.filter { !ok($0) }.count, alternatives: sorted(alternatives.filter(ok)))
+                        hidden: all.filter { !ok($0) }.count, alternatives: sorted(alternatives.filter(ok)), timing: sorted(timing.filter(ok)))
     }
 
     static func proofText(_ l: Link, fmt: (Int64) -> String) -> String {
@@ -2343,6 +2512,7 @@ enum MatchSourcesRule {
             }
         }
         return parts.joined(separator: " · ") + (l.possible && !l.proofs.contains { $0.kind == .manual || $0.kind == .epg } ? " · مطابقة محتملة بالاسم" : "")
+            + (l.timing.map { " · " + $0 } ?? "")
     }
 }
 
@@ -2821,9 +2991,44 @@ enum GuideFeedRule {
 
     private static let notMatch = try! NSRegularExpression(pattern: "(?i)\\b(magazine|preview|review|highlights|goals|ملخص|أهداف|استوديو|studio|countdown|road to)\\b")
 
-    /// The beIN feed → confirm-only matches (no live marker), Qatar wall-clock times (the file states «+0100»; checked 24/11:
-    /// «Galatasaray vs Aston Villa» 20:00 on beIN SPORTS 1 English for a 17:45 UTC kickoff). Same rule as the TV's 0.9.53.
-    static func fromBeinFeed(name: String, url: String?, progs: [Prog], fetchedAt: Int64, from: Int64, to: Int64) -> MatchSourcesRule.ExtSource {
+    /// 1.10.2 (owner §4; TV 0.9.55): Qatar time is not forced. The first airing of every match the feed shares with a
+    /// schedule that gives real kickoffs is compared (live = 2 h before to 10 min after the kickoff); the file's own offset
+    /// stays unless clearly more matches fit Qatar time (≥ 3, and twice as many as the stated offset).
+    struct ZoneCheck: Equatable {
+        let qatar: Int, stated: Int, compared: Int, apply: Bool
+        var text: String {
+            compared == 0 ? "تصحيح التوقيت: لم يُطبّق — لا مباريات مشتركة مع جدول فيه موعد انطلاق حقيقي للتحقق"
+                : "تصحيح التوقيت: \(apply ? "طُبّق توقيت قطر بدل المذكور في الملف" : "لم يُطبّق — بقي توقيت الملف") · من \(compared) مباراة مشتركة: \(qatar) تطابق انطلاقها بتوقيت قطر، \(stated) بالتوقيت المذكور"
+        }
+    }
+
+    static func checkZone(_ progs: [Prog], schedule: [MatchSourcesRule.ExtMatch], zone: TimeZone = beinZone) -> ZoneCheck {
+        var ko: [String: Int64] = [:]
+        for m in schedule { let k = MatchGuideRule.teamKey(m.home) + "|" + MatchGuideRule.teamKey(m.away); if ko[k] == nil { ko[k] = m.kickoff } }
+        func fits(_ t: Int64, _ k: Int64) -> Bool { (-120 * 60_000...10 * 60_000).contains(t - k) }
+        var firstS: [String: Int64] = [:], firstQ: [String: Int64] = [:]
+        for p in progs {
+            guard beinName(p.channel) != nil, let t = MatchGuideRule.teams(p.title.trimmingCharacters(in: .whitespaces)) else { continue }
+            let key = MatchGuideRule.teamKey(t.home) + "|" + MatchGuideRule.teamKey(t.away)
+            guard let k = ko[key] else { continue }
+            let q = wallClock(p.start, statedOffsetMin: p.offsetMin, zone: zone)
+            let ch = p.channel.components(separatedBy: "_").dropLast().joined(separator: "_")
+            let id = key + "@" + ch
+            if abs(p.start - k) <= 6 * 3_600_000 { firstS[id] = min(firstS[id] ?? .max, p.start) }
+            if abs(q - k) <= 6 * 3_600_000 { firstQ[id] = min(firstQ[id] ?? .max, q) }
+        }
+        func matchOf(_ id: String) -> String { id.components(separatedBy: "@").first ?? id }
+        let mq = Set(firstQ.filter { fits($0.value, ko[matchOf($0.key)]!) }.keys.map(matchOf))
+        let ms = Set(firstS.filter { fits($0.value, ko[matchOf($0.key)]!) }.keys.map(matchOf))
+        let compared = Set((Array(firstQ.keys) + Array(firstS.keys)).map(matchOf)).count
+        return ZoneCheck(qatar: mq.count, stated: ms.count, compared: compared, apply: mq.count >= 3 && mq.count >= 2 * ms.count + 1)
+    }
+
+    /// The beIN feed → confirm-only matches (no live marker). `zoneFix`: read the wall-clock time as Qatar time (decided by
+    /// `checkZone`, or off). The file's own start and offset are kept with each match.
+    static func fromBeinFeed(name: String, url: String?, progs: [Prog], fetchedAt: Int64, from: Int64, to: Int64, zoneFix: ZoneCheck? = nil) -> MatchSourcesRule.ExtSource {
+        let fix = zoneFix?.apply == true
+        var orig: [String: String] = [:]
         var order: [String] = []
         var acc: [String: (home: String, away: String, start: Int64, comp: String?, chs: [String])] = [:]
         for p in progs {
@@ -2832,42 +3037,59 @@ enum GuideFeedRule {
             if notMatch.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)) != nil { continue }
             guard let teams = MatchGuideRule.teams(title) else { continue }
             if MatchGuideRule.sport(title: "\(title) \(sub)", description: nil, category: p.category, channel: ch).sport != .football { continue }
-            let start = wallClock(p.start, statedOffsetMin: p.offsetMin, zone: beinZone)
+            let start = fix ? wallClock(p.start, statedOffsetMin: p.offsetMin, zone: beinZone) : p.start
             if start < from - 3 * 3_600_000 || start >= to { continue }
             let key = MatchGuideRule.teamKey(teams.home) + "|" + MatchGuideRule.teamKey(teams.away) + "@\(start)"
-            if acc[key] == nil { acc[key] = (teams.home, teams.away, start, sub.isEmpty ? p.category : sub, []); order.append(key) }
+            if acc[key] == nil {
+                acc[key] = (teams.home, teams.away, start, sub.isEmpty ? p.category : sub, []); order.append(key)
+                let off = p.offsetMin ?? 0
+                let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(secondsFromGMT: off * 60); f.dateFormat = "yyyy-MM-dd'T'HH:mmxxx"
+                orig[key] = f.string(from: Date(timeIntervalSince1970: Double(p.start) / 1000))
+            }
             if !acc[key]!.chs.contains(ch) { acc[key]!.chs.append(ch) }
         }
-        let matches = order.compactMap { acc[$0] }.map { a in
-            MatchSourcesRule.ExtMatch(home: a.home, away: a.away, kickoff: a.start, competition: a.comp, sport: "football",
-                                      channels: a.chs.map { MatchSourcesRule.ExtChannel(name: $0, country: "QA", programmeStart: a.start) })
+        let matches = order.compactMap { k -> MatchSourcesRule.ExtMatch? in
+            guard let a = acc[k] else { return nil }
+            return MatchSourcesRule.ExtMatch(home: a.home, away: a.away, kickoff: a.start, competition: a.comp, sport: "football",
+                                      channels: a.chs.map { MatchSourcesRule.ExtChannel(name: $0, country: "QA", programmeStart: a.start) },
+                                      id: "بداية البرنامج في الملف: \(orig[k] ?? "")")
         }.sorted { $0.kickoff < $1.kickoff }
         return MatchSourcesRule.ExtSource(name: name, kind: .broadcaster, url: url, fetchedAt: fetchedAt, importedAt: fetchedAt, matches: matches,
-            status: "\(matches.count) مباراة كرة قدم في الدليل · أوقات بداية البرنامج بتوقيت قطر · يضيف قنوات beIN لمباراة معروفة من جدول آخر فقط · المصدر الأصلي bein.com عبر epgshare01",
+            status: "\(matches.count) مباراة كرة قدم في الدليل · \(zoneFix?.text ?? "تصحيح التوقيت: موقوف") · يضيف قنوات beIN لمباراة معروفة من جدول آخر فقط · المصدر الأصلي bein.com عبر epgshare01",
             programmeTimes: true, confirmOnly: true, origin: "bein.com")
     }
 }
 
 // MARK: - 1.10.1: Dutch / French channel diagnosis (owner 18:47 §1) — same rules as the TV's 0.9.54
 extension MatchGuideRule {
-    /// Dutch and French sports channels (by prefix, or the networks the owner named).
-    static func isFocus(_ name: String) -> Bool {
-        let c = country(name)
-        if c == "هولندا" || c == "فرنسا" { return true }
+    /// 1.10.2 (owner 19:06; TV 0.9.55): a Dutch or French channel, and why — the country from the prefix (also after a group
+    /// label such as «8K:»), the playlist group or the guide id; else a brand of that country only (Ziggo, RMC, L'Équipe,
+    /// Eurosport 360, Ligue 1+) or the French beIN edition. A network name alone (Canal+, ESPN, beIN) is not enough.
+    static func focusWhy(_ name: String, group: String? = nil, tvgId: String? = nil, labels: Set<String> = []) -> (country: String, why: String)? {
+        let o = MatchSourcesRule.libCountry(name, group: group, tvgId: tvgId, labels: labels)
+        if o.country == "هولندا" || o.country == "فرنسا" { return (o.country!, o.why) }
+        if o.country != nil { return nil }
         let w = " " + words(name) + " "
-        return [" ziggo ", " france ", " french ", " canal ", " rmc ", " eurosport 360 ", " l equipe ", " ligue 1 "].contains { w.contains($0) }
+        if w.contains(" ziggo ") { return ("هولندا", "الاسم «Ziggo» (شبكة هولندية فقط)") }
+        for (k, v) in [(" rmc ", "RMC"), (" l equipe ", "L'Équipe"), (" eurosport 360 ", "Eurosport 360"), (" ligue 1 ", "Ligue 1+")] where w.contains(k) {
+            return ("فرنسا", "الاسم «\(v)» (قناة فرنسية فقط)")
+        }
+        if MatchSourcesRule.edition(name).contains("fr") { return ("فرنسا", "نسخة beIN الفرنسية في الاسم (French/FRANCE)") }
+        return nil
     }
+    static func isFocus(_ name: String) -> Bool { focusWhy(name) != nil }
 
     /// One library channel in the diagnosis. `how`: 1 guide id (tvg-id), 2 name, 0 none.
     struct Focus {
         let channelId: String, name: String, list: String, tvgId: String?, how: Int, guideId: String?
+        var why = "", country = ""
         var upcoming = 0, withSep = 0, matches = 0
         var first: Int64 = 0, last: Int64 = 0
         var samples: [String] = []
 
         /// The kind of reason, for the counts (the owner's list, in his order).
         func reasonKind(now: Int64) -> String {
-            if guideId == nil { return (tvgId ?? "").trimmingCharacters(in: .whitespaces).isEmpty ? "ما عندها معرّف EPG" : "المعرّف غير موجود في الدليل المحمّل" }
+            if guideId == nil { return (tvgId ?? "").trimmingCharacters(in: .whitespaces).isEmpty ? "غير مربوطة: ما عندها معرّف EPG" : "المعرّف غير موجود في الدليل المحمّل" }
             if last == 0 { return "مربوطة لكن لا برامج لها" }
             if last < now { return "الدليل قديم" }
             if upcoming == 0 { return "لا برامج قادمة في النطاق" }
@@ -2877,7 +3099,7 @@ extension MatchGuideRule {
         }
         func reason(now: Int64, fmt: (Int64) -> String) -> String {
             switch reasonKind(now: now) {
-            case "ما عندها معرّف EPG": return "ما عندها معرّف EPG (tvg-id فاضي) ولا اسم يطابق قناة في الدليل"
+            case "غير مربوطة: ما عندها معرّف EPG": return "غير مربوطة: ما عندها معرّف EPG (tvg-id فاضي) ولا اسم يطابق قناة في الدليل"
             case "المعرّف غير موجود في الدليل المحمّل": return "المعرّف «\(tvgId ?? "")» غير موجود في الدليل المحمّل ولا اسم يطابق — الدليل لا يغطيها (مصدر الدليل غير مضاف) أو المعرّف مختلف"
             case "مربوطة لكن لا برامج لها": return "مربوطة بالدليل («\(guideId ?? "")»\(how == 2 ? " بالاسم" : "")) لكن لا برامج لها فيه"
             case "الدليل قديم": return "الدليل قديم: آخر برنامج لها ينتهي \(fmt(last))"

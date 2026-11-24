@@ -1348,7 +1348,8 @@ final class MatchSourcesRuleTests: XCTestCase {
         XCTAssertEqual(hits("beIN Sports HD 2", "Bahrain"), ["1:true"])   // 1.10.1: another country is another channel (not even possible)
         XCTAssertEqual(hits("Canal+ Foot", "France"), ["4:true"])
         XCTAssertTrue(hits("USA Network", "USA").isEmpty)
-        XCTAssertTrue(hits("Sky Sports UHD Event", "GB").contains("3:true"))
+        // 1.10.2 (owner 19:06): «4K:» is a group label, no country known → possible, not confirmed
+        XCTAssertTrue(hits("Sky Sports UHD Event", "GB").contains("3:false"))
     }
 
     func testOneRowPerMatchWithEveryProofAndSuggestionsApart() throws {
@@ -1774,7 +1775,10 @@ extension MatchSourcesUpdateTests {
             + S.rowsFor(rows, now: ko, dayStart: from, tomorrow: from + 86_400_000, end: to + 2 * 86_400_000, day: 1, nowOnly: false, sport: .football)
         XCTAssertFalse(shown.contains { $0.replay })
         let r = try XCTUnwrap(shown.first { $0.kickoff == ko })
-        XCTAssertFalse(r.links.contains { $0.channelId == "2" })
+        // 1.10.2 (§4): 5 h after the kickoff with no replay mark — a timing conflict, kept but never confirmed or zapped
+        let late = try XCTUnwrap(r.links.first { $0.channelId == "2" })
+        XCTAssertFalse(late.confirmed); XCTAssertTrue(late.timing?.contains("تعارض توقيت") == true)
+        XCTAssertFalse(r.links.contains { $0.channelId == "3" })
         XCTAssertTrue(r.links.contains { $0.channelId == "1" })
         XCTAssertFalse(r.missing.contains { $0.0.contains("Delayed") || $0.0.contains("Highlights") })
         XCTAssertTrue(S.delayedName("TVP Sport (D)") && S.delayedName("beIN Sports 1 (Delayed)") && !S.delayedName("Sky Sports Main Event"))
@@ -1832,7 +1836,8 @@ final class MatchDupQualityTests: XCTestCase {
     func testHighestQualityFirst() {
         let names = ["AR: beIN 1 HD", "AR: beIN 1 SD", "AR: beIN 1 RAW", "AR: beIN 1", "AR: beIN 1 FHD", "AR: beIN 1 4K", "AR: beIN 1 FHD RAW"]
         let order = names.sorted { S.quality(MatchGuideRule.version($0)) < S.quality(MatchGuideRule.version($1)) }
-        XCTAssertEqual(order, ["AR: beIN 1 4K", "AR: beIN 1 FHD RAW", "AR: beIN 1 FHD", "AR: beIN 1 RAW", "AR: beIN 1", "AR: beIN 1 HD", "AR: beIN 1 SD"])
+        // 1.10.2 (owner §5): 4K → 1080p → 720p → SD → unknown; RAW / HEVC are not a resolution
+        XCTAssertEqual(order, ["AR: beIN 1 4K", "AR: beIN 1 FHD RAW", "AR: beIN 1 FHD", "AR: beIN 1 HD", "AR: beIN 1 SD", "AR: beIN 1 RAW", "AR: beIN 1"])
     }
 }
 
@@ -1887,9 +1892,51 @@ final class BeinFeedTests: XCTestCase {
     let from: Int64 = 1_795_467_600_000
     var to: Int64 { from + 2 * 86_400_000 }
     var dir: URL { URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples").standardizedFileURL }
+    func progs(_ n: String, _ text: String? = nil) throws -> [GuideFeedRule.Prog] {
+        let d = try text.map { Data($0.utf8) } ?? Data(contentsOf: dir.appendingPathComponent(n))
+        return GuideFeedRule.read(d, from: from, to: to).progs
+    }
+    func lstv() throws -> S.ExtSource { try S.parse(Data(contentsOf: dir.appendingPathComponent("shasha-matches-livesoccertv-2026-11-24.json")), now: 0) }
+    let airings = "guides/epgshare01-bein1-2026-11-24-matches.xml"
+    func check() throws -> GuideFeedRule.ZoneCheck { GuideFeedRule.checkZone(try progs(airings), schedule: try lstv().matches) }
     func feed() throws -> S.ExtSource {
-        let r = GuideFeedRule.read(try Data(contentsOf: dir.appendingPathComponent("guides/epgshare01-bein1-2026-11-24-excerpt.xml")), from: from, to: to)
-        return GuideFeedRule.fromBeinFeed(name: "beIN", url: GuideFeedRule.beinFeed, progs: r.progs, fetchedAt: 1, from: from, to: to)
+        GuideFeedRule.fromBeinFeed(name: "beIN", url: GuideFeedRule.beinFeed, progs: try progs("guides/epgshare01-bein1-2026-11-24-excerpt.xml"),
+                                   fetchedAt: 1, from: from, to: to, zoneFix: try check())
+    }
+
+    /// 1.10.2 (§4): Qatar time chosen from this file's evidence, not forced (same vectors as the TV's 0.9.55).
+    func testPublishedFileIsCorrectedFromEvidence() throws {
+        let c = try check()
+        XCTAssertTrue(c.apply && c.qatar >= 4 && c.stated <= 1, c.text)
+    }
+    func testALaterFileWithACorrectOffsetIsNotCorrected() throws {
+        let raw = try String(contentsOf: dir.appendingPathComponent(airings), encoding: .utf8)
+        let rx = try NSRegularExpression(pattern: #"(start|stop)="(\d{14}) \+0100""#)
+        var out = ""; var last = raw.startIndex
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "UTC"); f.dateFormat = "yyyyMMddHHmmss"
+        for m in rx.matches(in: raw, range: NSRange(raw.startIndex..., in: raw)) {
+            let r = Range(m.range, in: raw)!
+            out += raw[last..<r.lowerBound]
+            out += "\(raw[Range(m.range(at: 1), in: raw)!])=\"\(raw[Range(m.range(at: 2), in: raw)!]) +0300\""
+            last = r.upperBound
+        }
+        out += raw[last...]
+        let pr = try progs(airings, out)
+        let c = GuideFeedRule.checkZone(pr, schedule: try lstv().matches)
+        XCTAssertTrue(!c.apply && c.stated >= 3, c.text)
+        let s = GuideFeedRule.fromBeinFeed(name: "beIN", url: nil, progs: pr, fetchedAt: 1, from: from, to: to, zoneFix: c)
+        let gal = try XCTUnwrap(s.matches.first { $0.home == "Galatasaray" && $0.channels.contains { $0.name == "beIN SPORTS 1 English" } })
+        XCTAssertEqual(gal.kickoff, 1_795_539_600_000)      // same instant, untouched
+        XCTAssertTrue(gal.id?.contains("+03:00") == true, gal.id ?? "")
+    }
+    func testNoScheduleEvidenceMeansNoCorrection() throws {
+        let c = GuideFeedRule.checkZone(try progs(airings), schedule: [])
+        XCTAssertFalse(c.apply); XCTAssertEqual(c.compared, 0)
+        let s = GuideFeedRule.fromBeinFeed(name: "beIN", url: nil, progs: try progs(airings), fetchedAt: 1, from: from, to: to, zoneFix: c)
+        let gal = try XCTUnwrap(s.matches.first { $0.home == "Galatasaray" && $0.channels.contains { $0.name == "beIN SPORTS 1 English" } })
+        XCTAssertEqual(gal.kickoff, 1_795_546_800_000)      // the file's own «20:00 +0100» = 19:00 UTC
+        XCTAssertTrue(s.status?.contains("لم يُطبّق") == true)
+        XCTAssertTrue(gal.id?.contains("2026-11-24T20:00+01:00") == true, gal.id ?? "")
     }
     let names = ["8K: beIN SP⚽RTS 1 ENGLISH ᴴᴰ ◉", "8K: beIN SP⚽RTS 1 ENGLISH ʰᵉᵛᶜ", "8K: beIN SP⚽RTS 1 ENGLISH ᴿᴬᵂ", "8K: beIN SP⚽RTS 1 ENGLISH SD",
                  "8K: beIN SP⚽RTS 2 ENGLISH ᴴᴰ ◉", "8K: beIN SP⚽RTS 4 ʰᵉᵛᶜ", "AR: beIN SPORTS 4K"]
@@ -1907,17 +1954,18 @@ final class BeinFeedTests: XCTestCase {
     }
 
     func testAddsTheOwnersBeinVersionsToTheLiveMatchOnly() throws {
-        let lstv = try S.parse(Data(contentsOf: dir.appendingPathComponent("shasha-matches-livesoccertv-2026-11-24.json")), now: 0)
+        let lstv = try lstv()
         let b = try S.parse(MatchFetchRule.toJSON(try feed()), now: 0)
         let rows = S.merge([], sources: [lstv, b], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: from, to: to)
-        let gal = try XCTUnwrap(rows.first { $0.home == "Galatasaray" })
+        let gal = try XCTUnwrap(rows.first { $0.home == "Galatasaray" && $0.unlinked == nil })
         XCTAssertEqual(gal.kickoff, 1_795_542_300_000)   // 17:45 UTC from the schedule, not the programme start
         let got = Set(gal.links.map(\.name))
         XCTAssertTrue(got.isSuperset(of: ["8K: beIN SP⚽RTS 1 ENGLISH ʰᵉᵛᶜ", "8K: beIN SP⚽RTS 1 ENGLISH ᴿᴬᵂ", "8K: beIN SP⚽RTS 1 ENGLISH ᴴᴰ ◉"]), "\(got)")
         XCTAssertFalse(got.contains("AR: beIN SPORTS 4K"))
         XCTAssertTrue(rows.first { $0.home.hasPrefix("Bod") }?.links.contains { $0.name == "8K: beIN SP⚽RTS 4 ʰᵉᵛᶜ" } ?? false)
         let alone = S.merge([], sources: [lstv], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: from, to: to)
-        XCTAssertEqual(rows.count, alone.count)   // the beIN rows never stand alone
+        XCTAssertEqual(rows.filter { $0.unlinked == nil }.count, alone.count)   // the beIN rows never stand alone in the main list
+        XCTAssertTrue(rows.contains { $0.unlinked != nil })                      // 1.10.2: kept apart, not dropped
     }
 }
 
@@ -1954,7 +2002,7 @@ final class FocusDiagnosisTests: XCTestCase {
         XCTAssertFalse(MatchGuideRule.isFocus("UK: SKY SPORTS MAIN EVENT"))
         let now: Int64 = 1_000_000_000
         var f = MatchGuideRule.Focus(channelId: "1", name: "NL: ESPN 1", list: "L", tvgId: nil, how: 0, guideId: nil)
-        XCTAssertEqual(f.reasonKind(now: now), "ما عندها معرّف EPG")
+        XCTAssertEqual(f.reasonKind(now: now), "غير مربوطة: ما عندها معرّف EPG")
         f = MatchGuideRule.Focus(channelId: "1", name: "NL: ESPN 1", list: "L", tvgId: "espn1.nl", how: 0, guideId: nil)
         XCTAssertEqual(f.reasonKind(now: now), "المعرّف غير موجود في الدليل المحمّل")
         f = MatchGuideRule.Focus(channelId: "1", name: "NL: ESPN 1", list: "L", tvgId: "espn1.nl", how: 1, guideId: "espn1.nl")
@@ -1966,5 +2014,111 @@ final class FocusDiagnosisTests: XCTestCase {
         XCTAssertEqual(f.reasonKind(now: now), "قواعد الاكتشاف استبعدتها")
         f.matches = 2
         XCTAssertEqual(f.reasonKind(now: now), "تعمل")
+    }
+}
+
+
+/// 1.10.2 — owner 18:47 §3–§5 and 19:06: identity, timing and quality (same vectors as the TV's IdentityTimingQualityTest).
+final class IdentityTimingQualityTests: XCTestCase {
+    typealias S = MatchSourcesRule
+    func idx(_ l: [S.LibCh]) -> S.LibIndex { S.LibIndex(l) }
+
+    func testCountryFromPrefixLabelGroupAndGuideId() {
+        XCTAssertEqual(S.libCountry("NL: ZIGGO SPORT 2 HD").country, "هولندا")
+        let a = S.libCountry("8K: NL ZIGGO SPORT ᴴᴰ", labels: ["8K"])
+        XCTAssertEqual(a.country, "هولندا"); XCTAssertTrue(a.why.contains("8K"))
+        XCTAssertEqual(S.libCountry("8K: FR| CANAL+ FOOT").country, "فرنسا")
+        XCTAssertEqual(S.libCountry("ESPN 2 HD", group: "NETHERLANDS | SPORTS").country, "هولندا")
+        XCTAssertEqual(S.libCountry("Canal+ Sport", group: "FR| SPORTS").country, "فرنسا")
+        XCTAssertEqual(S.libCountry("ESPN 2", tvgId: "ESPN2.nl").country, "هولندا")
+        XCTAssertNil(S.libCountry("Canal+ Sport").country)
+        XCTAssertNil(S.libCountry("ESPN 2").country)
+        XCTAssertNil(S.libCountry("8K: beIN SP⚽RTS 1 ᴴᴰ", labels: ["8K"]).country)
+    }
+
+    func testEspnOfAnotherCountryIsRefusedWithAReason() {
+        let i = idx([.init(id: "1", name: "NL: ESPN 2 HD"), .init(id: "2", name: "US: ESPN 2 HD")])
+        var rej: [S.Reject] = []
+        let hits = S.libraryHits(.init(name: "ESPN 2", country: "Netherlands", programmeStart: nil), i, siblings: [], rejects: &rej)
+        XCTAssertEqual(hits.map { "\($0.e.ch.id):\($0.exact)" }, ["1:true"])
+        XCTAssertEqual(rej.map(\.e.ch.id), ["2"]); XCTAssertTrue(rej[0].why.contains("دولة مختلفة"))
+    }
+
+    func testAnUnknownCountryIsNotAConfirmedMatch() {
+        let h = S.libraryHits(.init(name: "ESPN 2", country: "Netherlands", programmeStart: nil), idx([.init(id: "1", name: "ESPN 2 HD")]))
+        XCTAssertEqual(h.count, 1); XCTAssertFalse(h[0].exact); XCTAssertTrue(h[0].why?.contains("غير معروفة") == true)
+        let g = S.libraryHits(.init(name: "ESPN 2", country: "Netherlands", programmeStart: nil), idx([.init(id: "1", name: "ESPN 2 HD", group: "NL | Sport")]))
+        XCTAssertTrue(g.first?.exact == true)
+    }
+
+    func testFranceAndFrenchAreOneEditionForBeinOnly() {
+        XCTAssertEqual(S.edition("8K: beIN SP⚽RTS 1 FRANCE ᴿᴬᵂ"), ["fr"])
+        XCTAssertEqual(S.edition("beIN SPORTS 1 French"), ["fr"])
+        XCTAssertTrue(S.edition("Eurosport 1 French").isEmpty)
+        XCTAssertTrue(S.edition("Canal+ France").isEmpty)
+        let i = idx([.init(id: "1", name: "FR: beIN SPORTS 1 FRANCE HD"), .init(id: "2", name: "AR: beIN SPORTS 1 HD")])
+        var rej: [S.Reject] = []
+        let hits = S.libraryHits(.init(name: "beIN Sports 1 French", country: "France", programmeStart: nil), i, siblings: [], rejects: &rej)
+        XCTAssertEqual(hits.map { "\($0.e.ch.id):\($0.exact)" }, ["1:true"])
+        XCTAssertEqual(rej.map(\.e.ch.id), ["2"])
+    }
+
+    func testFocusNeedsACountryOrANationalBrand() {
+        XCTAssertEqual(MatchGuideRule.focusWhy("8K: NL ZIGGO SPORT", labels: ["8K"])?.country, "هولندا")
+        XCTAssertEqual(MatchGuideRule.focusWhy("Ziggo Sport 3")?.country, "هولندا")
+        XCTAssertEqual(MatchGuideRule.focusWhy("RMC Sport 1")?.country, "فرنسا")
+        XCTAssertEqual(MatchGuideRule.focusWhy("8K: beIN SP⚽RTS 1 FRANCE", labels: ["8K"])?.country, "فرنسا")
+        XCTAssertNil(MatchGuideRule.focusWhy("Canal+ Sport"))
+        XCTAssertNil(MatchGuideRule.focusWhy("ESPN 2"))
+        XCTAssertNil(MatchGuideRule.focusWhy("PL: CANAL+ SPORT"))
+        XCTAssertEqual(MatchGuideRule.focusWhy("Canal+ Sport", group: "France | Sport")?.country, "فرنسا")
+    }
+
+    let h: Int64 = 3_600_000
+    let ko: Int64 = 1_795_550_400_000
+    func e(_ ch: String, _ id: String, _ start: Int64, _ title: String) -> MatchGuideRule.Entry {
+        MatchGuideRule.Entry(channel: ch, source: "src", start: start, stop: start + 2 * h, title: title, teams: MatchGuideRule.teams(title)!,
+                             kind: MatchGuideRule.kind(title: title, description: nil, minutes: 120), channelId: id)
+    }
+
+    func testLateAiringsAreTimingConflictsAndReplaysByMarkOnly() {
+        XCTAssertNil(S.lateBy(ko + 90 * 60_000, kickoff: ko))
+        XCTAssertTrue(S.lateBy(ko + 91 * 60_000, kickoff: ko)?.contains("91") == true)
+        let g = MatchGuideRule.group([e("beIN SPORTS 1", "1", ko - 30 * 60_000, "Manchester City v Napoli"),
+                                      e("beIN SPORTS 2", "2", ko + 4 * h, "Manchester City v Napoli"),
+                                      e("beIN SPORTS 3", "3", ko + 6 * h, "Replay: Manchester City v Napoli")])
+        let rows = S.merge(g, sources: [], idx: idx([]), pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: ko - 20 * h, to: ko + 28 * h)
+        guard let r = rows.first(where: { $0.group != nil && !$0.replay }) else { return XCTFail("no row") }
+        XCTAssertTrue(r.links.first { $0.channelId == "1" }?.confirmed == true)
+        let later = r.links.first { $0.channelId == "2" }
+        XCTAssertNotNil(later?.timing); XCTAssertFalse(later?.confirmed ?? true)
+        let s = S.sections(r, versionOf: { MatchGuideRule.version($0) }, hideHd: false, hideSd: false)
+        XCTAssertEqual(s.timing.map(\.channelId), ["2"])
+        XCTAssertFalse(rows.flatMap(\.links).contains { $0.channelId == "3" && $0.confirmed })
+    }
+
+    func testQatarWallClockAcrossMidnightAndSummerTime() {
+        // «23:30 +0200» read as Qatar wall time = 20:30 UTC; «00:15 +0100» on the 25th → 24th 21:15 UTC
+        XCTAssertEqual(GuideFeedRule.wallClock(1_782_941_400_000, statedOffsetMin: 120, zone: GuideFeedRule.beinZone), 1_782_937_800_000)
+        XCTAssertEqual(GuideFeedRule.wallClock(1_795_562_100_000, statedOffsetMin: 60, zone: GuideFeedRule.beinZone), 1_795_554_900_000)
+    }
+
+    func link(_ id: String, _ name: String, _ src: String = "LiveSoccerTV") -> S.Link {
+        S.Link(channelId: id, name: name, proofs: [S.Proof(kind: .guide, source: src, at: 0, detail: name)])
+    }
+
+    func testHevcAndRawAreNotAResolutionAndFiltersAreIndependent() {
+        XCTAssertEqual(MatchGuideRule.version("AR: beIN SPORTS 1 ʰᵉᵛᶜ").res, .unknown)
+        XCTAssertEqual(MatchGuideRule.version("AR: beIN SPORTS 1 ᴿᴬᵂ").res, .unknown)
+        let r = S.Row(key: "k", home: "A", away: "B", competition: nil, audience: [], kickoff: ko, kickoffFrom: "x", group: nil, timeConflict: false,
+                      links: [link("1", "AR: beIN 1 ʰᵉᵛᶜ"), link("2", "AR: beIN 1 HD"), link("3", "AR: beIN 1 SD", "Live-FootballOnTV"), link("4", "AR: beIN 1 4K")],
+                      missing: [], removed: [], sources: [])
+        let v = { (n: String) in MatchGuideRule.version(n) }
+        XCTAssertEqual(S.sections(r, versionOf: v, hideHd: false, hideSd: false).confirmed.map(\.channelId), ["4", "2", "3", "1"])
+        let nu = S.sections(r, versionOf: v, hideHd: false, hideSd: false, hideUnknown: true)
+        XCTAssertEqual(nu.confirmed.map(\.channelId), ["4", "2", "3"]); XCTAssertEqual(nu.hidden, 1)
+        XCTAssertEqual(S.sections(r, versionOf: v, hideHd: false, hideSd: false, source: "Live-FootballOnTV").confirmed.map(\.channelId), ["3"])
+        let none = S.sections(r, versionOf: v, hideHd: true, hideSd: true, hideUnknown: true, source: "Live-FootballOnTV")
+        XCTAssertTrue(none.confirmed.isEmpty && none.hidden == 4)
     }
 }

@@ -29,6 +29,9 @@ final class MatchFetch: ObservableObject {
     let sites = [MatchFetchRule.lfotv, MatchFetchRule.lstv]
     /// 1.10.0: the beIN MENA guide (bein.com via epgshare01), only after the owner approves it; every 12 h (6 when asked).
     static let beinKey = "matchFetch.beinApproved"
+    /// 1.10.2 (owner §4): the beIN time check (Qatar time only when the schedules prove it); off = the file's own offset kept.
+    static let beinZoneKey = "matchFetch.beinZoneCheck"
+    var beinZoneCheck: Bool { d.object(forKey: Self.beinZoneKey) as? Bool ?? true }
     static let bein = "beIN الشرق الأوسط (bein.com عبر epgshare01)"
     var beinApproved: Bool { d.bool(forKey: Self.beinKey) }
     func beinDue(force: Bool) -> Bool {
@@ -212,11 +215,15 @@ final class MatchFetch: ObservableObject {
                 let t0 = Date()
                 let raw = try await Self.getData(GuideFeedRule.beinFeed)
                 progress = "beIN: نقرأ الدليل…"
+                // real kickoffs from the schedules kept now (not other channel guides, not confirm-only pages)
+                let sched = MatchSourceFiles.list().map(\.source).filter { !$0.programmeTimes && !$0.confirmOnly }.flatMap(\.matches)
+                let zoneOn = beinZoneCheck
                 let s = try await Task.detached(priority: .utility) { () throws -> MatchSourcesRule.ExtSource in
                     guard let xml = Self.gunzip(raw) else { throw Unexpected() }
                     let r = GuideFeedRule.read(xml, from: from, to: to)
                     if r.channels.isEmpty { throw Unexpected() }
-                    return GuideFeedRule.fromBeinFeed(name: b, url: GuideFeedRule.beinFeed, progs: r.progs, fetchedAt: Self.now(), from: from, to: to)
+                    let check = zoneOn ? GuideFeedRule.checkZone(r.progs, schedule: sched) : nil
+                    return GuideFeedRule.fromBeinFeed(name: b, url: GuideFeedRule.beinFeed, progs: r.progs, fetchedAt: Self.now(), from: from, to: to, zoneFix: check)
                 }.value
                 if s.matches.isEmpty { line = "لا مباريات كرة قدم لليوم وبكرة في الدليل · بقي السابق" }
                 else if let err = keep(s) { line = "لم يُحفظ: \(err)" }

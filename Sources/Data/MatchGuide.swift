@@ -159,6 +159,7 @@ enum MatchIndexBuilder {
         var isSports: [String: Bool] = [:]
         var sportIds = Set<String>(), sportKeys = Set<String>(), sportKeysLinked = Set<String>()
         var unguided: [MatchGuideRule.ExtraPool.Item] = []
+        let focusLabels = st != nil ? MatchGuideRule.prefixLabels(channels.map(\.name)) : []
         for ch in channels {
             var how = 0
             var id: String?
@@ -167,8 +168,10 @@ enum MatchIndexBuilder {
             let sp = MatchGuideRule.isSportsChannel(name: ch.name, group: ch.group)
             isSports[ch.id] = sp
             if let id { onId[id, default: []].append(ch) } else if sp { unguided.append(.init(id: ch.id, name: ch.name, source: source)) }
-            if sp, let st, MatchGuideRule.isFocus(ch.name) {
+            // 1.10.2 (owner 19:06): classified by country (prefix, after a group label, group, guide id) or a national brand, with the reason
+            if sp, let st, let fw = MatchGuideRule.focusWhy(ch.name, group: ch.group, tvgId: ch.epg, labels: focusLabels) {
                 var f = MatchGuideRule.Focus(channelId: ch.id, name: ch.name, list: source, tvgId: ch.epg, how: how, guideId: id)
+                f.why = fw.why; f.country = fw.country
                 if let id { f.first = p.range[id]?.0 ?? 0; f.last = p.range[id]?.1 ?? 0; f.upcoming = p.upcoming[id]?.0 ?? 0
                             f.withSep = p.upcoming[id]?.1 ?? 0; f.samples = p.samples[id] ?? [] }
                 st.focus.append(f)
@@ -339,10 +342,18 @@ enum MatchIndexBuilder {
             var byReason: [String: Int] = [:]
             for f in st.focus { byReason[f.reasonKind(now: nowMs), default: 0] += 1 }
             for (k, n) in byReason.sorted(by: { $0.value > $1.value }) { line("   \(k): \(n)") }
-            for f in st.focus.sorted(by: { (MatchGuideRule.country($0.name), $0.name) < (MatchGuideRule.country($1.name), $1.name) }) {
+            // 1.10.2 (owner 19:06): a missing tvg-id is not a failure when the name links the channel — counted apart
+            let noId = st.focus.filter { ($0.tvgId ?? "").trimmingCharacters(in: .whitespaces).isEmpty }
+            line("   بلا tvg-id: \(noId.count) · منها مربوطة بالاسم: \(noId.filter { $0.guideId != nil }.count) · غير مربوطة: \(noId.filter { $0.guideId == nil }.count)"
+                 + " · بمعرّف لا يجده الدليل: \(st.focus.filter { !($0.tvgId ?? "").trimmingCharacters(in: .whitespaces).isEmpty && $0.guideId == nil }.count)")
+            for (c, l) in Dictionary(grouping: st.focus, by: \.country).sorted(by: { $0.key < $1.key }) {
+                line("   \(c): \(l.count) نسخة · \(Set(l.map { MatchGuideRule.channelKey($0.name) }).count) قناة فريدة · \(l.reduce(0) { $0 + $1.matches }) إدخال مباراة")
+            }
+            for f in st.focus.sorted(by: { ($0.country, $0.name) < ($1.country, $1.name) }) {
                 line("   - \(f.name) · \(f.list) · tvg-id: \(f.tvgId ?? "—") · ربط: \(f.how == 1 ? "بالمعرّف" : f.how == 2 ? "بالاسم" : "لا يوجد")"
                      + (f.guideId.map { " «\($0)»" } ?? "") + " · برامج قادمة \(f.upcoming)"
                      + (f.first > 0 ? " · النطاق \(fmt(f.first)) – \(fmt(f.last))" : "") + " · مباريات \(f.matches)")
+                line("     التصنيف: \(f.country) — \(f.why)")
                 line("     السبب: \(f.reason(now: nowMs, fmt: fmt))")
                 if f.matches == 0 && !f.samples.isEmpty { line("     أمثلة عناوين: " + f.samples.map { "«\($0)»" }.joined(separator: " | ")) }
             }
