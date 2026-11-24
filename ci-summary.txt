@@ -1,0 +1,117 @@
+run=183 sha=eda020977a304f83148436b6b165d736530ab4bd outcome=success libmpv=skipped
+  "CFBundleShortVersionString" => "1.10.8"
+  "CFBundleVersion" => "183"
+== linked VLC (must be 0)
+0
+0
+== size
+-rw-r--r--  1 runner  staff  16308335 Nov 24 20:48 Shasha-unsigned.ipa
+ 45M	build/Build/Products/Release-iphoneos/ShashaIOS.app
+== errors
+	 Executed 8 tests, with 0 failures (0 unexpected) in 9.841 (9.842) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.063 (0.063) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+	 Executed 17 tests, with 0 failures (0 unexpected) in 0.010 (0.011) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.031 (0.032) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.009 (0.010) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 6.466 (6.467) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.014 (0.015) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.036 (0.037) seconds
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.084 (0.085) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 11.840 (11.840) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.015 (0.016) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.206 (0.206) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.547 (0.547) seconds
+	 Executed 13 tests, with 0 failures (0 unexpected) in 10.116 (10.117) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 186.815 (186.816) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.023 (0.024) seconds
+	 Executed 13 tests, with 0 failures (0 unexpected) in 19.282 (19.283) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.209 (0.210) seconds
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 1.622 (1.622) seconds
+	 Executed 14 tests, with 0 failures (0 unexpected) in 0.007 (0.008) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+	 Executed 234 tests, with 0 failures (0 unexpected) in 247.286 (247.314) seconds
+	 Executed 234 tests, with 0 failures (0 unexpected) in 247.286 (247.317) seconds
+** BUILD SUCCEEDED **
+== tail
+    builtin-swiftHeaderTool -arch arm64 /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS-Swift.h -o /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/DerivedSources/ShashaIOS-Swift.h
+
+Copy /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/arm64-apple-ios.swiftmodule /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.swiftmodule (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.swiftmodule /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/arm64-apple-ios.abi.json /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.abi.json (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.abi.json /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/arm64-apple-ios.swiftdoc /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.swiftdoc (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.swiftdoc /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.swiftsourceinfo (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.swiftsourceinfo /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+Ld /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/ShashaIOS normal (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0 -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -Os -L/Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos -L/Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos -F/Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos -F/Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/PackageFrameworks -F/Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/PackageFrameworks -F/Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos -filelist /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.LinkFileList -Xlinker -rpath -Xlinker @executable_path/Frameworks -dead_strip -Xlinker -object_path_lto -Xlinker /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS_lto.o -Xlinker -dependency_info -Xlinker /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.swiftmodule -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -framework Libmpv -framework Libplacebo -framework Libdovi -framework Libshaderc_combined -framework lcms2 -framework Libavcodec -framework Libavdevice -framework Libavfilter -framework Libavformat -framework Libavutil -framework Libswresample -framework Libswscale -framework Libass -framework Libfreetype -framework Libfribidi -framework Libharfbuzz -framework Libunibreak -framework Libssl -framework Libcrypto -framework gmp -framework nettle -framework hogweed -framework gnutls -framework Libdav1d -framework Libuavs3d -framework Libuchardet -framework Libbluray -lMoltenVK -framework AVFoundation -framework CoreAudio -framework AudioToolbox -framework CoreVideo -framework CoreFoundation -framework CoreMedia -framework Metal -framework VideoToolbox -lbz2 -liconv -lexpat -lresolv -lxml2 -lz -lc++ -framework Libmpv -framework Libavcodec -framework Libavdevice -framework Libavfilter -framework Libavformat -framework Libavutil -framework Libswresample -framework Libswscale -framework Libssl -framework Libcrypto -framework Libass -framework Libfreetype -framework Libfribidi -framework Libharfbuzz -lMoltenVK -framework Libshaderc_combined -framework lcms2 -framework Libplacebo -framework Libdovi -framework Libunibreak -framework gmp -framework nettle -framework hogweed -framework gnutls -framework Libdav1d -framework Libuavs3d -framework Libuchardet -framework Libbluray -o /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/ShashaIOS
+
+CopySwiftLibs /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/ShashaIOS --scan-folder /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/Frameworks --scan-folder /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/PlugIns --scan-folder /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/SystemExtensions --scan-folder /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/Extensions --platform iphoneos --toolchain /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+ExtractAppIntentsMetadata (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name ShashaIOS --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 16.0 --bundle-identifier app.shasha.ios --output /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app --target-triple arm64-apple-ios16.0 --binary-file /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/ShashaIOS --dependency-file /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS_dependency_info.dat --stringsdata-file /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.SwiftFileList --metadata-file-list /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/ShashaIOS.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/ShashaIOS.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/Objects-normal/arm64/ShashaIOS.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-11-24 20:47:58.748 appintentsmetadataprocessor[18462:49817] Starting appintentsmetadataprocessor export
+2026-11-24 20:47:58.767 appintentsmetadataprocessor[18462:49817] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+GenerateDSYMFile /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app.dSYM /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/ShashaIOS (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/ShashaIOS -o /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app.dSYM
+
+AppIntentsSSUTraining (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/Info.plist --temp-dir-path /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/ssu --bundle-id app.shasha.ios --product-path /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app --extracted-metadata-path /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app/Metadata.appintents --metadata-file-list /Users/runner/work/shasha-ios/shasha-ios/build/Build/Intermediates.noindex/ShashaIOS.build/Release-iphoneos/ShashaIOS.build/ShashaIOS.DependencyMetadataFileList --archive-ssu-assets
+2026-11-24 20:47:58.849 appintentsnltrainingprocessor[18464:49820] Parsing options for appintentsnltrainingprocessor
+2026-11-24 20:47:58.853 appintentsnltrainingprocessor[18464:49820] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    builtin-RegisterExecutionPolicyException /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app
+
+Validate /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    builtin-validationUtility /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app -infoplist-subpath Info.plist
+
+Touch /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app (in target 'ShashaIOS' from project 'ShashaIOS')
+    cd /Users/runner/work/shasha-ios/shasha-ios
+    /usr/bin/touch -c /Users/runner/work/shasha-ios/shasha-ios/build/Build/Products/Release-iphoneos/ShashaIOS.app
+
+note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target '_MPVKit' from project 'MPVKit')
+note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target '_FFmpeg' from project 'MPVKit')
+note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ShashaIOS' from project 'ShashaIOS')
+** BUILD SUCCEEDED **
+
