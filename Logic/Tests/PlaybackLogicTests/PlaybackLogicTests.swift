@@ -2403,6 +2403,25 @@ final class RightsTests: XCTestCase {
         XCTAssertLessThan(ms, 6000)        // CI machines vary; the TV figure is the reference
     }
 
+    /// 1.10.7 (owner's report 22:33: 3273 MB then the app closed on «مباريات اليوم»): matches of the same competition hold the
+    /// same rights buffer — no per-match copy of the ~500 facts.
+    func testRowsOfTheSameCompetitionShareOneRightsBuffer() throws {
+        let ko: Int64 = 1_764_000_000
+        let idx = S.LibIndex([.init(id: "1", name: "UK: SKY SPORTS MAIN EVENT FHD"), .init(id: "2", name: "AR: beIN SPORTS 1 HD")])
+        let rows = (0..<3).map { i in
+            S.Row(key: "k\(i)", home: "H\(i)", away: "A\(i)", competition: "England - Premier League", audience: [], kickoff: ko, kickoffFrom: "x", group: nil,
+                  timeConflict: false, links: [epgLink("\(i)", "UK: SKY SPORTS MAIN EVENT FHD")], missing: [], removed: [], sources: [])
+        }
+        let out = RightsRule.annotate(rows, try all(), idx: idx, quality: q)
+        XCTAssertFalse(out[0].rightsParts.isEmpty)
+        XCTAssertEqual(out[0].rightsParts.count, out[2].rightsParts.count)
+        for (a, b) in zip(out[0].rightsParts, out[2].rightsParts) where !a.isEmpty {
+            let pa = a.withUnsafeBufferPointer { $0.baseAddress }, pb = b.withUnsafeBufferPointer { $0.baseAddress }
+            XCTAssertEqual(pa, pb, "each match must point at the cache's array, not a copy")
+        }
+        XCTAssertEqual(out[0].rights.count, out[0].rightsParts.reduce(0) { $0 + $1.count })
+    }
+
     func testAnotherChannelOfTheSameNetworkIsNotANearMatch() {
         let idx = S.LibIndex([.init(id: "1", name: "FR: BEIN MAX 4 HD"), .init(id: "2", name: "FR: BEIN CINEMA COMEDY 4 RAW"), .init(id: "3", name: "FR: BEIN SPORTS MAX 4"),
                               .init(id: "4", name: "AR: beIN SPORTS 4 HD"), .init(id: "5", name: "AR: beIN SPORTS 4 HD 1080")])

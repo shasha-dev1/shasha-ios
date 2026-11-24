@@ -176,9 +176,9 @@ final class MatchStore: ObservableObject {
         // the library index matches imported schedules and (1.10.4) counts the rights holders' versions: built once per library change
         let rts = Self.rights.ok
         let needIdx = (!files.isEmpty || !rts.isEmpty) && (libIdx == nil || stamp != libStamp)
-        let cats = Dictionary(lib.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        // 1.10.6 (owner's report 22:33: «توقف الواجهة 1262 ms» at the merge start): the 56 103 library entries are built off the main thread
+        let cats = needIdx ? Dictionary(lib.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a }) : [:]
         let fix = Self.countryFix
-        let libList = needIdx ? chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId, manualCountry: fix[$0.name]) } : []
         let oldIdx = libIdx
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
         let (from, to) = window
@@ -190,7 +190,9 @@ final class MatchStore: ObservableObject {
         Perf.shared.memory("مباريات اليوم: قبل الدمج")
         Task {
             let (idx, out) = await Task.detached(priority: .userInitiated) { () -> (MatchSourcesRule.LibIndex, [MatchSourcesRule.Row]) in
-                let idx = needIdx ? MatchSourcesRule.LibIndex(libList) : (oldIdx ?? MatchSourcesRule.LibIndex([]))
+                let idx = needIdx ? MatchSourcesRule.LibIndex(chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId],
+                                                                                                tvgId: $0.epgId, manualCountry: fix[$0.name]) })
+                    : (oldIdx ?? MatchSourcesRule.LibIndex([]))
                 let merged = MatchSourcesRule.merge(gs, sources: srcs, idx: idx, pool: pl, manual: man, guideSource: guideSource, guideAt: guideAt, from: from, to: to)
                 // 1.10.4 (owner 20:50): rights holders per competition and country — never added as channels of the match
                 let lbl = idx.labels
@@ -209,7 +211,7 @@ final class MatchStore: ObservableObject {
     func compareText(_ library: Library) async -> String {
         let cats = Dictionary(library.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
         let fix = Self.countryFix
-        let libList = library.channels.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId, manualCountry: fix[$0.name]) }
+        let chans = library.channels
         let focusIds = Set(result?.stats?.focus.map(\.channelId) ?? [])
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
         let (from, to) = window
@@ -217,6 +219,7 @@ final class MatchStore: ObservableObject {
         let fetchSummary = "\n— الجلب التلقائي (Live-FootballOnTV و LiveSoccerTV)\n   " + MatchFetch.shared.summary().replacingOccurrences(of: "\n", with: "\n   ") + "\n"
         return fetchSummary + (await Task.detached(priority: .userInitiated) { () -> String in
             if srcs.isEmpty { return "\n— الجداول المستوردة: لا شيء. استورد ملف shasha-matches أو انتظر الجلب التلقائي لتظهر المقارنة الكاملة.\n" }
+            let libList = chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId, manualCountry: fix[$0.name]) }
             let idx = MatchSourcesRule.LibIndex(libList)
             let names = srcs.map { s -> String in
                 let c = MatchSourcesRule.counts(s, idx: idx)

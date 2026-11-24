@@ -324,13 +324,18 @@ enum RightsRule {
     }
 
     static func facts(_ all: [Rights], competitions: [String?], kickoff: Int64, cache: Cache) -> [Fact] {
-        var out: [Fact] = []
+        Array(parts(all, competitions: competitions, kickoff: kickoff, cache: cache).joined())
+    }
+
+    /// The facts of each applicable file as the cache keeps them: the same array for every match (no copy per match).
+    static func parts(_ all: [Rights], competitions: [String?], kickoff: Int64, cache: Cache) -> [[Fact]] {
+        var out: [[Fact]] = []
         let ws = Array(Set(competitions.compactMap { $0 })).map(cache.words)
         for (i, r) in all.enumerated() where ws.contains(where: { appliesToWords(r, $0) }) {
             var outside = false
             if let a = r.windowFrom, let b = r.windowTo { outside = kickoff < a || kickoff > b }
             let base = cache.base(i, r)
-            out += outside ? base.map { var f = $0; f.outsideSeason = true; return f } : base
+            out.append(outside ? base.map { var f = $0; f.outsideSeason = true; return f } : base)
         }
         return out
     }
@@ -375,8 +380,11 @@ enum RightsRule {
     static func passes(_ f: Fact, country: String?) -> Bool { country == nil || f.territory.countries.contains(country!) || f.territory.territory == country }
 
     static func noteFor(_ facts: [Fact], channelName: String, country: String?, firm: Bool) -> String? {
-        guard !facts.isEmpty, let country, firm else { return nil }
-        let here = facts.filter { $0.territory.countries.contains(country) && $0.territory.verified && !$0.holder.highlightsOnly }
+        noteFor([facts], channelName: channelName, country: country, firm: firm)
+    }
+    static func noteFor(_ parts: [[Fact]], channelName: String, country: String?, firm: Bool) -> String? {
+        guard parts.contains(where: { !$0.isEmpty }), let country, firm else { return nil }
+        let here = parts.joined().filter { $0.territory.countries.contains(country) && $0.territory.verified && !$0.holder.highlightsOnly }
         guard let first = here.first else { return nil }
         let net = MatchGuideRule.network(channelName)
         if net != "أخرى", let hit = here.first(where: { holderNetworks($0.holder).contains(net) }) {
@@ -396,10 +404,10 @@ enum RightsRule {
         if let idx { for l in idx.byNet.values { for e in l { origins[e.ch.id] = e.origin } } }
         let cache = Cache(idx: idx, quality: quality)
         return rows.map { r in
-            let f = facts(all, competitions: competitionsOf(r), kickoff: r.kickoff ?? r.start, cache: cache)
-            if f.isEmpty { return r }
+            let f = parts(all, competitions: competitionsOf(r), kickoff: r.kickoff ?? r.start, cache: cache)
+            if !f.contains(where: { !$0.isEmpty }) { return r }
             var x = r
-            x.rights = f
+            x.rightsParts = f
             x.links = r.links.map { l in
                 if l.proofs.allSatisfy({ $0.kind == .candidate }) { return l }
                 let o = origins[l.channelId]
@@ -2346,7 +2354,13 @@ enum MatchSourcesRule {
         /// 1.10.2 (owner §4): known only from a channel guide no schedule links — listed apart, never hidden.
         var unlinked: String? = nil
         /// 1.10.4 (owner 20:50): the competition's rights holders by territory — «صاحب حقوق البطولة», not broadcasters of the match.
-        var rights: [RightsRule.Fact] = []
+        /// 1.10.6 (owner's report 22:33: 3.2 GB then closed): the rows share each rights file's facts (one array per file, the
+        /// same buffer for every match) — 1.10.5 copied ~500 facts into each of 3484 matches.
+        var rightsParts: [[RightsRule.Fact]] = []
+        var rights: [RightsRule.Fact] {
+            get { rightsParts.count == 1 ? rightsParts[0] : Array(rightsParts.joined()) }
+            set { rightsParts = newValue.isEmpty ? [] : [newValue] }
+        }
         var start: Int64 { kickoff ?? group!.start }
         var stop: Int64 { group?.stop ?? start + 2 * 3_600_000 }
         func airingAt(_ now: Int64) -> Bool { group?.airingAt(now) == true || (kickoff.map { now >= $0 && now < $0 + 2 * 3_600_000 } ?? false) }
