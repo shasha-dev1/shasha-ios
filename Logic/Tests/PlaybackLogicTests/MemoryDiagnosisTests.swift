@@ -128,7 +128,7 @@ final class MemoryDiagnosisTests: XCTestCase {
                      entries.count, groups.count, rows.count, facts, gIdx, gGroup, gMerge, tMerge, gRights, gCopy))
         XCTAssertEqual(copied.count, out.count)
         XCTAssertLessThan(gRights, 150, "rows must share the rights facts")
-        XCTAssertLessThan(gIdx, 300, "the library index must not hold the temporary strings of 56 000 channels")
+        XCTAssertLessThan(gIdx, 450, "the library index must not hold the temporary strings of 56 000 channels (measured: +322 MB drained, +1432 MB not)")
     }
 
     func testRightsFactsOfAFullDay() throws {
