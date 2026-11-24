@@ -920,6 +920,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 
+    /// 1.9.7 (owner 13:44: after closing the player the screens were laid out sideways): the allowed orientations follow
+    /// the player — landscape while it plays, portrait otherwise — so the system rotates once and the layout follows.
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        Orientation.mask
+    }
+
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
         Downloads.shared.backgroundCompletion = completionHandler
         Downloads.shared.activate()

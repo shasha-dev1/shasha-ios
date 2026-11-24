@@ -1747,6 +1747,8 @@ enum Orientation {
     static func portraitMeasured() {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
         let t0 = Perf.now()
+        mask = .portrait
+        for w in scene.windows { w.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations() }
         scene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { _ in }
         func check(_ n: Int) {
             if scene.interfaceOrientation.isPortrait || n > 40 {
@@ -1756,8 +1758,12 @@ enum Orientation {
         }
         check(0)
     }
+    /// 1.9.7: what the app allows now (read by the app delegate); portrait outside the player.
+    static var mask: UIInterfaceOrientationMask = .portrait
     private static func request(_ m: UIInterfaceOrientationMask) {
+        mask = m
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        for w in scene.windows { w.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations() }
         scene.requestGeometryUpdate(.iOS(interfaceOrientations: m)) { _ in }
     }
 }

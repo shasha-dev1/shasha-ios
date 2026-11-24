@@ -27,6 +27,7 @@ struct ShashaApp: App {
         // 1.0.3: posters/logos (AsyncImage → URLSession.shared → URLCache.shared) kept in a bounded cache, so
         // scrolling back or returning to a screen doesn't download them again. iOS evicts it under pressure.
         URLCache.shared = URLCache(memoryCapacity: 40 * 1024 * 1024, diskCapacity: 200 * 1024 * 1024)
+        CrashReporter.shared.launch()   // 1.9.7: crash / unclean-exit reports kept for the owner to send
     }
 
     var body: some Scene {
@@ -49,6 +50,11 @@ struct RootView: View {
     @State private var minimized = false
     /// 1.9.3: a new item asked for while one is up (or hidden in picture in picture) waits for the old player to close.
     @State private var switching = 0
+    // 1.9.7: crash / unclean-exit reports from the last runs, offered for sending on launch
+    @ObservedObject private var crashes = CrashReporter.shared
+    @State private var askCrash = false
+    @State private var sendCrash = false
+    @AppStorage(CrashReporter.emailKey) private var crashEmail = ""
 
     /// 1.9.3 (owner: choosing a match's channel from the schedule played sound only, then the app froze and closed):
     /// replacing the item swapped the player in one step, so the new mpv engine started before the old one stopped and
@@ -96,7 +102,19 @@ struct RootView: View {
             }
         }
         .onChange(of: library.activeId) { _ in epg.clear() }
-        .onAppear { Perf.shared.startMonitor() }
+        .onAppear { Perf.shared.startMonitor(); if !crashes.pending.isEmpty { askCrash = true } }
+        .onChange(of: crashes.pending.count) { n in if n > 0 && play == nil { askCrash = true } }
+        .alert("التطبيق انغلق بشكل غير طبيعي", isPresented: $askCrash) {
+            TextField("بريدك (يُحفظ على الجهاز فقط)", text: $crashEmail).keyboardType(.emailAddress).textInputAutocapitalization(.never)
+            Button("إرسال التقرير") { sendCrash = true }
+            Button("حذف", role: .destructive) { crashes.clear() }
+            Button("لاحقًا", role: .cancel) {}
+        } message: {
+            Text("فيه \(crashes.pending.count) تقرير عن آخر تشغيل (الخطوات والذاكرة، وتقرير Apple إن وصل). لا يُرسل شيء إلا بضغطك.")
+        }
+        .sheet(isPresented: $sendCrash) {
+            CrashSendView(to: crashEmail) { sent in sendCrash = false; if sent { crashes.clear() } }
+        }
         .task {
             if !library.sources.isEmpty && !library.hasData { await library.start() }
             await TraktSync.pull()

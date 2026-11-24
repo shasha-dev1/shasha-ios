@@ -2235,9 +2235,11 @@ enum MatchSourcesRule {
             if r.kickoff == nil && covers(r.start) { return false }
             if importantOnly && !important(r) { return false }
             let sportOk = r.sport.sport == .football
-            let dayOk = nowOnly ? r.airingAt(now) : day == 0 ? (r.stop > dayStart && r.start < tomorrow) : (r.start >= tomorrow && r.start < end)
+            // 1.9.7 (owner 13:44: yesterday's matches still listed, not in time order): today = not ended yet (a match
+            // that started yesterday shows only while it still airs); in kickoff order, the league order only for ties.
+            let dayOk = nowOnly ? r.airingAt(now) : day == 0 ? (r.stop > max(now, dayStart) && r.start < tomorrow) : (r.start >= tomorrow && r.start < end)
             return sportOk && dayOk
-        }.sorted { (rank($0), $0.start) < (rank($1), $1.start) }
+        }.sorted { ($0.start, rank($0)) < ($1.start, rank($1)) }
     }
 
     struct Sections { let confirmed: [Link]; let possible: [Link]; let suggested: [Link]; let hidden: Int; var alternatives: [Link] = [] }

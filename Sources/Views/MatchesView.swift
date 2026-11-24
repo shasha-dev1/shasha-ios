@@ -11,7 +11,8 @@ final class MatchStore: ObservableObject {
     /// Sports channels without a guide, read once per index.
     private(set) var pool = MatchGuideRule.ExtraPool([])
     @Published private(set) var busy = false
-    @Published var status = ""
+    /// 1.9.7: each status is also the last step on disk (named in an unclean-exit report) with a memory sample.
+    @Published var status = "" { didSet { if !status.isEmpty && status != oldValue && !status.contains(" MB") { Perf.shared.mark("مباريات اليوم: " + status); Perf.shared.memory("مباريات اليوم: " + status) } } }
     @Published var day = 0
     @Published var nowOnly = false
     @Published var sport: MatchScreenRule.SportFilter = .football
@@ -94,6 +95,9 @@ final class MatchStore: ObservableObject {
             case .success(let (file, size)):
                 defer { try? FileManager.default.removeItem(at: file) }
                 status = "قراءة الدليل…"
+                // 1.9.7: memory every 10 s while the guide is read (an exit for memory leaves no Apple report)
+                let sampler = Task { var n = 0; while !Task.isCancelled { try? await Task.sleep(nanoseconds: 10_000_000_000); n += 10; Perf.shared.memory("قراءة الدليل بعد \(n) ث") } }
+                defer { sampler.cancel() }
                 let now = Date()
                 let res = await Task.detached(priority: .utility) {
                     MatchIndexBuilder.build(file: file, size: size, channels: chans, source: src, now: now, cancel: flag, withStats: false)
@@ -136,6 +140,8 @@ final class MatchStore: ObservableObject {
         let guideAt = result?.built ?? 0
         mergeGen += 1; let gen = mergeGen
         let t0 = Perf.now()
+        Perf.shared.mark("مباريات اليوم: الدمج بدأ (\(gs.count) بطاقة دليل، \(srcs.count) جدول)")
+        Perf.shared.memory("مباريات اليوم: قبل الدمج")
         Task {
             let (idx, out) = await Task.detached(priority: .userInitiated) { () -> (MatchSourcesRule.LibIndex, [MatchSourcesRule.Row]) in
                 let idx = needIdx ? MatchSourcesRule.LibIndex(libList) : (srcs.isEmpty ? MatchSourcesRule.LibIndex([]) : oldIdx!)
@@ -145,6 +151,7 @@ final class MatchStore: ObservableObject {
             if needIdx { libIdx = idx; libStamp = stamp }
             Perf.shared.record("مباريات اليوم: الدمج", since: t0, "\(out.count) مباراة · فهرس المكتبة \(needIdx ? "بُني" : "محفوظ أو غير لازم")")
             rows = out
+            Perf.shared.memory("مباريات اليوم: بعد الدمج")
         }
     }
 

@@ -62,6 +62,7 @@ final class Perf: NSObject {
     /// Names the step now running, so a stalled frame in the next seconds is attributed to it.
     func mark(_ step: String) {
         lock.lock(); context = step; contextAt = CACurrentMediaTime(); lock.unlock()
+        CrashReporter.shared.step(step)     // 1.9.7: kept on disk, named in an unclean-exit report
     }
 
     /// Time from now until the next frame is drawn (= how long the main thread was busy with this change).
