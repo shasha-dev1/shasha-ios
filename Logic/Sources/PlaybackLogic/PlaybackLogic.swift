@@ -279,9 +279,7 @@ enum RightsRule {
     /// About this competition: a key's words in its name, no excluded word (the season never hides rights).
     static func appliesTo(_ r: Rights, competition: String?) -> Bool {
         guard let competition else { return false }
-        let w = " " + MatchGuideRule.words(competition) + " "
-        if r.excludes.contains(where: { !$0.isEmpty && w.contains(" \($0) ") }) { return false }
-        return r.keys.contains { !$0.isEmpty && w.contains(" \($0) ") }
+        return appliesToWords(r, " " + MatchGuideRule.words(competition) + " ")
     }
 
     struct Fact: Equatable {
@@ -302,35 +300,73 @@ enum RightsRule {
     private static let missing = Holder(name: "", entity: "unknown", rights: [], channels: [], brands: [], brandsFrom: nil, sublicence: nil, note: nil)
 
     static func facts(_ all: [Rights], competitions: [String?], kickoff: Int64, idx: MatchSourcesRule.LibIndex? = nil,
-                      quality: (String) -> Int = { _ in 0 }) -> [Fact] {
-        var out: [Fact] = []; var seen = Set<String>(); var netSource: [String: String] = [:]
-        for r in all where competitions.contains(where: { appliesTo(r, competition: $0) }) {
+                      quality: @escaping (String) -> Int = { _ in 0 }) -> [Fact] {
+        facts(all, competitions: competitions, kickoff: kickoff, cache: Cache(idx: idx, quality: quality))
+    }
+
+    /// 1.10.6 (owner 22:26, TV 0.9.59): a rights file's facts and each holder's library versions are the same for every match
+    /// of the competition — worked out once per merge (quality and competition words memoized), not once per match.
+    final class Cache {
+        let idx: MatchSourcesRule.LibIndex?
+        private let quality: (String) -> Int
+        private var byFile: [Int: [Fact]] = [:]
+        private var q: [String: Int] = [:]
+        private var w: [String: String] = [:]
+        init(idx: MatchSourcesRule.LibIndex?, quality: @escaping (String) -> Int) { self.idx = idx; self.quality = quality }
+        func qualityOf(_ n: String) -> Int { if let v = q[n] { return v }; let v = quality(n); q[n] = v; return v }
+        func words(_ s: String) -> String { if let v = w[s] { return v }; let v = " " + MatchGuideRule.words(s) + " "; w[s] = v; return v }
+        func base(_ i: Int, _ r: Rights) -> [Fact] { if let v = byFile[i] { return v }; let v = RightsRule.baseFacts(r, cache: self); byFile[i] = v; return v }
+    }
+
+    static func appliesToWords(_ r: Rights, _ w: String) -> Bool {
+        if r.excludes.contains(where: { !$0.isEmpty && w.contains(" \($0) ") }) { return false }
+        return r.keys.contains { !$0.isEmpty && w.contains(" \($0) ") }
+    }
+
+    static func facts(_ all: [Rights], competitions: [String?], kickoff: Int64, cache: Cache) -> [Fact] {
+        var out: [Fact] = []
+        let ws = Array(Set(competitions.compactMap { $0 })).map(cache.words)
+        for (i, r) in all.enumerated() where ws.contains(where: { appliesToWords(r, $0) }) {
             var outside = false
             if let a = r.windowFrom, let b = r.windowTo { outside = kickoff < a || kickoff > b }
-            for t in r.territories {
-                if !t.verified {
-                    if seen.insert(r.competition + "|?|" + t.territory).inserted { out.append(Fact(rights: r, territory: t, holder: missing, outsideSeason: outside)) }
-                    continue
+            let base = cache.base(i, r)
+            out += outside ? base.map { var f = $0; f.outsideSeason = true; return f } : base
+        }
+        return out
+    }
+
+    fileprivate static func baseFacts(_ r: Rights, cache: Cache) -> [Fact] {
+        var out: [Fact] = []; var seen = Set<String>(); var netSource: [String: String] = [:]
+        var byNetCountry: [String: [MatchSourcesRule.LibCh]] = [:]
+        func lib(_ net: String, _ countries: [String]) -> [MatchSourcesRule.LibCh] {
+            let k = net + "|" + countries.sorted().joined(separator: ",")
+            if let v = byNetCountry[k] { return v }
+            let v = (cache.idx?.byNet[net] ?? []).filter { $0.origin.firm && countries.contains($0.origin.country ?? "") }.map(\.ch)
+            byNetCountry[k] = v; return v
+        }
+        for t in r.territories {
+            if !t.verified {
+                if seen.insert("?|" + t.territory).inserted { out.append(Fact(rights: r, territory: t, holder: missing)) }
+                continue
+            }
+            for h in t.holders {
+                // UEFA lists «Middle East/North Africa» and «MENA» both: one fact per holder and country set
+                guard seen.insert(h.name + "|" + t.countries.sorted().joined(separator: ",") + "|" + (t.countries.isEmpty ? t.territory : "")).inserted else { continue }
+                let nets = holderNetworks(h).filter { $0 != "أخرى" }
+                // the same network for the same country from a second source (Cyta's page and LaLiga's list): the first record stands
+                if !nets.isEmpty && !t.countries.isEmpty {
+                    let nk = "net|" + nets.sorted().joined(separator: ",") + "|" + t.countries.sorted().joined(separator: ",")
+                    let src = (t.source ?? r.source).url
+                    if let o = netSource[nk], o != src { continue }
+                    if netSource[nk] == nil { netSource[nk] = src }
                 }
-                for h in t.holders {
-                    // UEFA lists «Middle East/North Africa» and «MENA» both: one fact per holder and country set
-                    guard seen.insert(r.competition + "|" + h.name + "|" + t.countries.sorted().joined(separator: ",") + "|" + (t.countries.isEmpty ? t.territory : "")).inserted else { continue }
-                    let nets = holderNetworks(h).filter { $0 != "أخرى" }
-                    // the same network for the same country from a second source (Cyta's page and LaLiga's list): the first record stands
-                    if !nets.isEmpty && !t.countries.isEmpty {
-                        let nk = r.competition + "|net|" + nets.sorted().joined(separator: ",") + "|" + t.countries.sorted().joined(separator: ",")
-                        let src = (t.source ?? r.source).url
-                        if let o = netSource[nk], o != src { continue }
-                        if netSource[nk] == nil { netSource[nk] = src }
-                    }
-                    var lib: [MatchSourcesRule.LibCh] = []
-                    if let idx, !nets.isEmpty, !t.countries.isEmpty, !h.highlightsOnly {
-                        var ids = Set<String>()
-                        for n in nets { for e in idx.byNet[n] ?? [] where e.origin.firm && t.countries.contains(e.origin.country ?? "") && ids.insert(e.ch.id).inserted { lib.append(e.ch) } }
-                        lib.sort { (quality($0.name), $0.name) < (quality($1.name), $1.name) }
-                    }
-                    out.append(Fact(rights: r, territory: t, holder: h, library: lib, outsideSeason: outside))
+                var l: [MatchSourcesRule.LibCh] = []
+                if cache.idx != nil, !nets.isEmpty, !t.countries.isEmpty, !h.highlightsOnly {
+                    var ids = Set<String>()
+                    for n in nets { for c in lib(n, t.countries) where ids.insert(c.id).inserted { l.append(c) } }
+                    l.sort { (cache.qualityOf($0.name), $0.name) < (cache.qualityOf($1.name), $1.name) }
                 }
+                out.append(Fact(rights: r, territory: t, holder: h, library: l))
             }
         }
         return out
@@ -354,12 +390,13 @@ enum RightsRule {
     }
 
     static func annotate(_ rows: [MatchSourcesRule.Row], _ all: [Rights], idx: MatchSourcesRule.LibIndex?,
-                         quality: (String) -> Int = { _ in 0 }) -> [MatchSourcesRule.Row] {
+                         quality: @escaping (String) -> Int = { _ in 0 }) -> [MatchSourcesRule.Row] {
         if all.isEmpty { return rows }
         var origins: [String: MatchSourcesRule.Origin] = [:]
         if let idx { for l in idx.byNet.values { for e in l { origins[e.ch.id] = e.origin } } }
+        let cache = Cache(idx: idx, quality: quality)
         return rows.map { r in
-            let f = facts(all, competitions: competitionsOf(r), kickoff: r.kickoff ?? r.start, idx: idx, quality: quality)
+            let f = facts(all, competitions: competitionsOf(r), kickoff: r.kickoff ?? r.start, cache: cache)
             if f.isEmpty { return r }
             var x = r
             x.rights = f

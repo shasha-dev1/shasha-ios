@@ -2380,6 +2380,29 @@ final class RightsTests: XCTestCase {
         XCTAssertTrue(RightsRule.facts(try all(), competitions: ["Italy - Coppa Italia"], kickoff: ko).allSatisfy { $0.rights.competition == "Coppa Italia" })
     }
 
+    /// 1.10.6 (owner 22:26): 2000 matches, a 20 000-channel library — rights add little time (TV: 220 ms).
+    func testAnnotatingAFullDayIsQuick() throws {
+        let nets = ["beIN SPORTS", "SKY SPORTS", "CANAL+ SPORT", "DAZN", "ZIGGO SPORT", "TNT SPORTS", "ARENA SPORT", "ESPN", "MOVISTAR LIGA", "SPORT TV"]
+        let prefixes = ["AR", "UK", "FR", "NL", "DE", "ES", "IT", "PT", "TR", "US", "8K", "4K", "HR", "RS"]
+        let res = ["HD", "FHD", "4K", "SD", "RAW"]
+        let lib = (0..<20_000).map { i in S.LibCh(id: "\(i)", name: "\(prefixes[i % prefixes.count]): \(nets[i % nets.count]) \(i % 9 + 1) \(res[i % 5])") }
+        let idx = S.LibIndex(lib)
+        let comps = ["UEFA Champions League", "England - Premier League", "Spain - LaLiga", "Italy - Serie A", "Turkey - Süper Lig", "Saudi Pro League"]
+        let rows = (0..<2000).map { i in
+            S.Row(key: "k\(i)", home: "Team\(i)", away: "Other\(i)", competition: comps[i % comps.count], audience: [], kickoff: ko, kickoffFrom: "x", group: nil,
+                  timeConflict: false, links: [epgLink("\(i)", lib[i].name)], missing: [], removed: [], sources: [])
+        }
+        let a = try all()
+        _ = RightsRule.annotate(Array(rows.prefix(50)), a, idx: idx, quality: q)
+        let t0 = Date()
+        let out = RightsRule.annotate(rows, a, idx: idx, quality: q)
+        let ms = Date().timeIntervalSince(t0) * 1000
+        print("annotate 2000 rows / 20000 channels: \(Int(ms)) ms")
+        XCTAssertEqual(out.count, rows.count)
+        XCTAssertGreaterThan(out.filter { !$0.rights.isEmpty }.count, 1000)
+        XCTAssertLessThan(ms, 6000)        // CI machines vary; the TV figure is the reference
+    }
+
     func testAnotherChannelOfTheSameNetworkIsNotANearMatch() {
         let idx = S.LibIndex([.init(id: "1", name: "FR: BEIN MAX 4 HD"), .init(id: "2", name: "FR: BEIN CINEMA COMEDY 4 RAW"), .init(id: "3", name: "FR: BEIN SPORTS MAX 4"),
                               .init(id: "4", name: "AR: beIN SPORTS 4 HD"), .init(id: "5", name: "AR: beIN SPORTS 4 HD 1080")])
