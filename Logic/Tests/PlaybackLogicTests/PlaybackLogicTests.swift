@@ -1835,3 +1835,27 @@ final class MatchDupQualityTests: XCTestCase {
         XCTAssertEqual(order, ["AR: beIN 1 4K", "AR: beIN 1 FHD RAW", "AR: beIN 1 FHD", "AR: beIN 1 RAW", "AR: beIN 1", "AR: beIN 1 HD", "AR: beIN 1 SD"])
     }
 }
+
+/// 1.9.4 — owner's photo 09:04: the same Serie A match listed four times.
+final class MatchPhotoDupTests: XCTestCase {
+    let h: Int64 = 3_600_000, t0: Int64 = 1_795_550_400_000
+    func e(_ title: String, _ start: Int64, _ ch: String) -> MatchGuideRule.Entry {
+        MatchGuideRule.Entry(channel: ch, source: "S1", start: start, stop: start + 2 * h, title: title,
+                             teams: MatchGuideRule.teams(title)!, kind: MatchGuideRule.kind(title: title, description: nil, minutes: 120))
+    }
+    func testCompetitionAndClubWordsAreNotPartOfTheName() {
+        XCTAssertEqual(MatchGuideRule.teams("Serie A - Monza x Fiorentina (Direto)")?.home, "Monza")
+        XCTAssertEqual(MatchGuideRule.teams("Monza × Fiorentina Serie A")?.away, "Fiorentina")
+        XCTAssertNil(MatchGuideRule.teams("Serie A x Resumos Da Jornada - 12"))
+        XCTAssertEqual(MatchGuideRule.teamKey("Fiorentina"), MatchGuideRule.teamKey("ACF Fiorentina"))
+        XCTAssertEqual(MatchGuideRule.teamKey("Inter"), MatchGuideRule.teamKey("Inter Mediolan"))
+        XCTAssertEqual(MatchGuideRule.teamKey("Atalanta"), MatchGuideRule.teamKey("Atalanta BC"))
+    }
+    func testOneCardPerMatchAndLaterShowingsDropped() {
+        let es = [e("Serie A - Monza x Fiorentina (Direto)", t0 - 60_000, "A"), e("AC Monza - ACF Fiorentina", t0, "B"),
+                  e("Monza × Fiorentina Serie A", t0, "C"), e("Monza v Fiorentina", t0 + 3 * h + 20 * 60_000, "D")]
+        let g = MatchSourcesRule.dedupeGroups(MatchGuideRule.group(es))
+        XCTAssertEqual(g.count, 1)
+        XCTAssertEqual(g.first?.entries.count, 3)
+    }
+}

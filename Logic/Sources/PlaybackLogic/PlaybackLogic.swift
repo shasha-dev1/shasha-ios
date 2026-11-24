@@ -1205,6 +1205,13 @@ enum MatchGuideRule {
         }
         if let g = groups(#"^(.*\S)\s*/\s*(\S+)$"#, b), slashMarkers.contains(words(g[2])) { b = trim(g[1]) }
         b = dropTail(b); a = dropTail(a)
+        // 1.9.4 (owner's photo: «Serie A - Monza × Fiorentina», «Monza × Fiorentina Serie A», «Serie A × Resumos Da Jornada»):
+        // a competition before the home team or after the away team is not part of the name; a side that is only a
+        // competition (or a recap programme) means the title is not a match. Same as the TV's 0.9.49.
+        if !["-", "–", "—"].contains(trim(sep)), let g = groups(#"^.*\s[-–—]\s(\S.*)$"#, a) { a = trim(g[1]) }
+        a = stripCompetition(a, lead: true); b = stripCompetition(b, lead: false)
+        if isCompetition(a) || isCompetition(b) || foldWords(a).range(of: recap, options: .regularExpression) != nil
+            || foldWords(b).range(of: recap, options: .regularExpression) != nil { return nil }
         var lead: String?
         let roundLead = "^(.*?)(?:\\b\\d{1,2}\\s*\\.?\\s*(?:\(roundWords))\\b|\\b(?:\(roundWords))\\s*\\d{1,2}\\b)\\s*[:\\-–.]?\\s*(\\S.*)$"
         if let g = groups(roundLead, a, caseInsensitive: true) {
@@ -1335,7 +1342,27 @@ enum MatchGuideRule {
 
     // ---------- same match on several channels ----------
 
-    private static let clubWords: Set<String> = ["fc", "cf", "sc", "afc", "ac", "cd", "ud", "sd", "club", "sk", "fk", "nk", "bk", "if", "the"]
+    private static let clubWords: Set<String> = ["fc", "cf", "sc", "afc", "ac", "acf", "ssc", "bc", "cd", "ud", "sd", "club", "sk", "fk", "nk", "bk", "if", "the"]
+
+    /// 1.9.4: competitions that stick to a team in some titles («Serie A - Monza», «Fiorentina Serie A»).
+    private static let competitions = ["serie a brasil", "serie a", "serie b", "la liga", "laliga", "premier league", "2 bundesliga", "bundesliga",
+        "ligue 1", "ligue 2", "super lig", "eredivisie", "primeira liga", "liga portugal", "champions league", "europa league",
+        "conference league", "saudi pro league", "roshn saudi league", "copa del rey", "coppa italia", "fa cup", "carabao cup", "efl cup",
+        "brasileirao", "uefa champions league", "uefa europa league"]
+    private static let recap = #"\b(resumo|resumos|melhores momentos|skrot|podsumowanie|ozetler|ozeti|goller|resumen|resumenes|sintesi|highlights|recap)\b"#
+    private static func isCompetition(_ x: String) -> Bool { let f = trim(foldWords(x)); return competitions.contains(f) }
+    private static func stripCompetition(_ x: String, lead: Bool) -> String {
+        let f = foldWords(x)
+        let ws = trim(x).split(whereSeparator: { $0 == " " }).map(String.init)
+        for c in competitions {
+            let n = c.split(separator: " ").count
+            if lead && f.hasPrefix(c + " ") && f.count > c.count + 2 && ws.count > n { return ws.dropFirst(n).joined(separator: " ") }
+            if !lead && f.hasSuffix(" " + c) && f.count > c.count + 2 && ws.count > n { return ws.dropLast(n).joined(separator: " ") }
+        }
+        return x
+    }
+    /// 1.9.4: other-language names of the same club (Polish «Inter Mediolan»).
+    private static let aliases = ["inter mediolan": "inter", "inter milan": "inter", "internazionale": "inter", "mediolan": "milan"]
 
     static func teamKey(_ name: String) -> String {
         var n = foldWords(name)
@@ -1348,7 +1375,8 @@ enum MatchGuideRule {
             else if clubWords.contains(w) { continue }
             else { core.append(w) }
         }
-        return trim(core.joined(separator: " ") + markers.sorted().map { "#" + $0 }.joined())
+        let c = core.joined(separator: " ")
+        return trim((aliases[c] ?? c) + markers.sorted().map { "#" + $0 }.joined())
     }
 
     /// Women / age group named anywhere in the title: both teams carry it.
@@ -1923,7 +1951,7 @@ enum MatchSourcesRule {
 
     static func merge(_ groups: [MatchGuideRule.Group], sources: [ExtSource], idx: LibIndex, pool: MatchGuideRule.ExtraPool,
                       manual: [Manual], guideSource: String, guideAt: Int64, from: Int64, to: Int64, tz: TimeZone = .current) -> [Row] {
-        var accs: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)])] = groups.map { ($0, []) }
+        var accs: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)])] = dedupeGroups(groups).map { ($0, []) }
         for s in sources {
             for m in s.matches where m.kickoff >= from - 3 * 3_600_000 && m.kickoff < to {
                 if let i = accs.firstIndex(where: { $0.group != nil && sameMatch($0.group!, m) }) ?? accs.firstIndex(where: { a in
@@ -2145,10 +2173,41 @@ enum MatchSourcesRule {
     }
 
     /// Live men's senior football only (owner 07:38–07:45): replays, youth and women's matches, other sports and unclassified cards are not listed.
+    /// 1.9.4 (owner's photo: «Monza × Fiorentina» four times — 22:39, 22:40, 22:40, 02:00): guide cards of the same match
+    /// within 12 h are one: within 90 min of the first they are versions of the same airing, later ones are later showings
+    /// (not live) and are dropped. Same as the TV's 0.9.49.
+    static func dedupeGroups(_ groups: [MatchGuideRule.Group]) -> [MatchGuideRule.Group] {
+        func pair(_ g: MatchGuideRule.Group) -> String {
+            [canonTeam(MatchGuideRule.teamKey(g.home)), canonTeam(MatchGuideRule.teamKey(g.away))].sorted().joined(separator: "|")
+                + Set(g.entries.flatMap(\.audience)).sorted().map { "#" + $0 }.joined()
+        }
+        var kept: [MatchGuideRule.Group] = []
+        for g in groups.sorted(by: { $0.start < $1.start }) {
+            if let i = kept.firstIndex(where: { pair($0) == pair(g) && g.start - $0.start <= 12 * 3_600_000 }) {
+                if g.start - kept[i].start <= 90 * 60_000 {
+                    let k = kept[i]
+                    kept[i] = MatchGuideRule.Group(key: k.key, home: k.home, away: k.away, start: k.start, entries: k.entries + g.entries)
+                }
+            } else { kept.append(g) }
+        }
+        return kept
+    }
+
+    /// 1.9.4: LiveSoccerTV lists every televised match of its days; a guide-only card inside the hours it covers is a
+    /// replay the guide didn't mark (owner's photo: Monza × Fiorentina, Atalanta × Inter the day after), so it is not listed.
+    static func scheduleCovers(_ rows: [Row]) -> (Int64) -> Bool {
+        let ks = rows.filter { $0.kickoff != nil && $0.sources.contains(MatchFetchRule.lstv) }.compactMap(\.kickoff)
+        guard ks.count >= 5, let mn = ks.min(), let mx = ks.max() else { return { _ in false } }
+        let lo = mn - 6 * 3_600_000, hi = mx + 3 * 3_600_000
+        return { $0 >= lo && $0 <= hi }
+    }
+
     static func rowsFor(_ rows: [Row], now: Int64, dayStart: Int64, tomorrow: Int64, end: Int64, day: Int, nowOnly: Bool, sport: MatchScreenRule.SportFilter,
                         importantOnly: Bool = false) -> [Row] {
-        rows.filter { r in
+        let covers = scheduleCovers(rows)
+        return rows.filter { r in
             if r.replay || youthOrWomen(r) || (r.links.isEmpty && r.missing.isEmpty && r.platforms.isEmpty) { return false }
+            if r.kickoff == nil && covers(r.start) { return false }
             if importantOnly && !important(r) { return false }
             let sportOk = r.sport.sport == .football
             let dayOk = nowOnly ? r.airingAt(now) : day == 0 ? (r.stop > dayStart && r.start < tomorrow) : (r.start >= tomorrow && r.start < end)
