@@ -1368,7 +1368,22 @@ enum MatchGuideRule {
     /// 1.9.4: other-language names of the same club (Polish «Inter Mediolan»).
     private static let aliases = ["inter mediolan": "inter", "inter milan": "inter", "internazionale": "inter", "mediolan": "milan"]
 
+    /// 1.9.5 (owner 10:12: the app closed after «قراءة الدليل»): a team's key is worked out once per name — the merge asks
+    /// for the same few thousand names hundreds of thousands of times. Bounded, thread-safe.
+    private static let keyLock = NSLock()
+    private static var keyCache: [String: String] = [:]
     static func teamKey(_ name: String) -> String {
+        keyLock.lock()
+        if let k = keyCache[name] { keyLock.unlock(); return k }
+        keyLock.unlock()
+        let k = teamKeyRaw(name)
+        keyLock.lock()
+        if keyCache.count > 50_000 { keyCache.removeAll(keepingCapacity: true) }
+        keyCache[name] = k
+        keyLock.unlock()
+        return k
+    }
+    private static func teamKeyRaw(_ name: String) -> String {
         var n = foldWords(name)
         n = n.replacingOccurrences(of: #"u-(\d{2})"#, with: "u$1", options: .regularExpression)
         n = n.replacingOccurrences(of: #"تحت\s*(\d{2})"#, with: "u$1", options: .regularExpression)

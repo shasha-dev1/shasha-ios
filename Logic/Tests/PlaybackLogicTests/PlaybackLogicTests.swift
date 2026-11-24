@@ -1877,6 +1877,6 @@ final class MatchMergeSpeedTests: XCTestCase {
         let t = Date()
         _ = MatchSourcesRule.merge(groups, sources: [src], idx: MatchSourcesRule.LibIndex([]), pool: MatchGuideRule.ExtraPool([]), manual: [],
                                    guideSource: "EPG", guideAt: 0, from: t0 - 20 * h, to: t0 + 40 * h)
-        XCTAssertLessThan(Date().timeIntervalSince(t), 20)
+        XCTAssertLessThan(Date().timeIntervalSince(t), 10)
     }
 }
