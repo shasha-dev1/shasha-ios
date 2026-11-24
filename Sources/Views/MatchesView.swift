@@ -52,6 +52,16 @@ final class MatchStore: ObservableObject {
     @Published private(set) var files: [MatchSourceFiles.Item] = MatchSourceFiles.list()
     @Published private(set) var manual: [MatchSourcesRule.Manual] = MatchSourceFiles.manual()
     private var libIdx: MatchSourcesRule.LibIndex?
+    /// 1.10.3 (owner 19:37): his correction of a channel's country, by channel name (kept after a library refresh); "" = unknown.
+    static let countryFixKey = "match.countryFix"
+    static var countryFix: [String: String] { UserDefaults.standard.dictionary(forKey: countryFixKey) as? [String: String] ?? [:] }
+    @Published private(set) var countryFixVersion = 0
+    func setCountry(_ name: String, _ country: String?) {
+        var m = Self.countryFix
+        if let country { m[name] = country } else { m[name] = nil }
+        UserDefaults.standard.set(m, forKey: Self.countryFixKey)
+        countryFixVersion += 1; libIdx = nil; remerge()
+    }
     private var libStamp = ""
     private var mergeGen = 0
 
@@ -155,11 +165,12 @@ final class MatchStore: ObservableObject {
         if let library { lastLibrary = library }
         guard let lib = lastLibrary else { return }
         let chans = lib.channels
-        let stamp = "\(lib.active?.name ?? "")#\(chans.count)#\(chans.first?.id ?? "")#\(chans.last?.id ?? "")"
+        let stamp = "\(lib.active?.name ?? "")#\(chans.count)#\(chans.first?.id ?? "")#\(chans.last?.id ?? "")#\(countryFixVersion)"
         // the library index is needed only to match imported schedules: not built at all without one
         let needIdx = !files.isEmpty && (libIdx == nil || stamp != libStamp)
         let cats = Dictionary(lib.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
-        let libList = needIdx ? chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId) } : []
+        let fix = Self.countryFix
+        let libList = needIdx ? chans.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId, manualCountry: fix[$0.name]) } : []
         let oldIdx = libIdx
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
         let (from, to) = window
@@ -186,7 +197,8 @@ final class MatchStore: ObservableObject {
     /// The full comparison for the report (same rows as the screen, computed now).
     func compareText(_ library: Library) async -> String {
         let cats = Dictionary(library.liveCats.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
-        let libList = library.channels.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId) }
+        let fix = Self.countryFix
+        let libList = library.channels.map { MatchSourcesRule.LibCh(id: $0.id, name: $0.name, group: cats[$0.categoryId], tvgId: $0.epgId, manualCountry: fix[$0.name]) }
         let focusIds = Set(result?.stats?.focus.map(\.channelId) ?? [])
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
         let (from, to) = window
@@ -289,7 +301,7 @@ struct MatchesView: View {
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
             Menu {
-                Toggle("إخفاء HD (720p)", isOn: $hideHd)
+                Toggle("إخفاء 720p (المصنّفة HD — 1080p وFHD وFull HD تبقى)", isOn: $hideHd)
                 Toggle("إخفاء SD", isOn: $hideSd)
                 Toggle("إخفاء الدقة غير المعروفة", isOn: $hideUnknown)
                 Divider()
@@ -422,6 +434,7 @@ struct MatchRowView: View {
     @AppStorage("match.country") private var country = ""
     @AppStorage("match.lang") private var lang = ""
     @AppStorage("match.source") private var source = ""
+    @State private var countryFor: String?
     @AppStorage("match.hideUnknown") private var hideUnknown = false
 
     private var row: MatchSourcesRule.Row? { store.rows.first { MatchStore.key($0) == key } }
@@ -437,6 +450,14 @@ struct MatchRowView: View {
         .navigationTitle(row.map { "\($0.home) × \($0.away)" } ?? "")
         .onAppear { store.selectedKey = key }
         .sheet(isPresented: $adding) { if let r = row { NavigationStack { MatchAddChannelView(row: r) } } }
+        .confirmationDialog("دولة \(countryFor ?? "") — تصحيحك يبقى بعد التحديث", isPresented: Binding(get: { countryFor != nil }, set: { if !$0 { countryFor = nil } }),
+                            titleVisibility: .visible) {
+            let name = countryFor ?? ""
+            let now = MatchStore.countryFix[name]
+            ForEach(MatchSourcesRule.countryChoices, id: \.self) { c in Button((now == c ? "✓ " : "") + c) { store.setCountry(name, c) } }
+            Button("غير معروفة (لا تتأكد بالدولة)") { store.setCountry(name, "") }
+            if now != nil { Button("إزالة تصحيحي", role: .destructive) { store.setCountry(name, nil) } }
+        }
     }
 
     @ViewBuilder private func content(_ r: MatchSourcesRule.Row) -> some View {
@@ -471,9 +492,10 @@ struct MatchRowView: View {
                         Button { store.setManual(row: r, channelId: x.0.id, name: x.0.name, add: true) } label: {
                             VStack(alignment: .leading, spacing: 2) { Text(x.0.name).lineLimit(1); Text(x.1).font(.caption2).foregroundStyle(.secondary) }
                         }
+                        .contextMenu { Button { countryFor = x.0.name } label: { Label("دولة القناة…", systemImage: "globe") } }
                     }
                 } header: { Text("رُفضت (دولة أو نسخة beIN مختلفة) (\(r.rejected.count))") } footer: {
-                    Text("الاسم مطابق لكن الدولة أو نسخة beIN مختلفة. اخترها لتضيفها لهذه المباراة بنفسك.")
+                    Text("الاسم مطابق لكن الدولة أو نسخة beIN مختلفة. اخترها لتضيفها لهذه المباراة بنفسك، أو اضغط مطوّلًا لتصحيح دولتها.")
                 }
             }
             Section { Button { adding = true } label: { Label("إضافة قناة لهذه المباراة يدويًا", systemImage: "plus") } } footer: {
@@ -568,6 +590,7 @@ struct MatchRowView: View {
                                     store.setManual(row: r, channelId: l.channelId, name: l.name, add: true)
                                 } label: { Label("تأكيدها يدويًا", systemImage: "checkmark.circle") }
                             }
+                            Button { countryFor = l.name } label: { Label("دولة القناة…", systemImage: "globe") }
                         }
                 }
             } header: { Text("\(title) (\(links.count))") } footer: { Text(footer) }

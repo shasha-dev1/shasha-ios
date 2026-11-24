@@ -46,7 +46,7 @@ final class Perf: NSObject {
         lines.append(line); if lines.count > 400 { lines.removeFirst(lines.count - 400) }
         let all = lines.joined(separator: "\n")
         lock.unlock()
-        if let file { try? all.write(to: file, atomically: true, encoding: .utf8) }
+        if let file { try? RedactRule.text(all).write(to: file, atomically: true, encoding: .utf8) }
     }
 
     /// Measures a block that runs where it is called (on the main thread for screen computations).
@@ -180,7 +180,7 @@ final class Perf: NSObject {
         lines.append(line); if lines.count > 400 { lines.removeFirst(lines.count - 400) }
         let all = lines.joined(separator: "\n")
         lock.unlock()
-        if let file { try? all.write(to: file, atomically: true, encoding: .utf8) }
+        if let file { try? RedactRule.text(all).write(to: file, atomically: true, encoding: .utf8) }
     }
 
     /// The same, again after `seconds` (memory that stays = steady state; memory that drops = temporary peak).
@@ -215,7 +215,7 @@ final class Perf: NSObject {
         out.append("")
         out.append("— الخطوات المقاسة (الأحدث في الأسفل، تبقى بعد إعادة فتح التطبيق)")
         out.append(contentsOf: ls.suffix(150))
-        return out.joined(separator: "\n")
+        return RedactRule.text(out.joined(separator: "\n"))      // 1.10.3: no links, accounts or servers
     }
 
     /// 1.0.4: the last launch split into network, background processing, main-thread work and stalls.

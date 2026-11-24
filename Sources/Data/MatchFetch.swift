@@ -23,7 +23,7 @@ final class MatchFetch: ObservableObject {
     func lastSuccess(_ s: String) -> Int64 { Int64(d.double(forKey: k(s, "success"))) }
     func lastFull(_ s: String) -> Int64 { Int64(d.double(forKey: k(s, "full"))) }
     func blockedUntil(_ s: String) -> Int64 { Int64(d.double(forKey: k(s, "blocked"))) }
-    func lastLine(_ s: String) -> String { d.string(forKey: k(s, "line")) ?? "" }
+    func lastLine(_ s: String) -> String { RedactRule.text(d.string(forKey: k(s, "line")) ?? "") }
     private func set(_ s: String, _ x: String, _ v: Int64) { d.set(Double(v), forKey: k(s, x)) }
 
     let sites = [MatchFetchRule.lfotv, MatchFetchRule.lstv]

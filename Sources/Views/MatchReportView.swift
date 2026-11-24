@@ -61,8 +61,8 @@ struct MatchReportView: View {
                 Perf.shared.memory("دليل المباريات: بعد القراءة")
                 if flag.isSet { status = "أُلغي"; job = nil; return }
                 MatchStore.shared.adopt(res, source: source)        // the screen uses the same build
-                text = MatchIndexBuilder.report(res, now: now)
-                text += await MatchStore.shared.compareText(library)    // 1.8.6: imported schedules vs EPG vs the library, in full
+                let full = MatchIndexBuilder.report(res, now: now) + (await MatchStore.shared.compareText(library))   // 1.8.6: in full
+                text = RedactRule.text(full)          // 1.10.3 (owner 19:37): no playback link, account or server anywhere
                 status = "تم — الدليل \(size / 1_048_576) MB"
             }
             job = nil

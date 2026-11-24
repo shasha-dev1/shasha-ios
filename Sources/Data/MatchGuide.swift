@@ -160,6 +160,7 @@ enum MatchIndexBuilder {
         var sportIds = Set<String>(), sportKeys = Set<String>(), sportKeysLinked = Set<String>()
         var unguided: [MatchGuideRule.ExtraPool.Item] = []
         let focusLabels = st != nil ? MatchGuideRule.prefixLabels(channels.map(\.name)) : []
+        let countryFix = st != nil ? (UserDefaults.standard.dictionary(forKey: "match.countryFix") as? [String: String] ?? [:]) : [:]
         for ch in channels {
             var how = 0
             var id: String?
@@ -169,7 +170,7 @@ enum MatchIndexBuilder {
             isSports[ch.id] = sp
             if let id { onId[id, default: []].append(ch) } else if sp { unguided.append(.init(id: ch.id, name: ch.name, source: source)) }
             // 1.10.2 (owner 19:06): classified by country (prefix, after a group label, group, guide id) or a national brand, with the reason
-            if sp, let st, let fw = MatchGuideRule.focusWhy(ch.name, group: ch.group, tvgId: ch.epg, labels: focusLabels) {
+            if sp, let st, let fw = MatchGuideRule.focusWhy(ch.name, group: ch.group, tvgId: ch.epg, labels: focusLabels, manual: countryFix[ch.name]) {
                 var f = MatchGuideRule.Focus(channelId: ch.id, name: ch.name, list: source, tvgId: ch.epg, how: how, guideId: id)
                 f.why = fw.why; f.country = fw.country
                 if let id { f.first = p.range[id]?.0 ?? 0; f.last = p.range[id]?.1 ?? 0; f.upcoming = p.upcoming[id]?.0 ?? 0

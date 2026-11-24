@@ -74,7 +74,7 @@ final class CrashReporter: NSObject, ObservableObject, MXMetricManagerSubscriber
             s += t.split(separator: "\n").suffix(120).joined(separator: "\n") + "\n"
         }
         s += "\nملاحظة: إغلاق iOS للتطبيق بسبب الذاكرة لا يصنع تقرير انهيار من Apple؛ إن وصل تقرير Apple لاحقًا فهو انهيار فعلي.\n"
-        try? s.write(to: dir.appendingPathComponent("\(stamp())-exit.txt"), atomically: true, encoding: .utf8)
+        try? RedactRule.text(s).write(to: dir.appendingPathComponent("\(stamp())-exit.txt"), atomically: true, encoding: .utf8)
     }
 
     func didReceive(_ payloads: [MXDiagnosticPayload]) {
@@ -89,14 +89,14 @@ final class CrashReporter: NSObject, ObservableObject, MXMetricManagerSubscriber
             for c in p.cpuExceptionDiagnostics ?? [] { s += "\n[استهلاك معالج] \(c.totalCPUTime) خلال \(c.totalSampledTime)\n" }
             for w in p.diskWriteExceptionDiagnostics ?? [] { s += "\n[كتابة قرص] \(w.totalWritesCaused)\n" }
             s += "\n[JSON كامل مع مكدّس الاستدعاءات]\n" + (String(data: p.jsonRepresentation(), encoding: .utf8) ?? "")
-            try? s.write(to: dir.appendingPathComponent("\(stamp())-\(i)-apple.txt"), atomically: true, encoding: .utf8)
+            try? RedactRule.text(s).write(to: dir.appendingPathComponent("\(stamp())-\(i)-apple.txt"), atomically: true, encoding: .utf8)
         }
         if !payloads.isEmpty { refresh() }
     }
 
     /// 1.9.8: a report the owner sends himself (the performance report from Settings), in the same mail.
     func attach(_ text: String, name: String) {
-        try? (header(name) + "\n" + text).write(to: dir.appendingPathComponent("\(stamp())-\(name).txt"), atomically: true, encoding: .utf8)
+        try? RedactRule.text(header(name) + "\n" + text).write(to: dir.appendingPathComponent("\(stamp())-\(name).txt"), atomically: true, encoding: .utf8)
         let l = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
         pending = l.filter { $0.pathExtension == "txt" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
@@ -104,7 +104,7 @@ final class CrashReporter: NSObject, ObservableObject, MXMetricManagerSubscriber
     /// A crash or unclean exit among the files (not only a report the owner attached himself).
     var hasCrash: Bool { pending.contains { !$0.lastPathComponent.hasSuffix("-perf.txt") } }
 
-    func joined() -> String { pending.compactMap { try? String(contentsOf: $0, encoding: .utf8) }.joined(separator: "\n\n==========\n\n") }
+    func joined() -> String { RedactRule.text(pending.compactMap { try? String(contentsOf: $0, encoding: .utf8) }.joined(separator: "\n\n==========\n\n")) }
     func clear() { for u in pending { try? FileManager.default.removeItem(at: u) }; refresh() }
 }
 
@@ -130,10 +130,10 @@ struct CrashSendView: UIViewControllerRepresentable {
             if !to.isEmpty { m.setToRecipients([to]) }
             m.setSubject(subject)
             m.setMessageBody("تقرير انهيار شاشة (\(r.pending.count) ملف) مرفق.", isHTML: false)
-            for u in r.pending { if let d = try? Data(contentsOf: u) { m.addAttachmentData(d, mimeType: "text/plain", fileName: u.lastPathComponent) } }
+            for u in r.pending { if let x = try? String(contentsOf: u, encoding: .utf8) { m.addAttachmentData(Data(RedactRule.text(x).utf8), mimeType: "text/plain", fileName: u.lastPathComponent) } }
             return m
         }
-        let a = UIActivityViewController(activityItems: [r.joined()] + r.pending, applicationActivities: nil)
+        let a = UIActivityViewController(activityItems: [r.joined()], applicationActivities: nil)   // 1.10.3: redacted text, not the raw files
         a.setValue(subject, forKey: "subject")
         a.completionWithItemsHandler = { _, ok, _, _ in onDone(ok) }
         return a
