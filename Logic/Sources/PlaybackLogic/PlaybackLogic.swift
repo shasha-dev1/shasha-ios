@@ -3464,3 +3464,60 @@ extension MatchGuideRule {
         }
     }
 }
+
+// MARK: - 1.10.8: the guide read in pieces (owner's report 23:04: «قراءة الدليل» rose to 3.2 GB, then the app closed)
+
+/// Reads an XMLTV file in pieces that end on a complete `</programme>` or `</channel>`, each parsed on its own and released before
+/// the next. One XMLParser over the whole stream kept what it made for the whole file until the end (see the memory test).
+public enum XMLTVChunks {
+    static let ends: [Data] = [Data("</programme>".utf8), Data("</channel>".utf8)]
+
+    /// End offset of the last complete element in `buf`, or nil when there is none yet.
+    public static func cut(_ buf: Data) -> Int? {
+        var best: Int?
+        for e in ends { if let r = buf.range(of: e, options: .backwards) { best = max(best ?? 0, r.upperBound - buf.startIndex) } }
+        return best
+    }
+
+    /// Everything after the opening `<tv …>` (with the XML header and doctype), or the data unchanged when there is no `<tv`.
+    public static func dropHeader(_ d: Data) -> Data {
+        guard let tv = d.range(of: Data("<tv".utf8)) else { return d }
+        let after = d[tv.upperBound...]
+        guard let gt = after.firstIndex(of: UInt8(ascii: ">")) else { return d }
+        return Data(d[(gt + 1)...])
+    }
+
+    /// A piece as a document of its own.
+    public static func wrap(_ piece: Data) -> Data {
+        var w = Data("<?xml version=\"1.0\" encoding=\"UTF-8\"?><tv>".utf8); w.append(piece); w.append(Data("</tv>".utf8)); return w
+    }
+
+    /// Calls `body` with each piece as its own document; `body` returns false to stop. Returns false when the file can't be opened.
+    @discardableResult
+    public static func read(_ url: URL, chunkBytes: Int = 4 << 20, body: (Data) -> Bool) -> Bool {
+        guard let fh = try? FileHandle(forReadingFrom: url) else { return false }
+        defer { try? fh.close() }
+        var buf = Data(), first = true, go = true, eof = false
+        while go && !eof {
+            autoreleasepool {
+                let d = fh.readData(ofLength: chunkBytes)
+                if d.isEmpty { eof = true; return }
+                buf.append(d)
+                if first {
+                    guard buf.range(of: Data("<tv".utf8)) != nil || buf.count > 1 << 20 else { return }
+                    buf = dropHeader(buf); first = false
+                }
+                guard let c = cut(buf) else { return }
+                let piece = buf.prefix(c)
+                buf = Data(buf.dropFirst(c))
+                go = body(wrap(piece))
+            }
+        }
+        if go, !buf.isEmpty {
+            var rest = first ? dropHeader(buf) : buf
+            if let r = rest.range(of: Data("</tv>".utf8), options: .backwards) { rest = rest.prefix(r.lowerBound - rest.startIndex) }
+            if rest.contains(UInt8(ascii: "<")) { autoreleasepool { _ = body(wrap(rest)) } }
+        }
+        return true
+    }
+}
