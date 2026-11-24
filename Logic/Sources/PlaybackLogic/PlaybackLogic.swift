@@ -226,7 +226,7 @@ enum RightsRule {
         let brandsFrom: String?, sublicence: String?, note: String?
         var highlightsOnly: Bool { !rights.isEmpty && rights.allSatisfy { $0 == "highlights" } }
         var entityLabel: String? { ["company": "شركة", "platform": "منصة", "channel": "قناة"][entity] }
-        var rightsLabel: String { rights.compactMap { ["live": "مباشر", "highlights": "ملخصات", "digital": "رقمي", "selected": "مباريات مختارة"][$0] }.joined(separator: " · ") }
+        var rightsLabel: String { rights.compactMap { ["live": "مباشر", "highlights": "ملخصات", "digital": "رقمي", "selected": "مباريات مختارة", "unspecified": "نوع الحقوق غير مذكور في المصدر"][$0] }.joined(separator: " · ") }
     }
     struct Territory: Equatable {
         let territory: String, region: String?, countries: [String], status: String, source: Source?, contract: String?, note: String?, holders: [Holder]
@@ -301,7 +301,7 @@ enum RightsRule {
 
     static func facts(_ all: [Rights], competitions: [String?], kickoff: Int64, idx: MatchSourcesRule.LibIndex? = nil,
                       quality: (String) -> Int = { _ in 0 }) -> [Fact] {
-        var out: [Fact] = []; var seen = Set<String>()
+        var out: [Fact] = []; var seen = Set<String>(); var netSource: [String: String] = [:]
         for r in all where competitions.contains(where: { appliesTo(r, competition: $0) }) {
             var outside = false
             if let a = r.windowFrom, let b = r.windowTo { outside = kickoff < a || kickoff > b }
@@ -314,6 +314,13 @@ enum RightsRule {
                     // UEFA lists «Middle East/North Africa» and «MENA» both: one fact per holder and country set
                     guard seen.insert(r.competition + "|" + h.name + "|" + t.countries.sorted().joined(separator: ",") + "|" + (t.countries.isEmpty ? t.territory : "")).inserted else { continue }
                     let nets = holderNetworks(h).filter { $0 != "أخرى" }
+                    // the same network for the same country from a second source (Cyta's page and LaLiga's list): the first record stands
+                    if !nets.isEmpty && !t.countries.isEmpty {
+                        let nk = r.competition + "|net|" + nets.sorted().joined(separator: ",") + "|" + t.countries.sorted().joined(separator: ",")
+                        let src = (t.source ?? r.source).url
+                        if let o = netSource[nk], o != src { continue }
+                        if netSource[nk] == nil { netSource[nk] = src }
+                    }
                     var lib: [MatchSourcesRule.LibCh] = []
                     if let idx, !nets.isEmpty, !t.countries.isEmpty, !h.highlightsOnly {
                         var ids = Set<String>()

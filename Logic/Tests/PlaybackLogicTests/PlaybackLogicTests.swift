@@ -2353,6 +2353,20 @@ final class RightsTests: XCTestCase {
         XCTAssertTrue(laliga.holder.rights.contains("selected")); XCTAssertTrue(laliga.holder.note?.contains("4K") == true)
     }
 
+    func testLaligaFromItsOwnPagePerCountry() throws {
+        let ll = try load("laliga-2026-27")
+        let nl = try XCTUnwrap(ll.territories.first { $0.territory == "Netherlands" })
+        XCTAssertEqual(nl.holders.map(\.name), ["Ziggo Sport"])
+        XCTAssertEqual(nl.source?.url, "https://www.laliga.com/en-NL/where-to-watch-laliga-easports")
+        XCTAssertEqual(nl.holders[0].rights, ["unspecified"]); XCTAssertNil(nl.contract)
+        XCTAssertFalse(ll.territories.first { $0.territory == "Kosovo" }?.verified ?? true)
+        XCTAssertEqual(ll.territories.filter(\.verified).count, 217)
+        let f = RightsRule.facts(try all(), competitions: ["Spain - LaLiga"], kickoff: ko)
+        XCTAssertEqual(f.filter { $0.territory.territory == "Türkiye" }.map(\.holder.name), ["S Sport", "S Sport Plus"])
+        XCTAssertEqual(f.filter { $0.territory.countries.contains("قبرص") }.count, 1)
+        XCTAssertTrue(RightsRule.holderLine(f.first { $0.territory.territory == "Netherlands" }!).contains("نوع الحقوق غير مذكور"))
+    }
+
     func testAnotherChannelOfTheSameNetworkIsNotANearMatch() {
         let idx = S.LibIndex([.init(id: "1", name: "FR: BEIN MAX 4 HD"), .init(id: "2", name: "FR: BEIN CINEMA COMEDY 4 RAW"), .init(id: "3", name: "FR: BEIN SPORTS MAX 4"),
                               .init(id: "4", name: "AR: beIN SPORTS 4 HD"), .init(id: "5", name: "AR: beIN SPORTS 4 HD 1080")])

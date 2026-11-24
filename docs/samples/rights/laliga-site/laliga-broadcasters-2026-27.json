@@ -1,0 +1,3514 @@
+{
+  "retrieved_at_utc": "2026-11-24T18:28:49.575825+00:00",
+  "website_season_label": "2026/27",
+  "country_territory_count_in_site": 216,
+  "retrieved_count": 215,
+  "scope": "Countries and territories offered by LaLiga country selector; not a list of every sovereign state. Website listings are not independently verified contracts or match-specific channel confirmations. No contract dates inferred.",
+  "source": "https://www.laliga.com/en-ES/where-to-watch-laliga-easports",
+  "issues": [
+    {
+      "country": "XK",
+      "issue": "page not retrieved; XK returned HTTP 404"
+    }
+  ],
+  "countries": [
+    {
+      "code": "IS",
+      "country_ar": "آيسلندا",
+      "country_en": "Iceland",
+      "broadcasters": [
+        "Disney+"
+      ],
+      "broadcaster_ids": [
+        186
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-IS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AZ",
+      "country_ar": "أذربيجان",
+      "country_en": "Azerbaijan",
+      "broadcasters": [
+        "Az TV",
+        "Sport TV",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        271,
+        283,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AM",
+      "country_ar": "أرمينيا",
+      "country_en": "Armenia",
+      "broadcasters": [
+        "Fast Media",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        259,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AW",
+      "country_ar": "أروبا",
+      "country_en": "Aruba",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AU",
+      "country_ar": "أستراليا",
+      "country_en": "Australia",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AL",
+      "country_ar": "ألبانيا",
+      "country_en": "Albania",
+      "broadcasters": [
+        "DigitAlb",
+        "Supersport"
+      ],
+      "broadcaster_ids": [
+        269,
+        28
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "DE",
+      "country_ar": "ألمانيا",
+      "country_en": "Germany",
+      "broadcasters": [
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-DE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AG",
+      "country_ar": "أنتيغوا وبربودا",
+      "country_en": "Antigua & Barbuda",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AD",
+      "country_ar": "أندورا",
+      "country_en": "Andorra",
+      "broadcasters": [
+        "Mútua Elèctrica de Sant Julià de Lòria",
+        "beIN Sports",
+        "Movistar LALIGA"
+      ],
+      "broadcaster_ids": [
+        203,
+        1,
+        139
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AD/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AO",
+      "country_ar": "أنغولا",
+      "country_en": "Angola",
+      "broadcasters": [
+        "SuperSport 7",
+        "ZAP",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        5,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AI",
+      "country_ar": "أنغويلا",
+      "country_en": "Anguilla",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "UY",
+      "country_ar": "أورغواي",
+      "country_en": "Uruguay",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-UY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "UZ",
+      "country_ar": "أوزبكستان",
+      "country_en": "Uzbekistan",
+      "broadcasters": [
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-UZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "UG",
+      "country_ar": "أوغندا",
+      "country_en": "Uganda",
+      "broadcasters": [
+        "SuperSport 7",
+        "Baba TV",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        289,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-UG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "UA",
+      "country_ar": "أوكرانيا",
+      "country_en": "Ukraine",
+      "broadcasters": [
+        "Megogo"
+      ],
+      "broadcaster_ids": [
+        71
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-UA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "IE",
+      "country_ar": "أيرلندا",
+      "country_en": "Ireland",
+      "broadcasters": [
+        "Disney+ UK",
+        "Premier Sports"
+      ],
+      "broadcaster_ids": [
+        257,
+        91
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-IE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ET",
+      "country_ar": "إثيوبيا",
+      "country_en": "Ethiopia",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ET/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ER",
+      "country_ar": "إريتريا",
+      "country_en": "Eritrea",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ER/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ES",
+      "country_ar": "إسبانيا",
+      "country_en": "Spain",
+      "broadcasters": [
+        "Movistar LALIGA",
+        "Dazn LALIGA",
+        "LALIGATV Bar"
+      ],
+      "broadcaster_ids": [
+        139,
+        195,
+        160
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ES/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "EE",
+      "country_ar": "إستونيا",
+      "country_en": "Estonia",
+      "broadcasters": [
+        "Go3",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        265,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-EE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "IL",
+      "country_ar": "إسرائيل",
+      "country_en": "Israel",
+      "broadcasters": [
+        "ONE"
+      ],
+      "broadcaster_ids": [
+        12
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-IL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SZ",
+      "country_ar": "إسواتيني",
+      "country_en": "Eswatini",
+      "broadcasters": [
+        "SuperSport 7"
+      ],
+      "broadcaster_ids": [
+        4
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ID",
+      "country_ar": "إندونيسيا",
+      "country_en": "Indonesia",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ID/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "IR",
+      "country_ar": "إيران",
+      "country_en": "Iran",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-IR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "IT",
+      "country_ar": "إيطاليا",
+      "country_en": "Italy",
+      "broadcasters": [
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-IT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PS",
+      "country_ar": "الأراضي الفلسطينية",
+      "country_en": "Palestinian Territories",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AR",
+      "country_ar": "الأرجنتين",
+      "country_en": "Argentina",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "JO",
+      "country_ar": "الأردن",
+      "country_en": "Jordan",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-JO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "EC",
+      "country_ar": "الإكوادور",
+      "country_en": "Ecuador",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-EC/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AE",
+      "country_ar": "الإمارات العربية المتحدة",
+      "country_en": "United Arab Emirates",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BH",
+      "country_ar": "البحرين",
+      "country_en": "Bahrain",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BH/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BR",
+      "country_ar": "البرازيل",
+      "country_en": "Brazil",
+      "broadcasters": [
+        "Cazé TV",
+        "SportyNet"
+      ],
+      "broadcaster_ids": [
+        268,
+        275
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PT",
+      "country_ar": "البرتغال",
+      "country_en": "Portugal",
+      "broadcasters": [
+        "DAZN",
+        "DAZN-ELEVEN Portugal"
+      ],
+      "broadcaster_ids": [
+        36,
+        149
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BA",
+      "country_ar": "البوسنة والهرسك",
+      "country_en": "Bosnia & Herzegovina",
+      "broadcasters": [
+        "Arena Sport"
+      ],
+      "broadcaster_ids": [
+        167
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CZ",
+      "country_ar": "التشيك",
+      "country_en": "Czechia",
+      "broadcasters": [
+        "NovaSport"
+      ],
+      "broadcaster_ids": [
+        179
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ME",
+      "country_ar": "الجبل الأسود",
+      "country_en": "Montenegro",
+      "broadcasters": [
+        "Arena Sport"
+      ],
+      "broadcaster_ids": [
+        167
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ME/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "DZ",
+      "country_ar": "الجزائر",
+      "country_en": "Algeria",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-DZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "DK",
+      "country_ar": "الدانمرك",
+      "country_en": "Denmark",
+      "broadcasters": [
+        "Disney+"
+      ],
+      "broadcaster_ids": [
+        186
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-DK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CV",
+      "country_ar": "الرأس الأخضر",
+      "country_en": "Cape Verde",
+      "broadcasters": [
+        "SuperSport 7",
+        "ZAP",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        5,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CV/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SV",
+      "country_ar": "السلفادور",
+      "country_en": "El Salvador",
+      "broadcasters": [
+        "Sky Mexico"
+      ],
+      "broadcaster_ids": [
+        8
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SV/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SN",
+      "country_ar": "السنغال",
+      "country_en": "Senegal",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SD",
+      "country_ar": "السودان",
+      "country_en": "Sudan",
+      "broadcasters": [
+        "SuperSport 7",
+        "beIN Sports",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        1,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SD/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SE",
+      "country_ar": "السويد",
+      "country_en": "Sweden",
+      "broadcasters": [
+        "Disney+"
+      ],
+      "broadcaster_ids": [
+        186
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SO",
+      "country_ar": "الصومال",
+      "country_en": "Somalia",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CN",
+      "country_ar": "الصين",
+      "country_en": "China",
+      "broadcasters": [
+        "CCTV",
+        "Migu"
+      ],
+      "broadcaster_ids": [
+        248,
+        156
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "IQ",
+      "country_ar": "العراق",
+      "country_en": "Iraq",
+      "broadcasters": [
+        "1001",
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        231,
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-IQ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GA",
+      "country_ar": "الغابون",
+      "country_en": "Gabon",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PH",
+      "country_ar": "الفلبين",
+      "country_en": "Philippines",
+      "broadcasters": [
+        "beIN Sports",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        1,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PH/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CM",
+      "country_ar": "الكاميرون",
+      "country_en": "Cameroon",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CG",
+      "country_ar": "الكونغو - برازافيل",
+      "country_en": "Congo - Brazzaville",
+      "broadcasters": [
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CD",
+      "country_ar": "الكونغو - كينشاسا",
+      "country_en": "Congo - Kinshasa",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CD/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KW",
+      "country_ar": "الكويت",
+      "country_en": "Kuwait",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MA",
+      "country_ar": "المغرب",
+      "country_en": "Morocco",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MX",
+      "country_ar": "المكسيك",
+      "country_en": "Mexico",
+      "broadcasters": [
+        "Izzi",
+        "Canal5",
+        "Sky Mexico"
+      ],
+      "broadcaster_ids": [
+        251,
+        190,
+        8
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MX/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SA",
+      "country_ar": "المملكة العربية السعودية",
+      "country_en": "Saudi Arabia",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GB",
+      "country_ar": "المملكة المتحدة",
+      "country_en": "United Kingdom",
+      "broadcasters": [
+        "Disney+ UK",
+        "Premier Sports"
+      ],
+      "broadcaster_ids": [
+        257,
+        91
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GB/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NO",
+      "country_ar": "النرويج",
+      "country_en": "Norway",
+      "broadcasters": [
+        "TV2 Sport Premium"
+      ],
+      "broadcaster_ids": [
+        131
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "AT",
+      "country_ar": "النمسا",
+      "country_en": "Austria",
+      "broadcasters": [
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-AT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NE",
+      "country_ar": "النيجر",
+      "country_en": "Niger",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "IN",
+      "country_ar": "الهند",
+      "country_en": "India",
+      "broadcasters": [
+        "FanCode"
+      ],
+      "broadcaster_ids": [
+        253
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-IN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "US",
+      "country_ar": "الولايات المتحدة",
+      "country_en": "United States",
+      "broadcasters": [
+        "ESPN+",
+        "ESPN",
+        "ESPN Deportes"
+      ],
+      "broadcaster_ids": [
+        169,
+        2,
+        168
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-US/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "JP",
+      "country_ar": "اليابان",
+      "country_en": "Japan",
+      "broadcasters": [
+        "DAZN",
+        "U-Next"
+      ],
+      "broadcaster_ids": [
+        36,
+        217
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-JP/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "YE",
+      "country_ar": "اليمن",
+      "country_en": "Yemen",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-YE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GR",
+      "country_ar": "اليونان",
+      "country_en": "Greece",
+      "broadcasters": [
+        "MAGENTA TV"
+      ],
+      "broadcaster_ids": [
+        3
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PG",
+      "country_ar": "بابوا غينيا الجديدة",
+      "country_en": "Papua New Guinea",
+      "broadcasters": [
+        "Digicel Papúa Nueva Guinea"
+      ],
+      "broadcaster_ids": [
+        206
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PY",
+      "country_ar": "باراغواي",
+      "country_en": "Paraguay",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PK",
+      "country_ar": "باكستان",
+      "country_en": "Pakistan",
+      "broadcasters": [
+        "Begin"
+      ],
+      "broadcaster_ids": [
+        254
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BB",
+      "country_ar": "بربادوس",
+      "country_en": "Barbados",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BB/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BM",
+      "country_ar": "برمودا",
+      "country_en": "Bermuda",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BN",
+      "country_ar": "بروناي",
+      "country_en": "Brunei",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BE",
+      "country_ar": "بلجيكا",
+      "country_en": "Belgium",
+      "broadcasters": [
+        "DAZN",
+        "DAZN-ELEVEN Bélgica"
+      ],
+      "broadcaster_ids": [
+        36,
+        19
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BG",
+      "country_ar": "بلغاريا",
+      "country_en": "Bulgaria",
+      "broadcasters": [
+        "Max Sport"
+      ],
+      "broadcaster_ids": [
+        83
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BZ",
+      "country_ar": "بليز",
+      "country_en": "Belize",
+      "broadcasters": [
+        "ESPN",
+        "Sky Mexico",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        8,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BD",
+      "country_ar": "بنغلاديش",
+      "country_en": "Bangladesh",
+      "broadcasters": [
+        "Tap Mad",
+        "Begin"
+      ],
+      "broadcaster_ids": [
+        288,
+        254
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BD/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PA",
+      "country_ar": "بنما",
+      "country_en": "Panama",
+      "broadcasters": [
+        "Sky Mexico"
+      ],
+      "broadcaster_ids": [
+        8
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BJ",
+      "country_ar": "بنين",
+      "country_en": "Benin",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BJ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BW",
+      "country_ar": "بوتسوانا",
+      "country_en": "Botswana",
+      "broadcasters": [
+        "SuperSport 7",
+        "BTV",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        287,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PR",
+      "country_ar": "بورتوريكو",
+      "country_en": "Puerto Rico",
+      "broadcasters": [
+        "ESPN+",
+        "ESPN",
+        "ESPN Deportes"
+      ],
+      "broadcaster_ids": [
+        169,
+        2,
+        168
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BF",
+      "country_ar": "بوركينا فاسو",
+      "country_en": "Burkina Faso",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BF/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BI",
+      "country_ar": "بوروندي",
+      "country_en": "Burundi",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PL",
+      "country_ar": "بولندا",
+      "country_en": "Poland",
+      "broadcasters": [
+        "Canal +"
+      ],
+      "broadcaster_ids": [
+        69
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BO",
+      "country_ar": "بوليفيا",
+      "country_en": "Bolivia",
+      "broadcasters": [
+        "Tigo Sports",
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        45,
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PF",
+      "country_ar": "بولينيزيا الفرنسية",
+      "country_en": "French Polynesia",
+      "broadcasters": [
+        "Digicel",
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        205,
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PF/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PE",
+      "country_ar": "بيرو",
+      "country_en": "Peru",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BY",
+      "country_ar": "بيلاروس",
+      "country_en": "Belarus",
+      "broadcasters": [
+        "Belarus 5",
+        "Kinopoisk",
+        "Voka TV"
+      ],
+      "broadcaster_ids": [
+        266,
+        267,
+        272
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TH",
+      "country_ar": "تايلاند",
+      "country_en": "Thailand",
+      "broadcasters": [
+        "PPTV",
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        38,
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TH/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TW",
+      "country_ar": "تايوان",
+      "country_en": "Taiwan",
+      "broadcasters": [
+        "DAZN",
+        "Eleven Sports - Taiwan"
+      ],
+      "broadcaster_ids": [
+        36,
+        204
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TM",
+      "country_ar": "تركمانستان",
+      "country_en": "Turkmenistan",
+      "broadcasters": [
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TR",
+      "country_ar": "تركيا",
+      "country_en": "Türkiye",
+      "broadcasters": [
+        "S Sport",
+        "S Sport Plus"
+      ],
+      "broadcaster_ids": [
+        187,
+        188
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TT",
+      "country_ar": "ترينيداد وتوباغو",
+      "country_en": "Trinidad & Tobago",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TD",
+      "country_ar": "تشاد",
+      "country_en": "Chad",
+      "broadcasters": [
+        "beIN Sports",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        1,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TD/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CL",
+      "country_ar": "تشيلي",
+      "country_en": "Chile",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TZ",
+      "country_ar": "تنزانيا",
+      "country_en": "Tanzania",
+      "broadcasters": [
+        "SuperSport 7",
+        "Okapi Sports",
+        "TV-E",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        276,
+        277,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TG",
+      "country_ar": "توغو",
+      "country_en": "Togo",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TV",
+      "country_ar": "توفالو",
+      "country_en": "Tuvalu",
+      "broadcasters": [
+        "Digicel",
+        "DigiCel Pacific"
+      ],
+      "broadcaster_ids": [
+        205,
+        210
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TV/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TK",
+      "country_ar": "توكيلاو",
+      "country_en": "Tokelau",
+      "broadcasters": [
+        "Digicel"
+      ],
+      "broadcaster_ids": [
+        205
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TN",
+      "country_ar": "تونس",
+      "country_en": "Tunisia",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TO",
+      "country_ar": "تونغا",
+      "country_en": "Tonga",
+      "broadcasters": [
+        "Digicel",
+        "DigiCel Pacific"
+      ],
+      "broadcaster_ids": [
+        205,
+        210
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TL",
+      "country_ar": "تيمور - ليشتي",
+      "country_en": "Timor-Leste",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "JM",
+      "country_ar": "جامايكا",
+      "country_en": "Jamaica",
+      "broadcasters": [
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-JM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GI",
+      "country_ar": "جبل طارق",
+      "country_en": "Gibraltar",
+      "broadcasters": [
+        "Disney+ UK",
+        "SOFI CHANNEL 109",
+        "smile",
+        "Gib Fibre"
+      ],
+      "broadcaster_ids": [
+        257,
+        130,
+        162,
+        163
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BS",
+      "country_ar": "جزر البهاما",
+      "country_en": "Bahamas",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KM",
+      "country_ar": "جزر القمر",
+      "country_en": "Comoros",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MQ",
+      "country_ar": "جزر المارتينيك",
+      "country_en": "Martinique",
+      "broadcasters": [
+        "beIN Sports",
+        "Rush Sports",
+        "Canal +"
+      ],
+      "broadcaster_ids": [
+        1,
+        15,
+        69
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MQ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MV",
+      "country_ar": "جزر المالديف",
+      "country_en": "Maldives",
+      "broadcasters": [
+        "ICE Network"
+      ],
+      "broadcaster_ids": [
+        264
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MV/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TC",
+      "country_ar": "جزر توركس وكايكوس",
+      "country_en": "Turks & Caicos Islands",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TC/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SB",
+      "country_ar": "جزر سليمان",
+      "country_en": "Solomon Islands",
+      "broadcasters": [
+        "Digicel",
+        "DigiCel Pacific"
+      ],
+      "broadcaster_ids": [
+        205,
+        210
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SB/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "FK",
+      "country_ar": "جزر فوكلاند",
+      "country_en": "Falkland Islands",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-FK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "VI",
+      "country_ar": "جزر فيرجن الأمريكية",
+      "country_en": "U.S. Virgin Islands",
+      "broadcasters": [
+        "beIN Sports",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        1,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-VI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "VG",
+      "country_ar": "جزر فيرجن البريطانية",
+      "country_en": "British Virgin Islands",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-VG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KY",
+      "country_ar": "جزر كايمان",
+      "country_en": "Cayman Islands",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CK",
+      "country_ar": "جزر كوك",
+      "country_en": "Cook Islands",
+      "broadcasters": [
+        "Digicel",
+        "DigiCel Pacific"
+      ],
+      "broadcaster_ids": [
+        205,
+        210
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "WF",
+      "country_ar": "جزر والس وفوتونا",
+      "country_en": "Wallis & Futuna",
+      "broadcasters": [
+        "Digicel",
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        205,
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-WF/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CF",
+      "country_ar": "جمهورية أفريقيا الوسطى",
+      "country_en": "Central African Republic",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CF/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "DO",
+      "country_ar": "جمهورية الدومينيكان",
+      "country_en": "Dominican Republic",
+      "broadcasters": [
+        "Sky Mexico",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        8,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-DO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ZA",
+      "country_ar": "جنوب أفريقيا",
+      "country_en": "South Africa",
+      "broadcasters": [
+        "SuperSport 7",
+        "Sporty TV",
+        "OneFootball",
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        4,
+        260,
+        285,
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ZA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SS",
+      "country_ar": "جنوب السودان",
+      "country_en": "South Sudan",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GE",
+      "country_ar": "جورجيا",
+      "country_en": "Georgia",
+      "broadcasters": [
+        "Silknet",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        11,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GS",
+      "country_ar": "جورجيا الجنوبية وجزر ساندويتش الجنوبية",
+      "country_en": "South Georgia & South Sandwich Islands",
+      "broadcasters": [
+        "ESPN"
+      ],
+      "broadcaster_ids": [
+        2
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "DJ",
+      "country_ar": "جيبوتي",
+      "country_en": "Djibouti",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-DJ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "DM",
+      "country_ar": "دومينيكا",
+      "country_en": "Dominica",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-DM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "RW",
+      "country_ar": "رواندا",
+      "country_en": "Rwanda",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-RW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "RU",
+      "country_ar": "روسيا",
+      "country_en": "Russia",
+      "broadcasters": [
+        "MatchTV"
+      ],
+      "broadcaster_ids": [
+        54
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-RU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "RO",
+      "country_ar": "رومانيا",
+      "country_en": "Romania",
+      "broadcasters": [
+        "Prima Sport",
+        "PrimaTV",
+        "Digisport"
+      ],
+      "broadcaster_ids": [
+        154,
+        175,
+        48
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-RO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "RE",
+      "country_ar": "روينيون",
+      "country_en": "Réunion",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "beIN Sports",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        1,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-RE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ZM",
+      "country_ar": "زامبيا",
+      "country_en": "Zambia",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ZM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ZW",
+      "country_ar": "زيمبابوي",
+      "country_en": "Zimbabwe",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ZW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CI",
+      "country_ar": "ساحل العاج",
+      "country_en": "Côte d’Ivoire",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "WS",
+      "country_ar": "ساموا",
+      "country_en": "Samoa",
+      "broadcasters": [
+        "Digicel"
+      ],
+      "broadcaster_ids": [
+        205
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-WS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BL",
+      "country_ar": "سان بارتليمي",
+      "country_en": "St. Barthélemy",
+      "broadcasters": [
+        "beIN Sports",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        1,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "PM",
+      "country_ar": "سان بيير ومكويلون",
+      "country_en": "St. Pierre & Miquelon",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-PM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MF",
+      "country_ar": "سان مارتن",
+      "country_en": "St. Martin",
+      "broadcasters": [
+        "beIN Sports",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        1,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MF/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "VC",
+      "country_ar": "سانت فنسنت وجزر غرينادين",
+      "country_en": "St. Vincent & Grenadines",
+      "broadcasters": [
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-VC/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KN",
+      "country_ar": "سانت كيتس ونيفيس",
+      "country_en": "St. Kitts & Nevis",
+      "broadcasters": [
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LC",
+      "country_ar": "سانت لوسيا",
+      "country_en": "St. Lucia",
+      "broadcasters": [
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LC/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SH",
+      "country_ar": "سانت هيلينا",
+      "country_en": "St. Helena",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        4,
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SH/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ST",
+      "country_ar": "ساو تومي وبرينسيبي",
+      "country_en": "São Tomé & Príncipe",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ST/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LK",
+      "country_ar": "سريلانكا",
+      "country_en": "Sri Lanka",
+      "broadcasters": [
+        "Begin"
+      ],
+      "broadcaster_ids": [
+        254
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SK",
+      "country_ar": "سلوفاكيا",
+      "country_en": "Slovakia",
+      "broadcasters": [
+        "NovaSport"
+      ],
+      "broadcaster_ids": [
+        179
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SI",
+      "country_ar": "سلوفينيا",
+      "country_en": "Slovenia",
+      "broadcasters": [
+        "SportKlub"
+      ],
+      "broadcaster_ids": [
+        23
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SG",
+      "country_ar": "سنغافورة",
+      "country_en": "Singapore",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SY",
+      "country_ar": "سوريا",
+      "country_en": "Syria",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SR",
+      "country_ar": "سورينام",
+      "country_en": "Suriname",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "Rush Sports",
+        "DirecTV",
+        "ATV 12.2"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        15,
+        18,
+        132
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CH",
+      "country_ar": "سويسرا",
+      "country_en": "Switzerland",
+      "broadcasters": [
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CH/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SL",
+      "country_ar": "سيراليون",
+      "country_en": "Sierra Leone",
+      "broadcasters": [
+        "SuperSport 7",
+        "SLBC",
+        "Max It App SL",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        278,
+        279,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "SC",
+      "country_ar": "سيشل",
+      "country_en": "Seychelles",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-SC/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "RS",
+      "country_ar": "صربيا",
+      "country_en": "Serbia",
+      "broadcasters": [
+        "Arena Sport"
+      ],
+      "broadcaster_ids": [
+        167
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-RS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "TJ",
+      "country_ar": "طاجيكستان",
+      "country_en": "Tajikistan",
+      "broadcasters": [
+        "Varzish TV",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        284,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-TJ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "OM",
+      "country_ar": "عُمان",
+      "country_en": "Oman",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-OM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GM",
+      "country_ar": "غامبيا",
+      "country_en": "Gambia",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GM/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GH",
+      "country_ar": "غانا",
+      "country_en": "Ghana",
+      "broadcasters": [
+        "SuperSport 7",
+        "Sporty TV",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        260,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GH/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GD",
+      "country_ar": "غرينادا",
+      "country_en": "Grenada",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GD/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GT",
+      "country_ar": "غواتيمالا",
+      "country_en": "Guatemala",
+      "broadcasters": [
+        "Sky Mexico"
+      ],
+      "broadcaster_ids": [
+        8
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GP",
+      "country_ar": "غوادلوب",
+      "country_en": "Guadeloupe",
+      "broadcasters": [
+        "ESPN",
+        "beIN Sports",
+        "Rush Sports",
+        "Canal +"
+      ],
+      "broadcaster_ids": [
+        2,
+        1,
+        15,
+        69
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GP/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GF",
+      "country_ar": "غويانا الفرنسية",
+      "country_en": "French Guiana",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports",
+        "DirecTV",
+        "Canal +"
+      ],
+      "broadcaster_ids": [
+        2,
+        15,
+        18,
+        69
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GF/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GY",
+      "country_ar": "غيانا",
+      "country_en": "Guyana",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "Rush Sports",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        15,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GN",
+      "country_ar": "غينيا",
+      "country_en": "Guinea",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GQ",
+      "country_ar": "غينيا الاستوائية",
+      "country_en": "Equatorial Guinea",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GQ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "GW",
+      "country_ar": "غينيا بيساو",
+      "country_en": "Guinea-Bissau",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-GW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "VU",
+      "country_ar": "فانواتو",
+      "country_en": "Vanuatu",
+      "broadcasters": [
+        "Digicel"
+      ],
+      "broadcaster_ids": [
+        205
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-VU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "FR",
+      "country_ar": "فرنسا",
+      "country_en": "France",
+      "broadcasters": [
+        "DAZN",
+        "Disney+"
+      ],
+      "broadcaster_ids": [
+        36,
+        186
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-FR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "VE",
+      "country_ar": "فنزويلا",
+      "country_en": "Venezuela",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV",
+        "IVC Networks"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18,
+        144
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-VE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "FI",
+      "country_ar": "فنلندا",
+      "country_en": "Finland",
+      "broadcasters": [
+        "Disney+"
+      ],
+      "broadcaster_ids": [
+        186
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-FI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "VN",
+      "country_ar": "فيتنام",
+      "country_en": "Vietnam",
+      "broadcasters": [
+        "SCTV-Vietnam",
+        "VTVCab"
+      ],
+      "broadcaster_ids": [
+        107,
+        134
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-VN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "FJ",
+      "country_ar": "فيجي",
+      "country_en": "Fiji",
+      "broadcasters": [
+        "Digicel"
+      ],
+      "broadcaster_ids": [
+        205
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-FJ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CY",
+      "country_ar": "قبرص",
+      "country_en": "Cyprus",
+      "broadcasters": [
+        "Cyta"
+      ],
+      "broadcaster_ids": [
+        230
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "QA",
+      "country_ar": "قطر",
+      "country_en": "Qatar",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-QA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KG",
+      "country_ar": "قيرغيزستان",
+      "country_en": "Kyrgyzstan",
+      "broadcasters": [
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KZ",
+      "country_ar": "كازاخستان",
+      "country_en": "Kazakhstan",
+      "broadcasters": [
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NC",
+      "country_ar": "كاليدونيا الجديدة",
+      "country_en": "New Caledonia",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NC/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "HR",
+      "country_ar": "كرواتيا",
+      "country_en": "Croatia",
+      "broadcasters": [
+        "SportKlub"
+      ],
+      "broadcaster_ids": [
+        23
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-HR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KH",
+      "country_ar": "كمبوديا",
+      "country_en": "Cambodia",
+      "broadcasters": [
+        "beIN Sports",
+        "CTN"
+      ],
+      "broadcaster_ids": [
+        1,
+        136
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KH/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CA",
+      "country_ar": "كندا",
+      "country_en": "Canada",
+      "broadcasters": [
+        "TSN Canada",
+        "RDS"
+      ],
+      "broadcaster_ids": [
+        176,
+        178
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CU",
+      "country_ar": "كوبا",
+      "country_en": "Cuba",
+      "broadcasters": [
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CW",
+      "country_ar": "كوراساو",
+      "country_en": "Curaçao",
+      "broadcasters": [
+        "ESPN",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        2,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KR",
+      "country_ar": "كوريا الجنوبية",
+      "country_en": "South Korea",
+      "broadcasters": [
+        "Coupang"
+      ],
+      "broadcaster_ids": [
+        215
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CR",
+      "country_ar": "كوستاريكا",
+      "country_en": "Costa Rica",
+      "broadcasters": [
+        "Sky Mexico"
+      ],
+      "broadcaster_ids": [
+        8
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "XK",
+      "country_ar": "كوسوفو",
+      "country_en": "Kosovo",
+      "broadcasters": [],
+      "broadcaster_ids": [],
+      "status": "تعذر جلب صفحة الدولة؛ لا استنتاج عن الحقوق",
+      "source_url": "https://www.laliga.com/en-XK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "CO",
+      "country_ar": "كولومبيا",
+      "country_en": "Colombia",
+      "broadcasters": [
+        "Disney+",
+        "ESPN",
+        "DirecTV"
+      ],
+      "broadcaster_ids": [
+        186,
+        2,
+        18
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-CO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "KE",
+      "country_ar": "كينيا",
+      "country_en": "Kenya",
+      "broadcasters": [
+        "SuperSport 7",
+        "Sporty TV",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        260,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-KE/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LV",
+      "country_ar": "لاتفيا",
+      "country_en": "Latvia",
+      "broadcasters": [
+        "Go3",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        265,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LV/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LA",
+      "country_ar": "لاوس",
+      "country_en": "Laos",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LB",
+      "country_ar": "لبنان",
+      "country_en": "Lebanon",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LB/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LU",
+      "country_ar": "لوكسمبورغ",
+      "country_en": "Luxembourg",
+      "broadcasters": [
+        "DAZN",
+        "DAZN-ELEVEN Bélgica"
+      ],
+      "broadcaster_ids": [
+        36,
+        19
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LY",
+      "country_ar": "ليبيا",
+      "country_en": "Libya",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LR",
+      "country_ar": "ليبيريا",
+      "country_en": "Liberia",
+      "broadcasters": [
+        "SuperSport 7",
+        "Max it App LR",
+        "Workbor TV",
+        "LNTV",
+        "Clar TV",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        280,
+        281,
+        282,
+        286,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LT",
+      "country_ar": "ليتوانيا",
+      "country_en": "Lithuania",
+      "broadcasters": [
+        "Go3",
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        265,
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "LS",
+      "country_ar": "ليسوتو",
+      "country_en": "Lesotho",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        4,
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-LS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MT",
+      "country_ar": "مالطا",
+      "country_en": "Malta",
+      "broadcasters": [
+        "TSN"
+      ],
+      "broadcaster_ids": [
+        72
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "ML",
+      "country_ar": "مالي",
+      "country_en": "Mali",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-ML/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MY",
+      "country_ar": "ماليزيا",
+      "country_en": "Malaysia",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MY/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "YT",
+      "country_ar": "مايوت",
+      "country_en": "Mayotte",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "beIN Sports",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        1,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-YT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MG",
+      "country_ar": "مدغشقر",
+      "country_en": "Madagascar",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "EG",
+      "country_ar": "مصر",
+      "country_en": "Egypt",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-EG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MK",
+      "country_ar": "مقدونيا الشمالية",
+      "country_en": "North Macedonia",
+      "broadcasters": [
+        "Arena Sport"
+      ],
+      "broadcaster_ids": [
+        167
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MW",
+      "country_ar": "ملاوي",
+      "country_en": "Malawi",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MW/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MO",
+      "country_ar": "منطقة ماكاو الإدارية الخاصة",
+      "country_en": "Macao SAR China",
+      "broadcasters": [
+        "M Plus",
+        "TDM"
+      ],
+      "broadcaster_ids": [
+        258,
+        126
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MO/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MR",
+      "country_ar": "موريتانيا",
+      "country_en": "Mauritania",
+      "broadcasters": [
+        "SuperSport 7",
+        "beIN Sports",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        1,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MU",
+      "country_ar": "موريشيوس",
+      "country_en": "Mauritius",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "New World",
+        "beIN Sports",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        235,
+        1,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MZ",
+      "country_ar": "موزمبيق",
+      "country_en": "Mozambique",
+      "broadcasters": [
+        "SuperSport 7",
+        "ZAP",
+        "Miramar TV",
+        "DAZN"
+      ],
+      "broadcaster_ids": [
+        4,
+        5,
+        270,
+        36
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MD",
+      "country_ar": "مولدوفا",
+      "country_en": "Moldova",
+      "broadcasters": [
+        "Setanta Sports"
+      ],
+      "broadcaster_ids": [
+        32
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MD/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MC",
+      "country_ar": "موناكو",
+      "country_en": "Monaco",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MC/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "MS",
+      "country_ar": "مونتسرات",
+      "country_en": "Montserrat",
+      "broadcasters": [
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-MS/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NA",
+      "country_ar": "ناميبيا",
+      "country_en": "Namibia",
+      "broadcasters": [
+        "SuperSport 7",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NA/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NR",
+      "country_ar": "ناورو",
+      "country_en": "Nauru",
+      "broadcasters": [
+        "Digicel"
+      ],
+      "broadcaster_ids": [
+        205
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NR/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NP",
+      "country_ar": "نيبال",
+      "country_en": "Nepal",
+      "broadcasters": [
+        "DGO",
+        "FanCode"
+      ],
+      "broadcaster_ids": [
+        273,
+        253
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NP/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NG",
+      "country_ar": "نيجيريا",
+      "country_en": "Nigeria",
+      "broadcasters": [
+        "SuperSport 7",
+        "Sporty TV",
+        "DAZN",
+        "Canal +Sport"
+      ],
+      "broadcaster_ids": [
+        4,
+        260,
+        36,
+        148
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NG/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NI",
+      "country_ar": "نيكاراغوا",
+      "country_en": "Nicaragua",
+      "broadcasters": [
+        "Sky Mexico"
+      ],
+      "broadcaster_ids": [
+        8
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NI/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NZ",
+      "country_ar": "نيوزيلندا",
+      "country_en": "New Zealand",
+      "broadcasters": [
+        "beIN Sports"
+      ],
+      "broadcaster_ids": [
+        1
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NZ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NU",
+      "country_ar": "نيوي",
+      "country_en": "Niue",
+      "broadcasters": [
+        "Digicel"
+      ],
+      "broadcaster_ids": [
+        205
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "HT",
+      "country_ar": "هايتي",
+      "country_en": "Haiti",
+      "broadcasters": [
+        "Canal+ Haiti",
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        234,
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-HT/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "HN",
+      "country_ar": "هندوراس",
+      "country_en": "Honduras",
+      "broadcasters": [
+        "Sky Mexico"
+      ],
+      "broadcaster_ids": [
+        8
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-HN/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "HU",
+      "country_ar": "هنغاريا",
+      "country_en": "Hungary",
+      "broadcasters": [
+        "Spiler2TV"
+      ],
+      "broadcaster_ids": [
+        56
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-HU/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "NL",
+      "country_ar": "هولندا",
+      "country_en": "Netherlands",
+      "broadcasters": [
+        "Ziggo Sport"
+      ],
+      "broadcaster_ids": [
+        34
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-NL/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "BQ",
+      "country_ar": "هولندا الكاريبية",
+      "country_en": "Caribbean Netherlands",
+      "broadcasters": [
+        "Rush Sports"
+      ],
+      "broadcaster_ids": [
+        15
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-BQ/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    },
+    {
+      "code": "HK",
+      "country_ar": "هونغ كونغ الصينية (منطقة إدارية خاصة)",
+      "country_en": "Hong Kong SAR China",
+      "broadcasters": [
+        "Now Sports"
+      ],
+      "broadcaster_ids": [
+        17
+      ],
+      "status": "كما يعرضه الموقع",
+      "source_url": "https://www.laliga.com/en-HK/where-to-watch-laliga-easports",
+      "season_label": "2026/27"
+    }
+  ]
+}

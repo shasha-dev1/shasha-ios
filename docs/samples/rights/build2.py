@@ -118,14 +118,40 @@ ci=[*[terr(c,[dz("حصري، كل المباريات")],"Europe",source=dazn_uk,
 file('coppa-italia-2026-27','Coppa Italia',["coppa italia","كأس إيطاليا"],["primavera","femminile","women","serie c","supercoppa"],"2026/27",lega,ci)
 file('supercoppa-italiana-2026-27','Supercoppa Italiana',["supercoppa italiana","supercoppa","السوبر الإيطالي"],["primavera","femminile","women"],"2026/27",lega,
      [*[terr(c,[dz("حصري")],"Europe",source=dazn_uk,contract="حتى نهاية 2028/29") for c in ["France","Germany","Austria","Switzerland"]],CYP()])
-# ---- LaLiga
+# ---- LaLiga: LaLiga's own «where to watch» page per country (extracted by the owner 2026-11-24, 215 countries), plus the
+# beIN MENA announcement (contract) and Cyta. The site's list proves neither the match channel nor exclusivity nor the contract.
+ISO={"ar":"عربي","sa":"السعودية","qa":"قطر","ae":"الإمارات","kw":"الكويت","bh":"البحرين","om":"عُمان","eg":"مصر","ma":"المغرب","dz":"الجزائر","tn":"تونس",
+"iq":"العراق","jo":"الأردن","lb":"لبنان","gb":"بريطانيا","ie":"إيرلندا","fr":"فرنسا","es":"إسبانيا","de":"ألمانيا","at":"النمسا","ch":"سويسرا","it":"إيطاليا",
+"pt":"البرتغال","nl":"هولندا","be":"بلجيكا","pl":"بولندا","tr":"تركيا","gr":"اليونان","cy":"قبرص","rs":"صربيا","hr":"كرواتيا","ba":"البوسنة","si":"سلوفينيا",
+"mk":"مقدونيا الشمالية","al":"ألبانيا","ro":"رومانيا","bg":"بلغاريا","hu":"المجر","cz":"التشيك","sk":"سلوفاكيا","se":"السويد","no":"النرويج","dk":"الدنمارك",
+"fi":"فنلندا","ru":"روسيا","ua":"أوكرانيا","us":"أمريكا","ca":"كندا","mx":"المكسيك","br":"البرازيل","cl":"تشيلي","co":"كولومبيا","pe":"بيرو","in":"الهند",
+"pk":"باكستان","sg":"سنغافورة","au":"أستراليا","nz":"نيوزيلندا","za":"جنوب أفريقيا","my":"ماليزيا","id":"إندونيسيا"}
+BR.update({"movistar laliga":["Movistar"],"dazn laliga":["DAZN"],"canal +sport":["Canal+"],"canal +":["Canal+"],"supersport 7":["SuperSport"],
+  "setanta sports":["Setanta"],"espn+":["ESPN"],"espn deportes":["ESPN"],"s sport":["S Sport"],"s sport plus":["S Sport"],"sky mexico":["Sky"],"cyta":["Cytavision"],
+  "magenta tv":["Magenta Sport"],"tsn canada":["TSN"],"novasport":["Nova Sport"]})
+ENT.update({"disney+":"platform","disney+ uk":"platform","espn+":"platform","s sport plus":"platform","fancode":"platform","go3":"platform","cazé tv":"platform"})
+site=json.load(open('/tmp/rights/inputs/laliga-broadcasters-2026-27.json',encoding='utf-8'))
+lall=[]
 ll={"url":"https://www.laliga.com/en-GB/news/bein-extends-exclusive-laliga-broadcast-rights-across-34-markets-in-mena-and-apac","title":"beIN Extends Exclusive LALIGA Broadcast Rights Across 34 Markets in MENA and APAC (laliga.com)","publisher":"LALIGA","kind":"official","retrievedAt":"2026-11-24"}
-bein=holder("beIN SPORTS",["live"]); bein["entity"]="channel"; bein["note"]="حصري، كل المباريات الـ380"
-lall=[terr("MENA",[bein],"Africa and Middle East",source=ll,contract="حتى نهاية 2027/28"),CYP(r4k=True),
-      *[terr(c,[],None,status="unverified",note="لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة") for c in ["United Kingdom","France","Netherlands","Türkiye","United States of America","Italy","Spain"]]]
+bein=holder("beIN SPORTS",["live"]); bein["entity"]="channel"; bein["note"]="حصري، كل المباريات الـ380 (إعلان LaLiga)"
+lall.append(terr("MENA",[bein],"Africa and Middle East",source=ll,contract="حتى نهاية 2027/28"))
+lall.append(CYP(r4k=True))     # the holder's own page first: it says «selected matches» and 4K
+for c in site["countries"]:
+    code=c["code"].lower()
+    srcc={"url":c["source_url"],"title":f"LALIGA — where to watch ({c['country_en']})","publisher":"LALIGA","kind":"official","retrievedAt":site["retrieved_at_utc"][:10]}
+    hs=[]
+    for n in c["broadcasters"]:
+        h=holder(n,["unspecified"]); h["note"]="كما يعرضه موقع LaLiga — لا يثبت قناة المباراة ولا الحصرية ولا مدة العقد"; hs.append(h)
+    t=terr(c["country_en"],hs,None,source=srcc) if hs else terr(c["country_en"],[],None,status="unverified",source=srcc,
+        note="الموقع لم يعرض ناقلًا لهذه الدولة (أو لم تُقرأ صفحتها) — بيانات ناقصة")
+    t["countries"]=[ISO.get(code, c["country_ar"])]
+    t["code"]=c["code"]
+    lall.append(t)
+for i in [i for i in site.get("issues",[]) if i["country"] not in {c["code"] for c in site["countries"]}]:
+    lall.append(terr(i["country"],[],None,status="unverified",note="صفحة الدولة لم تُقرأ ("+i["issue"]+") — بيانات ناقصة"))
 file('laliga-2026-27','LaLiga',["laliga","la liga","laliga ea sports","primera division","الدوري الإسباني","الدوري الاسباني"],
      ["hypermotion","segunda","2","liga f","women","womens","femenina","futsal","smartbank"],"2026/27",
-     {"url":"https://www.laliga.com/en-US/where-to-watch-laliga-easports","title":"LALIGA — where to watch (per match, by visitor's country)","publisher":"LALIGA","kind":"official","retrievedAt":"2026-11-24"},lall)
+     {"url":site["source"],"title":"LALIGA — where to watch LALIGA EA SPORTS, per country (extracted 2026-11-24, 215 of 216 countries)","publisher":"LALIGA","kind":"official","retrievedAt":"2026-11-24"},lall)
 # ---- Cyta-only competitions
 for slug,comp,keys,exc,r4k in [("fa-cup-2026-27","FA Cup",["fa cup","emirates fa cup","كأس الاتحاد الإنجليزي"],["women","womens","youth","trophy","vase"],False),
     ("efl-cup-2026-27","EFL Cup",["efl cup","carabao cup","كأس الرابطة الإنجليزية"],["women","scottish"],False),
