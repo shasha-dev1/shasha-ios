@@ -72,14 +72,12 @@ final class MatchStore: ObservableObject {
 
     /// 1.8.8: the schedule sites in the background (when due, or on Refresh); the rows are merged again when one changed.
     func fetchSchedules(force: Bool) {
-        guard MatchFetch.shared.due(force: force) else { return }
+        guard MatchFetch.shared.anyDue(force: force) || MatchFetch.shared.running else { return }
         Task {
-            let changed = await MatchFetch.shared.run(force: force) { msg in Task { @MainActor in MatchStore.shared.fetchStatus = msg } }
-            fetchStatus = ""
+            let changed = await MatchFetch.shared.run(force: force, idx: libIdx)
             if changed { files = MatchSourceFiles.list(); remerge() }
         }
     }
-    @Published var fetchStatus = ""
 
     func refresh(_ library: Library) {
         fetchSchedules(force: true)
@@ -156,13 +154,18 @@ final class MatchStore: ObservableObject {
         let gs = groups, srcs = files.map(\.source), man = manual, pl = pool
         let (from, to) = window
         let guideSource = result != nil ? "EPG المزوّد (\(source))" : "EPG المزوّد", guideAt = result?.built ?? 0
-        let names = files.map { "   - \($0.source.name) · \($0.source.kind.label) · حُدّث \(MatchIndexBuilder.fmt($0.source.fetchedAt)) · \($0.source.matches.count) مباراة" + ($0.source.url.map { " · " + $0 } ?? "") }
-        return await Task.detached(priority: .userInitiated) {
-            if srcs.isEmpty { return "\n— الجداول المستوردة: لا شيء. استورد ملف shasha-matches من شاشة المباريات لتظهر المقارنة الكاملة.\n" }
-            let rows = MatchSourcesRule.merge(gs, sources: srcs, idx: MatchSourcesRule.LibIndex(libList), pool: pl, manual: man,
-                                              guideSource: guideSource, guideAt: guideAt, from: from, to: to)
+        let fetchSummary = "\n— الجلب التلقائي (Live-FootballOnTV و LiveSoccerTV)\n   " + MatchFetch.shared.summary().replacingOccurrences(of: "\n", with: "\n   ") + "\n"
+        return fetchSummary + (await Task.detached(priority: .userInitiated) { () -> String in
+            if srcs.isEmpty { return "\n— الجداول المستوردة: لا شيء. استورد ملف shasha-matches أو انتظر الجلب التلقائي لتظهر المقارنة الكاملة.\n" }
+            let idx = MatchSourcesRule.LibIndex(libList)
+            let names = srcs.map { s -> String in
+                let c = MatchSourcesRule.counts(s, idx: idx)
+                return "   - \(s.name) · \(s.kind.label) · أُخذ \(MatchIndexBuilder.fmt(s.fetchedAt)) · \(s.matches.count) مباراة · \(c.entries) إدخال نقل · \(c.unique) قناة فريدة · \(c.inLibrary ?? 0) قناة من مكتبتك"
+                    + (s.url.map { " · " + $0 } ?? "") + (s.status.map { "\n      " + $0 } ?? "")
+            }
+            let rows = MatchSourcesRule.merge(gs, sources: srcs, idx: idx, pool: pl, manual: man, guideSource: guideSource, guideAt: guideAt, from: from, to: to)
             return "\n— الجداول المستوردة\n" + names.joined(separator: "\n") + "\n\n" + MatchSourcesRule.compare(rows, fmt: MatchIndexBuilder.fmt)
-        }.value
+        }.value)
     }
 
     func importFile(_ url: URL) {
@@ -204,6 +207,7 @@ final class MatchStore: ObservableObject {
 struct MatchesView: View {
     @EnvironmentObject var library: Library
     @ObservedObject private var store = MatchStore.shared
+    @ObservedObject private var fetch = MatchFetch.shared
     let onPlay: ([Channel], Int) -> Void
     @AppStorage("match.hideHd") private var hideHd = false
     @AppStorage("match.hideSd") private var hideSd = false
@@ -273,8 +277,8 @@ struct MatchesView: View {
                 if store.busy || !store.status.isEmpty {
                     Section { HStack { if store.busy { ProgressView() }; Text(store.status).font(.footnote).foregroundStyle(.secondary) } }
                 }
-                if !store.fetchStatus.isEmpty {
-                    Section { HStack { ProgressView(); Text(store.fetchStatus).font(.footnote).foregroundStyle(.secondary) } }
+                if let p = fetch.progress {
+                    Section { HStack { ProgressView(); Text(p).font(.footnote).foregroundStyle(.secondary) } }
                 }
                 if emptyNote {
                     Text("ما وجدنا مباريات لهذا الاختيار.").foregroundStyle(.secondary)
@@ -335,9 +339,12 @@ struct MatchFilesView: View {
                 .swipeActions { Button(role: .destructive) { store.removeFile(it.file) } label: { Label("حذف", systemImage: "trash") } }
             }
             Section {
-                Text(MatchFetch.shared.lastRun == nil ? "لم يُجلب بعد" : "آخر جلب: " + MatchFetch.shared.lastResult).font(.caption)
-                Button("جلب الآن") { store.fetchSchedules(force: true) }.disabled(!MatchFetch.shared.due(force: true))
-            } header: { Text("الجلب التلقائي (Live-FootballOnTV و LiveSoccerTV)") } footer: { Text("يجلب تلقائيًا كل 6 ساعات على الأكثر عند فتح شاشة المباريات، أو عند «تحديث» (مرة كل 15 دقيقة).") }
+                if let p = MatchFetch.shared.progress { Text("الجلب جارٍ: " + p).font(.caption) }
+                Text(MatchFetch.shared.summary()).font(.caption)
+                Button("جلب الآن") { store.fetchSchedules(force: true) }.disabled(!MatchFetch.shared.anyDue(force: true))
+            } header: { Text("الجلب التلقائي (Live-FootballOnTV و LiveSoccerTV)") } footer: {
+                Text("على الآيفون يبدأ الجلب عند فتح شاشة المباريات إذا حان وقته (كل 6 ساعات، أو فورًا في يوم جديد)، أو بـ«جلب الآن»/«تحديث» (كل 15 دقيقة على الأكثر). يعمل والتطبيق مفتوح فقط: إذا خرج للخلفية يتوقف ويكمل عند الرجوع، وما لم يُقرأ تبقى بياناته السابقة. لا جلب والتطبيق مغلق.")
+            }
             Section { } footer: {
                 Text("الملفات محفوظة على هذا الجهاز فقط (حد \(MatchSourceFiles.maxFiles) ملفات، 5 MB لكل ملف). الصيغة في docs/MATCH-SOURCES.md. روابط التشغيل وبيانات اشتراكك لا تُرسل لأي مصدر.")
             }

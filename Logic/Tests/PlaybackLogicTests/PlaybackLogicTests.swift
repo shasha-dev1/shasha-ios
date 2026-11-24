@@ -1677,4 +1677,81 @@ final class MatchFetchRuleTests: XCTestCase {
         XCTAssertTrue(r[0].platforms.contains { $0.0 == "HBO Max" })
         XCTAssertTrue(F.lstvDayURLs(today: Date(timeIntervalSince1970: 1_795_550_400), days: 2, tz: TimeZone(identifier: "Asia/Bahrain")!).first!.hasSuffix("/schedules/2026-11-23/"))
     }
+
+    // ---------- owner 05:55 (same vectors as the TV) ----------
+    let bh = TimeZone(identifier: "Asia/Bahrain")!
+    let h: Int64 = 3_600_000
+    private func ms(_ iso: String) -> Int64 { Int64(ISO8601DateFormatter().date(from: iso)!.timeIntervalSince1970 * 1000) }
+
+    func testUkTimeOnBothSidesOfTheClockChanges() {
+        func ko(_ date: String, _ time: String) -> Int64? {
+            F.parseLfotv(#"<div class="fixture-date">\#(date)</div><div class="fixture"><div class="fixture__time">\#(time)</div><div class="fixture__teams">A v B</div><div class="fixture__competition">X</div><div class="fixture__channel"><div class="span3 channels"></div></div></div>"#, fetchedAt: 0, from: 0, to: .max).matches.first?.kickoff
+        }
+        XCTAssertEqual(ko("Saturday 28th March 2026", "15:00"), ms("2026-03-28T15:00:00Z"))
+        XCTAssertEqual(ko("Sunday 29th March 2026", "15:00"), ms("2026-03-29T14:00:00Z"))
+        XCTAssertEqual(ko("Saturday 24th October 2026", "15:00"), ms("2026-10-24T14:00:00Z"))
+        XCTAssertEqual(ko("Sunday 25th October 2026", "15:00"), ms("2026-10-25T15:00:00Z"))
+        XCTAssertEqual(ko("Tuesday 24th November 2026", "20:00"), ms("2026-11-24T20:00:00Z"))
+    }
+
+    func testWhenASiteIsAskedAgain() {
+        let t = ms("2026-11-24T20:00:00Z")      // 23:00 Bahrain
+        XCTAssertTrue(F.due(now: t, lastAttempt: 0, lastSuccess: 0, blockedUntil: 0, force: false, tz: bh))
+        XCTAssertFalse(F.due(now: t, lastAttempt: t - 10 * 60_000, lastSuccess: 0, blockedUntil: 0, force: true, tz: bh))
+        XCTAssertTrue(F.due(now: t, lastAttempt: t - 20 * 60_000, lastSuccess: t - 20 * 60_000, blockedUntil: 0, force: true, tz: bh))
+        XCTAssertFalse(F.due(now: t, lastAttempt: t - h, lastSuccess: t - h, blockedUntil: 0, force: false, tz: bh))
+        XCTAssertTrue(F.due(now: t + 2 * h, lastAttempt: t - h, lastSuccess: t - h, blockedUntil: 0, force: false, tz: bh))
+        XCTAssertFalse(F.due(now: t, lastAttempt: t - 7 * h, lastSuccess: t - 7 * h, blockedUntil: t + h, force: true, tz: bh))
+        XCTAssertEqual(F.waitAfter(code: 429, retryAfter: "120", now: t), t + 120_000)
+        XCTAssertEqual(F.waitAfter(code: 503, retryAfter: "Wed, 25 Nov 2026 00:00:00 GMT", now: t), ms("2026-11-25T00:00:00Z"))
+        XCTAssertEqual(F.waitAfter(code: 429, retryAfter: nil, now: t), t + 6 * h)
+        XCTAssertEqual(F.waitAfter(code: 500, retryAfter: nil, now: t), t)
+    }
+
+    func testABlockPageIsNotASchedule() throws {
+        let block = "<html><title>Just a moment...</title><body>Checking your browser</body></html>"
+        XCTAssertFalse(F.looksLikeLfotv(block) || F.looksLikeLstvDay(block) || F.looksLikeLstvMatch(block))
+        XCTAssertTrue(F.looksLikeLfotv(try page("lfotv-2026-11-24.html")))
+        XCTAssertTrue(F.looksLikeLstvDay(try page("lstv-day-2026-11-24.html")))
+        XCTAssertTrue(F.looksLikeLstvMatch(try page("lstv-match-manchester-city-vs-napoli.html")))
+    }
+
+    func testAPartialRunKeepsWhatItCouldNotRead() throws {
+        let p = F.parseLstvMatch(try page("lstv-match-manchester-city-vs-napoli.html"))
+        let a = F.DayMatch(id: "1", url: "u1", home: "Manchester City", away: "Napoli", kickoff: 1_795_550_400_000, competition: "UCL", channels: ["TNT Sports 1"])
+        let b = F.DayMatch(id: "2", url: "u2", home: "Real Madrid", away: "PSV", kickoff: 1_795_550_400_000, competition: "UCL", channels: ["Movistar Liga de Campeones"])
+        let c = F.DayMatch(id: "3", url: "u3", home: "X", away: "Y", kickoff: 1_795_560_000_000, competition: "L", channels: [])
+        let first = F.mergeLstv(previous: nil, days: [a, b, c], dayPagesFailed: 0, pages: ["u1": p, "u2": p, "u3": p], notRead: [], fetchedAt: 100, from: from, to: to, lastFull: nil)
+        XCTAssertTrue(first.status!.hasPrefix("جلب كامل"))
+        let second = F.mergeLstv(previous: first, days: [a, b], dayPagesFailed: 1, pages: ["u1": p], notRead: [b], fetchedAt: 200, from: from, to: to, lastFull: "24/11 03:00")
+        XCTAssertEqual(second.matches.count, 3)
+        XCTAssertEqual(second.matches.first { $0.id == "1" }?.fetchedAt, 200)
+        let mb = try XCTUnwrap(second.matches.first { $0.id == "2" })
+        XCTAssertEqual(mb.fetchedAt, 100); XCTAssertGreaterThan(mb.channels.count, 400)
+        XCTAssertEqual(second.matches.first { $0.id == "3" }?.fetchedAt, 100)
+        XCTAssertTrue(second.status!.contains("جزئي") && second.status!.contains("24/11 03:00"))
+        let back = try S.parse(F.toJSON(second), now: 300)
+        XCTAssertEqual(back.matches.first { $0.id == "2" }?.fetchedAt, 100); XCTAssertEqual(back.status, second.status)
+        let idx = S.LibIndex([.init(id: "1", name: "UK: TNT SPORTS 1 ᴴᴰ")])
+        let row = try XCTUnwrap(S.merge([], sources: [back], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0,
+                                        from: from, to: to, tz: bh).first { $0.home == "Real Madrid" })
+        XCTAssertTrue(row.links.first!.proofs.allSatisfy { $0.at == 100 })
+    }
+
+    func testEntriesUniqueChannelsAndLibraryAreCountedApart() throws {
+        let p = F.parseLstvMatch(try page("lstv-match-manchester-city-vs-napoli.html"))
+        let d = F.DayMatch(id: "1", url: "u1", home: "Manchester City", away: "Napoli", kickoff: 1_795_550_400_000, competition: "UCL", channels: [])
+        let s = F.lstvSource([d], pages: ["u1": p], fetchedAt: 1, from: from, to: to)
+        let idx = S.LibIndex([.init(id: "1", name: "UK: TNT SPORTS 1 ᴴᴰ"), .init(id: "2", name: "AR: beIN SPORTS 3 ᴴᴰ")])
+        let c = S.counts(s, idx: idx)
+        XCTAssertEqual(c.entries, Set(p.coverage.map { $0.slug + "|" + $0.country }).count)
+        XCTAssertEqual(c.unique, Set(p.coverage.map(\.slug)).count)
+        XCTAssertLessThan(c.unique, c.entries)
+        XCTAssertEqual(c.inLibrary, 2)
+    }
+
+    func testTheOrderOfMatchPagesIsStable() {
+        let xs = (1...5).map { F.DayMatch(id: "\($0)", url: "u\($0)", home: "A", away: "B", kickoff: $0 % 2 == 0 ? 2 : 1, competition: nil, channels: []) }
+        XCTAssertEqual(F.priority(xs.reversed()).map(\.id), ["1", "3", "5", "2", "4"])
+    }
 }

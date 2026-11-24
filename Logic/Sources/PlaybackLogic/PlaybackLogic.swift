@@ -1555,8 +1555,12 @@ enum MatchSourcesRule {
     struct ExtChannel: Equatable { let name: String; let country: String?; let programmeStart: Int64?; var id: String? = nil; var type: ChType? = nil }
     /// `id`: the source's own match id (optional).
     struct ExtMatch: Equatable { let home: String; let away: String; let kickoff: Int64; let competition: String?; let sport: String?; let channels: [ExtChannel]
-        var id: String? = nil }
-    struct ExtSource { let name: String; let kind: Kind; let url: String?; let fetchedAt: Int64; let importedAt: Int64; let matches: [ExtMatch] }
+        var id: String? = nil
+        /// When this match's channels were read, if not the source's time (a partial fetch keeps older ones).
+        var fetchedAt: Int64? = nil }
+    struct ExtSource { let name: String; let kind: Kind; let url: String?; let fetchedAt: Int64; let importedAt: Int64; var matches: [ExtMatch]
+        /// How complete it is (an automatic fetch says «partial…» and its last complete fetch).
+        var status: String? = nil }
     struct BadFile: Error { let reason: String }
 
     private static func time(_ s: String?, _ what: String) throws -> Int64 {
@@ -1608,9 +1612,11 @@ enum MatchSourcesRule {
                                       id: str(c, "id").isEmpty ? nil : str(c, "id"), type: type))
             }
             out.append(ExtMatch(home: home, away: away, kickoff: ko, competition: str(m, "competition").isEmpty ? nil : str(m, "competition"),
-                                sport: str(m, "sport").isEmpty ? nil : str(m, "sport"), channels: chs, id: str(m, "id").isEmpty ? nil : str(m, "id")))
+                                sport: str(m, "sport").isEmpty ? nil : str(m, "sport"), channels: chs, id: str(m, "id").isEmpty ? nil : str(m, "id"),
+                                fetchedAt: str(m, "fetchedAt").isEmpty ? nil : try time(str(m, "fetchedAt"), "المباراة \(i + 1): وقت أخذ القنوات")))
         }
-        return ExtSource(name: name, kind: kind, url: str(src, "url").isEmpty ? nil : str(src, "url"), fetchedAt: fetched, importedAt: now, matches: out)
+        return ExtSource(name: name, kind: kind, url: str(src, "url").isEmpty ? nil : str(src, "url"), fetchedAt: fetched, importedAt: now, matches: out,
+                         status: str(src, "status").isEmpty ? nil : str(src, "status"))
     }
 
     // ---------- kept schedules: one file per source, an update replaces it ----------
@@ -1623,10 +1629,11 @@ enum MatchSourcesRule {
     }
 
     struct Coverage: Equatable {
-        let from: Int64?; let to: Int64?; let fetchedAt: Int64; let ended: Bool; let old: Bool
+        let from: Int64?; let to: Int64?; let fetchedAt: Int64; let ended: Bool; let old: Bool; var status: String? = nil
         func text(_ fmt: (Int64) -> String) -> String {
             var t = (from != nil && to != nil) ? "يغطي \(fmt(from!)) – \(fmt(to!))" : "بلا مباريات"
             t += " · أُخذت البيانات \(fmt(fetchedAt))"
+            if let status { t += " · " + status }
             if ended { t += " · ⚠︎ انتهت تغطيته، استورد تحديثًا" } else if old { t += " · ⚠︎ عمره أكثر من يوم" }
             return t
         }
@@ -1635,7 +1642,17 @@ enum MatchSourcesRule {
     static func coverage(_ s: ExtSource, now: Int64) -> Coverage {
         let ks = s.matches.map(\.kickoff)
         let to = ks.max()
-        return Coverage(from: ks.min(), to: to, fetchedAt: s.fetchedAt, ended: to.map { $0 + 3 * 3_600_000 < now } ?? true, old: now - s.fetchedAt > 24 * 3_600_000)
+        return Coverage(from: ks.min(), to: to, fetchedAt: s.fetchedAt, ended: to.map { $0 + 3 * 3_600_000 < now } ?? true, old: now - s.fetchedAt > 24 * 3_600_000,
+                        status: s.status)
+    }
+
+    /// Transmission entries (country × channel), distinct channels named, and distinct library channels they lead to.
+    struct Counts: Equatable { let entries: Int; let unique: Int; let inLibrary: Int? }
+    static func counts(_ s: ExtSource, idx: LibIndex?) -> Counts {
+        let chs = s.matches.flatMap(\.channels)
+        var seen = Set<String>(); let unique = chs.filter { seen.insert($0.id ?? MatchGuideRule.words($0.name)).inserted }
+        let inLib = idx.map { i in Set(unique.flatMap { libraryHits($0, i).map(\.e.ch.id) }).count }
+        return Counts(entries: chs.count, unique: unique.count, inLibrary: inLib)
     }
 
     // ---------- what a schedule names: a channel, a whole network, or a viewing platform ----------
@@ -1959,7 +1976,7 @@ enum MatchSourcesRule {
                     let hits = libraryHits(c, idx, siblings: m.channels.map(\.name))
                     if hits.isEmpty { if !missing.contains(where: { $0.0 == c.name && $0.1 == s.name }) { missing.append((c.name, s.name)) }; continue }
                     for h in hits {
-                        add(h.e.ch.id, h.e.ch.name, Proof(kind: s.kind, source: s.name, at: s.fetchedAt,
+                        add(h.e.ch.id, h.e.ch.name, Proof(kind: s.kind, source: s.name, at: m.fetchedAt ?? s.fetchedAt,
                                                           detail: c.name + (c.country.map { " · " + $0 } ?? "") + (h.alt4k ? " · بديل 4K محتمل" : "")),
                             possible: !h.exact && !h.alt4k, alt: h.alt4k)
                     }
@@ -2399,6 +2416,65 @@ enum MatchFetchRule {
         return (-1..<days).compactMap { cal.date(byAdding: .day, value: $0, to: today) }.map { lstvBase + "/schedules/" + f.string(from: $0) + "/" }
     }
 
+    // ---------- protecting what is kept (owner 05:55) — same as the TV ----------
+
+    static func looksLikeLfotv(_ h: String) -> Bool { h.contains("class=\"fixture-date\"") && h.contains("class=\"fixture\"") }
+    static func looksLikeLstvDay(_ h: String) -> Bool { h.contains("class=\"schedules\"") && (h.contains("r_comprow") || h.contains("matchrow")) }
+    static func looksLikeLstvMatch(_ h: String) -> Bool { h.contains("SportsEvent") || h.contains("ichannels") }
+
+    static func priority(_ days: [DayMatch]) -> [DayMatch] { days.sorted { ($0.kickoff, $0.id) < ($1.kickoff, $1.id) } }
+
+    static func mergeLstv(previous: MatchSourcesRule.ExtSource?, days: [DayMatch], dayPagesFailed: Int, pages: [String: MatchPage],
+                          notRead: [DayMatch], fetchedAt: Int64, from: Int64, to: Int64, lastFull: String?) -> MatchSourcesRule.ExtSource {
+        var fresh = lstvSource(days, pages: pages, fetchedAt: fetchedAt, from: from, to: to)
+        var prevById: [String: MatchSourcesRule.ExtMatch] = [:]
+        for m in previous?.matches ?? [] { if let id = m.id { prevById[id] = m } }
+        var out: [MatchSourcesRule.ExtMatch] = fresh.matches.map { m in
+            var x = m
+            let read = days.first { $0.id == m.id }.flatMap { pages[$0.url] }.map { !$0.coverage.isEmpty } ?? false
+            if !read, let id = m.id, let p = prevById[id], !p.channels.isEmpty {
+                x = MatchSourcesRule.ExtMatch(home: m.home, away: m.away, kickoff: m.kickoff, competition: m.competition, sport: m.sport,
+                                              channels: p.channels, id: m.id, fetchedAt: p.fetchedAt ?? previous!.fetchedAt)
+            } else { x.fetchedAt = fetchedAt }
+            return x
+        }
+        if dayPagesFailed > 0, let previous {
+            let have = Set(out.compactMap(\.id))
+            for m in previous.matches where !(m.id.map(have.contains) ?? false) && m.kickoff >= from && m.kickoff < to {
+                var k = m; k.fetchedAt = m.fetchedAt ?? previous.fetchedAt; out.append(k)
+            }
+        }
+        let complete = dayPagesFailed == 0 && notRead.isEmpty
+        var parts: [String] = []
+        if dayPagesFailed > 0 { parts.append("\(dayPagesFailed) صفحة يوم لم تُقرأ (بقيت مبارياتها السابقة)") }
+        if !notRead.isEmpty { parts.append("\(notRead.count) مباراة بلا صفحة تغطية (بقيت قنواتها السابقة أو قنوات صفحة اليوم)") }
+        fresh.status = complete ? "جلب كامل لما في صفحات اليوم (البطولات المطوية في الموقع لا تُجلب)"
+            : "جلب جزئي: " + parts.joined(separator: "، ") + (lastFull.map { " · آخر جلب كامل " + $0 } ?? " · لا جلب كامل بعد") + " · البطولات المطوية في الموقع لا تُجلب"
+        fresh.matches = out.sorted { $0.kickoff < $1.kickoff }
+        return fresh
+    }
+
+    /// Never while the site asked to wait; at most every 15 min (also forced); every 6 h, or at once on a new local day.
+    static func due(now: Int64, lastAttempt: Int64, lastSuccess: Int64, blockedUntil: Int64, force: Bool, tz: TimeZone = .current) -> Bool {
+        if now < blockedUntil { return false }
+        if now - lastAttempt < 15 * 60_000 { return false }
+        if force || lastSuccess == 0 { return true }
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = tz
+        let d = { (t: Int64) in cal.startOfDay(for: Date(timeIntervalSince1970: Double(t) / 1000)) }
+        return d(lastSuccess) != d(now) || now - lastSuccess >= 6 * 3_600_000
+    }
+
+    /// Retry-After (seconds or an HTTP date), else 6 h for 429/403, else none.
+    static func waitAfter(code: Int, retryAfter: String?, now: Int64) -> Int64 {
+        let ra = retryAfter?.trimmingCharacters(in: .whitespaces)
+        if let ra, let s = Int64(ra) { return now + s * 1000 }
+        if let ra {
+            let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "GMT"); f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+            if let d = f.date(from: ra) { return Int64(d.timeIntervalSince1970 * 1000) }
+        }
+        return code == 429 || code == 403 ? now + 6 * 3_600_000 : now
+    }
+
     /// The "shasha-matches" v1 file, so a fetched schedule goes through the same checks and merge as an import.
     static func toJSON(_ s: MatchSourcesRule.ExtSource) -> Data {
         let f = ISO8601DateFormatter()
@@ -2406,6 +2482,7 @@ enum MatchFetchRule {
         let ms: [[String: Any]] = s.matches.map { m in
             var o: [String: Any] = ["home": m.home, "away": m.away, "kickoff": iso(m.kickoff)]
             if let c = m.competition { o["competition"] = c }; if let sp = m.sport { o["sport"] = sp }; if let id = m.id { o["id"] = id }
+            if let t = m.fetchedAt { o["fetchedAt"] = iso(t) }
             o["channels"] = m.channels.map { c -> [String: Any] in
                 var x: [String: Any] = ["name": c.name]
                 if let v = c.country { x["country"] = v }; if let v = c.id { x["id"] = v }
@@ -2415,7 +2492,7 @@ enum MatchFetchRule {
             return o
         }
         var src: [String: Any] = ["name": s.name, "kind": s.kind == .broadcaster ? "broadcaster" : "guide", "fetchedAt": iso(s.fetchedAt)]
-        if let u = s.url { src["url"] = u }
+        if let u = s.url { src["url"] = u }; if let st = s.status { src["status"] = st }
         let root: [String: Any] = ["format": "shasha-matches", "version": 1, "source": src, "matches": ms,
                                    "note": "Read automatically by Shasha for the owner's personal use; source: \(s.name)."]
         return (try? JSONSerialization.data(withJSONObject: root)) ?? Data()

@@ -1,31 +1,50 @@
 import Foundation
 
-/// 1.8.8: reads Live-FootballOnTV and LiveSoccerTV automatically (owner: personal use, his responsibility). Same limits
-/// as the TV's MatchFetch: at most every 6 h (Refresh: every 15 min), one request at a time with a pause, never the paths
-/// the sites' robots.txt disallow, a refusal stops that site until next time. Each result is kept as a normal schedule
-/// file (same checks and merge as an import; manual links stay). Plain page requests: nothing of the user is sent.
+/// 1.8.8–1.8.9: reads Live-FootballOnTV and LiveSoccerTV automatically (owner: personal use). Same rules as the TV's
+/// MatchFetch (owner 05:55): one run at a time whatever starts it; per site the last attempt / success / complete fetch;
+/// 429/403 and Retry-After honoured; a failed or unexpected page never replaces a good schedule; a partial LiveSoccerTV
+/// run keeps the older coverage of what it could not read and says so; progress published for the screen.
+///
+/// What actually happens on the iPhone: there is no start timer — a run starts when the matches screen opens (if due)
+/// or on Refresh / «fetch now». It runs only while the app is in the foreground: if the app goes to the background iOS
+/// suspends it; when the app comes back it continues, and requests that failed meanwhile count as not read (the partial
+/// rules above keep the older data). Nothing is fetched while the app is closed.
 @MainActor
-final class MatchFetch {
+final class MatchFetch: ObservableObject {
     static let shared = MatchFetch()
-    private let every: TimeInterval = 6 * 3600, minForced: TimeInterval = 15 * 60
-    private let maxMatchPages = 80
-    private(set) var running = false
-    var lastRun: Date? {
-        get { UserDefaults.standard.object(forKey: "matchFetch.last") as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: "matchFetch.last") }
+    static let maxMatchPages = 80
+    @Published private(set) var progress: String?
+    private var job: Task<Bool, Never>?
+    var running: Bool { job != nil }
+
+    private let d = UserDefaults.standard
+    private func k(_ site: String, _ x: String) -> String { "matchFetch." + (site.split(separator: " ").first.map(String.init) ?? site) + "." + x }
+    func lastAttempt(_ s: String) -> Int64 { Int64(d.double(forKey: k(s, "attempt"))) }
+    func lastSuccess(_ s: String) -> Int64 { Int64(d.double(forKey: k(s, "success"))) }
+    func lastFull(_ s: String) -> Int64 { Int64(d.double(forKey: k(s, "full"))) }
+    func blockedUntil(_ s: String) -> Int64 { Int64(d.double(forKey: k(s, "blocked"))) }
+    func lastLine(_ s: String) -> String { d.string(forKey: k(s, "line")) ?? "" }
+    private func set(_ s: String, _ x: String, _ v: Int64) { d.set(Double(v), forKey: k(s, x)) }
+
+    let sites = [MatchFetchRule.lfotv, MatchFetchRule.lstv]
+    private static func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
+    func due(_ s: String, force: Bool) -> Bool {
+        MatchFetchRule.due(now: Self.now(), lastAttempt: lastAttempt(s), lastSuccess: lastSuccess(s), blockedUntil: blockedUntil(s), force: force)
     }
-    var lastResult: String {
-        get { UserDefaults.standard.string(forKey: "matchFetch.result") ?? "" }
-        set { UserDefaults.standard.set(newValue, forKey: "matchFetch.result") }
+    func anyDue(force: Bool) -> Bool { !running && sites.contains { due($0, force: force) } }
+
+    func summary() -> String {
+        sites.map { s in
+            let f = { (t: Int64) in t == 0 ? "—" : MatchIndexBuilder.fmt(t) }
+            var l = "\(s): آخر محاولة \(f(lastAttempt(s))) · آخر نجاح \(f(lastSuccess(s)))"
+            if blockedUntil(s) > Self.now() { l += " · ينتظر طلب الموقع لين \(f(blockedUntil(s)))" }
+            if !lastLine(s).isEmpty { l += "\n   " + lastLine(s) }
+            return l
+        }.joined(separator: "\n")
     }
 
-    func due(force: Bool = false) -> Bool {
-        guard !running else { return false }
-        guard let l = lastRun else { return true }
-        return Date().timeIntervalSince(l) >= (force ? minForced : every)
-    }
-
-    private struct Refused: Error { let code: Int }
+    private struct Refused: Error { let code: Int; let retryAfter: String? }
+    private struct Unexpected: Error {}
 
     private nonisolated static func get(_ url: String) async throws -> String {
         guard let u = URL(string: url) else { throw URLError(.badURL) }
@@ -34,75 +53,122 @@ final class MatchFetch {
         r.setValue("text/html", forHTTPHeaderField: "Accept")
         r.setValue("en", forHTTPHeaderField: "Accept-Language")
         let (data, resp) = try await URLSession.shared.data(for: r)
-        let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-        guard (200..<300).contains(code) else { throw Refused(code: code) }
+        let http = resp as? HTTPURLResponse
+        let code = http?.statusCode ?? 0
+        guard (200..<300).contains(code) else { throw Refused(code: code, retryAfter: http?.value(forHTTPHeaderField: "Retry-After")) }
         guard data.count <= 8 * 1_048_576 else { throw URLError(.dataLengthExceedsMaximum) }
         return String(decoding: data, as: UTF8.self)
     }
 
-    /// Reads both sites when due (or `force`). Returns true when a schedule was updated.
-    func run(force: Bool = false, step: @escaping (String) -> Void = { _ in }) async -> Bool {
-        guard due(force: force) else { return false }
-        running = true; lastRun = Date()
-        defer { running = false }
-        var lines: [String] = []
+    private func refused(_ s: String, _ e: Refused) -> String {
+        let until = MatchFetchRule.waitAfter(code: e.code, retryAfter: e.retryAfter, now: Self.now())
+        if until > Self.now() { set(s, "blocked", until) }
+        return "رفض الموقع (HTTP \(e.code))" + (until > Self.now() ? " — لن نطلبه قبل \(MatchIndexBuilder.fmt(until))" : "") + " · بقي الجدول السابق كما هو"
+    }
+
+    /// Starts a run if one is due and none is going on; a second call joins the running one. True when a schedule changed.
+    func run(force: Bool, idx: MatchSourcesRule.LibIndex?) async -> Bool {
+        if let job { return await job.value }
+        guard anyDue(force: force) else { return false }
+        let t = Task { await self.work(force: force, idx: idx) }
+        job = t
+        let r = await t.value
+        job = nil; progress = nil
+        return r
+    }
+
+    private func work(force: Bool, idx: MatchSourcesRule.LibIndex?) async -> Bool {
         var changed = false
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
         let from = Int64(today.timeIntervalSince1970 * 1000)
         let to = Int64((cal.date(byAdding: .day, value: 2, to: today) ?? today.addingTimeInterval(172_800)).timeIntervalSince1970 * 1000)
-        func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
+        let kept = Dictionary(MatchSourceFiles.list().map { ($0.source.name, $0.source) }, uniquingKeysWith: { a, _ in a })
+        func counts(_ s: MatchSourcesRule.ExtSource) -> String {
+            let c = MatchSourcesRule.counts(s, idx: idx)
+            return "\(c.entries) إدخال نقل · \(c.unique) قناة فريدة" + (c.inLibrary.map { " · \($0) منها في مكتبتك" } ?? "")
+        }
         func keep(_ s: MatchSourcesRule.ExtSource) -> String? {
-            switch MatchSourceFiles.store(MatchFetchRule.toJSON(s)) {
-            case .success: changed = true; return nil
-            case .failure(let f): return f.text
-            }
+            switch MatchSourceFiles.store(MatchFetchRule.toJSON(s)) { case .success: changed = true; return nil; case .failure(let f): return f.text }
         }
         // Live-FootballOnTV
-        do {
-            step("أجلب Live-FootballOnTV…")
-            let t0 = Date()
-            let html = try await Self.get(MatchFetchRule.lfotvURL)
-            let s = await Task.detached { MatchFetchRule.parseLfotv(html, fetchedAt: Int64(Date().timeIntervalSince1970 * 1000), from: from, to: to) }.value
-            if s.matches.isEmpty { lines.append("Live-FootballOnTV: الصفحة وصلت بلا مباريات لليوم وبكرة (تغيّر شكلها؟) — بقي الجدول السابق") }
-            else if let e = keep(s) { lines.append("Live-FootballOnTV: لم يُحفظ: " + e) }
-            else { lines.append("Live-FootballOnTV: \(s.matches.count) مباراة · \(s.matches.reduce(0) { $0 + $1.channels.count }) قناة · \(Int(Date().timeIntervalSince(t0))) ث") }
-        } catch let e as Refused { lines.append("Live-FootballOnTV: رفض الموقع (HTTP \(e.code)) — نحاول في الموعد التالي فقط") }
-        catch { lines.append("Live-FootballOnTV: تعذّر (\(error.localizedDescription))") }
+        let lf = MatchFetchRule.lfotv
+        if due(lf, force: force) {
+            set(lf, "attempt", Self.now()); progress = "Live-FootballOnTV: نجلب الصفحة…"
+            var line: String
+            do {
+                let t0 = Date()
+                let html = try await Self.get(MatchFetchRule.lfotvURL)
+                guard MatchFetchRule.looksLikeLfotv(html) else { throw Unexpected() }
+                var s = await Task.detached { MatchFetchRule.parseLfotv(html, fetchedAt: Self.now(), from: from, to: to) }.value
+                s.status = "جلب كامل للصفحة"
+                if s.matches.isEmpty { line = "الصفحة بلا مباريات لليوم وبكرة — بقي الجدول السابق" }
+                else if let e = keep(s) { line = "لم يُحفظ: " + e }
+                else {
+                    set(lf, "success", Self.now()); set(lf, "full", Self.now())
+                    line = "\(s.matches.count) مباراة · \(counts(s)) · \(Int(Date().timeIntervalSince(t0))) ث"
+                }
+            } catch let e as Refused { line = refused(lf, e) }
+            catch is Unexpected { line = "وصلت صفحة غير متوقعة (حماية من الروبوتات أو تغيّر شكلها) — بقي الجدول السابق" }
+            catch { line = "تعذّر (\(error.localizedDescription)) — بقي الجدول السابق" }
+            d.set(MatchIndexBuilder.fmt(Self.now()) + " · " + line, forKey: k(lf, "line"))
+        }
         // LiveSoccerTV
-        do {
-            let t0 = Date()
-            var days: [MatchFetchRule.DayMatch] = []
-            for u in MatchFetchRule.lstvDayURLs(today: Date(), days: 2) {
-                step("أجلب جدول LiveSoccerTV…")
-                let html = try await Self.get(u)
-                days += await Task.detached { MatchFetchRule.parseLstvDay(html) }.value
-                try? await Task.sleep(nanoseconds: 1_500_000_000)
-            }
-            var seen = Set<String>()
-            let inWindow = days.filter { seen.insert($0.id).inserted && $0.kickoff >= from - 3 * 3_600_000 && $0.kickoff < to }.sorted { $0.kickoff < $1.kickoff }
-            var pages: [String: MatchFetchRule.MatchPage] = [:]
-            var refused: Int?
-            for (i, d) in inWindow.prefix(maxMatchPages).enumerated() {
-                step("أجلب قنوات المباريات من LiveSoccerTV… \(i + 1)/\(min(inWindow.count, maxMatchPages))")
-                do {
-                    let html = try await Self.get(d.url)
-                    pages[d.url] = await Task.detached { MatchFetchRule.parseLstvMatch(html) }.value
-                } catch let e as Refused { refused = e.code; break } catch { }
-                try? await Task.sleep(nanoseconds: 1_500_000_000)
-            }
-            let s = MatchFetchRule.lstvSource(inWindow, pages: pages, fetchedAt: now(), from: from, to: to)
-            if s.matches.isEmpty { lines.append("LiveSoccerTV: ما وجدنا مباريات في صفحات اليوم (تغيّر شكلها؟) — بقي الجدول السابق") }
-            else if let e = keep(s) { lines.append("LiveSoccerTV: لم يُحفظ: " + e) }
-            else {
-                lines.append("LiveSoccerTV: \(s.matches.count) مباراة · صفحات التغطية الدولية \(pages.count)/\(inWindow.count)"
-                             + (inWindow.count > maxMatchPages ? " (أول \(maxMatchPages) بالموعد)" : "")
-                             + " · \(s.matches.reduce(0) { $0 + $1.channels.count }) قناة · \(Int(Date().timeIntervalSince(t0))) ث"
-                             + (refused.map { " · رفض الموقع (HTTP \($0)) فتوقفنا" } ?? ""))
-            }
-        } catch let e as Refused { lines.append("LiveSoccerTV: رفض الموقع (HTTP \(e.code)) — نحاول في الموعد التالي فقط") }
-        catch { lines.append("LiveSoccerTV: تعذّر (\(error.localizedDescription))") }
-        lastResult = MatchIndexBuilder.fmt(now()) + "\n" + lines.joined(separator: "\n")
+        let ls = MatchFetchRule.lstv
+        if due(ls, force: force) {
+            set(ls, "attempt", Self.now())
+            var line: String
+            do {
+                let t0 = Date()
+                var days: [MatchFetchRule.DayMatch] = []
+                var dayFailed = 0
+                let urls = MatchFetchRule.lstvDayURLs(today: Date(), days: 2)
+                for (i, u) in urls.enumerated() {
+                    progress = "LiveSoccerTV: صفحة اليوم \(i + 1)/\(urls.count)…"
+                    do {
+                        let html = try await Self.get(u)
+                        guard MatchFetchRule.looksLikeLstvDay(html) else { throw Unexpected() }
+                        days += await Task.detached { MatchFetchRule.parseLstvDay(html) }.value
+                    } catch let e as Refused { throw e } catch { dayFailed += 1 }
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                }
+                guard !days.isEmpty else { throw Unexpected() }
+                var seen = Set<String>()
+                let inWindow = MatchFetchRule.priority(days.filter { seen.insert($0.id).inserted && $0.kickoff >= from - 3 * 3_600_000 && $0.kickoff < to })
+                let toRead = Array(inWindow.prefix(Self.maxMatchPages))
+                var pages: [String: MatchFetchRule.MatchPage] = [:]
+                var refusal: Refused?
+                for (i, m) in toRead.enumerated() {
+                    progress = "LiveSoccerTV: قنوات المباريات \(i + 1)/\(toRead.count)" + (inWindow.count > toRead.count ? " (من \(inWindow.count))" : "")
+                    do {
+                        let html = try await Self.get(m.url)
+                        if MatchFetchRule.looksLikeLstvMatch(html) { pages[m.url] = await Task.detached { MatchFetchRule.parseLstvMatch(html) }.value }
+                    } catch let e as Refused { refusal = e; break } catch { }
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                }
+                let notRead = inWindow.filter { pages[$0.url]?.coverage.isEmpty ?? true }
+                let lastFull = lastFull(ls) > 0 ? MatchIndexBuilder.fmt(lastFull(ls)) : nil
+                let s = MatchFetchRule.mergeLstv(previous: kept[ls], days: inWindow, dayPagesFailed: dayFailed, pages: pages, notRead: notRead,
+                                                 fetchedAt: Self.now(), from: from, to: to, lastFull: lastFull)
+                if s.matches.isEmpty { line = "بلا مباريات — بقي الجدول السابق" }
+                else if let e = keep(s) { line = "لم يُحفظ: " + e }
+                else {
+                    set(ls, "success", Self.now())
+                    if dayFailed == 0 && notRead.isEmpty { set(ls, "full", Self.now()) }
+                    let excluded = inWindow.dropFirst(Self.maxMatchPages)
+                    line = "\(s.matches.count) مباراة · صفحات التغطية \(pages.count)/\(inWindow.count) · \(counts(s)) · \(Int(Date().timeIntervalSince(t0))) ث"
+                    if !excluded.isEmpty {
+                        line += " · بعد حد \(Self.maxMatchPages) (الأولوية بالموعد ثم رقم المباراة) بقيت بلا تغطية دولية: "
+                            + excluded.map { "\($0.home) × \($0.away) \(MatchIndexBuilder.fmt($0.kickoff))" }.joined(separator: "، ")
+                    }
+                    line += " · " + (s.status ?? "")
+                    if let refusal { line += " · " + refused(ls, refusal) }
+                }
+            } catch let e as Refused { line = refused(ls, e) }
+            catch is Unexpected { line = "وصلت صفحات غير متوقعة (حماية من الروبوتات أو تغيّر شكلها) — بقي الجدول السابق" }
+            catch { line = "تعذّر (\(error.localizedDescription)) — بقي الجدول السابق" }
+            d.set(MatchIndexBuilder.fmt(Self.now()) + " · " + line, forKey: k(ls, "line"))
+        }
         return changed
     }
 }
