@@ -54,6 +54,11 @@ and a library channel with the same 4K name as confirmed; an HD channel alone ne
   (personal use, source named), the permission drafts remain valid if the use ever goes beyond the owner, and the apps
   do not work around a refusal (403/429, bot checks): they stop and say so.
 
+- 24/11 07:24 the owner reports that he sent the permission request to LiveSoccerTV and that **they agreed**. Recorded
+  as stated by the owner; the reply itself (date, sender, any conditions such as rate, attribution or scope) is to be
+  kept with this record (docs/permissions/, without personal data). Until its conditions are known, the app keeps the
+  limits below (personal use, source named, one request at a time, no disallowed paths, stop on refusal).
+
 ## Automatic reading (owner 01:20–01:22: «جيب من الكل… شخصي، أنا أتحمل المسؤولية») — TV 0.9.39 / iPhone 1.8.8
 
 The apps now read both sites themselves, on the device, for the owner's personal use (no redistribution):
