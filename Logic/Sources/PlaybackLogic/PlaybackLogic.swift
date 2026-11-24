@@ -1208,10 +1208,11 @@ enum MatchGuideRule {
         // 1.9.4 (owner's photo: «Serie A - Monza × Fiorentina», «Monza × Fiorentina Serie A», «Serie A × Resumos Da Jornada»):
         // a competition before the home team or after the away team is not part of the name; a side that is only a
         // competition (or a recap programme) means the title is not a match. Same as the TV's 0.9.49.
-        if !["-", "–", "—"].contains(trim(sep)), let g = groups(#"^.*\s[-–—]\s(\S.*)$"#, a) { a = trim(g[1]) }
+        if !["-", "–", "—"].contains(trim(sep)),
+           let d = [" - ", " – ", " — "].compactMap({ a.range(of: $0, options: .backwards) }).max(by: { $0.lowerBound < $1.lowerBound }),
+           !trim(String(a[d.upperBound...])).isEmpty { a = trim(String(a[d.upperBound...])) }
         a = stripCompetition(a, lead: true); b = stripCompetition(b, lead: false)
-        if isCompetition(a) || isCompetition(b) || foldWords(a).range(of: recap, options: .regularExpression) != nil
-            || foldWords(b).range(of: recap, options: .regularExpression) != nil { return nil }
+        if isCompetition(a) || isCompetition(b) || isRecap(a) || isRecap(b) { return nil }
         var lead: String?
         let roundLead = "^(.*?)(?:\\b\\d{1,2}\\s*\\.?\\s*(?:\(roundWords))\\b|\\b(?:\(roundWords))\\s*\\d{1,2}\\b)\\s*[:\\-–.]?\\s*(\\S.*)$"
         if let g = groups(roundLead, a, caseInsensitive: true) {
@@ -1349,6 +1350,9 @@ enum MatchGuideRule {
         "ligue 1", "ligue 2", "super lig", "eredivisie", "primeira liga", "liga portugal", "champions league", "europa league",
         "conference league", "saudi pro league", "roshn saudi league", "copa del rey", "coppa italia", "fa cup", "carabao cup", "efl cup",
         "brasileirao", "uefa champions league", "uefa europa league"]
+    /// Compiled once (1.9.5: teams() runs for every programme of the guide).
+    private static let recapRx = try! NSRegularExpression(pattern: recap)
+    private static func isRecap(_ x: String) -> Bool { let f = foldWords(x); return recapRx.firstMatch(in: f, range: NSRange(f.startIndex..., in: f)) != nil }
     private static let recap = #"\b(resumo|resumos|melhores momentos|skrot|podsumowanie|ozetler|ozeti|goller|resumen|resumenes|sintesi|highlights|recap)\b"#
     private static func isCompetition(_ x: String) -> Bool { let f = trim(foldWords(x)); return competitions.contains(f) }
     private static func stripCompetition(_ x: String, lead: Bool) -> String {
@@ -1938,7 +1942,8 @@ enum MatchSourcesRule {
     }
 
     static func sameMatch(_ g: MatchGuideRule.Group, _ m: ExtMatch) -> Bool {
-        if g.replay { return false }
+        // 1.9.5: the cheap time check first — every schedule match was compared by name with every guide card
+        if g.replay || m.kickoff < g.start - 3 * 3_600_000 || m.kickoff > g.stop + 3_600_000 { return false }
         let aud = Set(g.entries.flatMap(\.audience))
         if !aud.isEmpty && aud != MatchGuideRule.audience(m.home + " " + m.away) { return false }
         let teams = (teamsMatch(g.home, m.home) && teamsMatch(g.away, m.away)) || (teamsMatch(g.home, m.away) && teamsMatch(g.away, m.home))
@@ -1953,12 +1958,12 @@ enum MatchSourcesRule {
                       manual: [Manual], guideSource: String, guideAt: Int64, from: Int64, to: Int64, tz: TimeZone = .current) -> [Row] {
         var accs: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)])] = dedupeGroups(groups).map { ($0, []) }
         for s in sources {
-            for m in s.matches where m.kickoff >= from - 3 * 3_600_000 && m.kickoff < to {
+            for m in s.matches where m.kickoff >= from - 3 * 3_600_000 && m.kickoff < to { autoreleasepool {
                 if let i = accs.firstIndex(where: { $0.group != nil && sameMatch($0.group!, m) }) ?? accs.firstIndex(where: { a in
                     a.group == nil && a.ext.contains { abs($0.1.kickoff - m.kickoff) <= 20 * 60_000 && teamsMatch($0.1.home, m.home) && teamsMatch($0.1.away, m.away) } }) {
                     accs[i].ext.append((s, m))
                 } else { accs.append((nil, [(s, m)])) }
-            }
+            } }
         }
         // 1.9.3 (owner: the same match listed more than once): schedule-only rows of the same match (same teams after
         // short names, same day, within 3 h) are one row. Same rule as the TV's 0.9.47.
@@ -2181,14 +2186,19 @@ enum MatchSourcesRule {
             [canonTeam(MatchGuideRule.teamKey(g.home)), canonTeam(MatchGuideRule.teamKey(g.away))].sorted().joined(separator: "|")
                 + Set(g.entries.flatMap(\.audience)).sorted().map { "#" + $0 }.joined()
         }
+        // 1.9.5 (owner 10:12: «قراءة الدليل» then the app closed): the pair key is worked out once per card and the earlier
+        // cards of the same pair are found by key — 1.9.4 compared every card with every kept one, working out both
+        // keys again each time (thousands of cards → millions of name foldings).
         var kept: [MatchGuideRule.Group] = []
+        var byPair: [String: [Int]] = [:]
         for g in groups.sorted(by: { $0.start < $1.start }) {
-            if let i = kept.firstIndex(where: { pair($0) == pair(g) && g.start - $0.start <= 12 * 3_600_000 }) {
+            let k = autoreleasepool { pair(g) }
+            if let i = byPair[k]?.first(where: { g.start - kept[$0].start <= 12 * 3_600_000 }) {
                 if g.start - kept[i].start <= 90 * 60_000 {
-                    let k = kept[i]
-                    kept[i] = MatchGuideRule.Group(key: k.key, home: k.home, away: k.away, start: k.start, entries: k.entries + g.entries)
+                    let o = kept[i]
+                    kept[i] = MatchGuideRule.Group(key: o.key, home: o.home, away: o.away, start: o.start, entries: o.entries + g.entries)
                 }
-            } else { kept.append(g) }
+            } else { byPair[k, default: []].append(kept.count); kept.append(g) }
         }
         return kept
     }

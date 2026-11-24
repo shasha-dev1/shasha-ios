@@ -1859,3 +1859,24 @@ final class MatchPhotoDupTests: XCTestCase {
         XCTAssertEqual(g.first?.entries.count, 3)
     }
 }
+
+/// 1.9.5 (owner 10:12: «قراءة الدليل» then the app closed): a big guide merges in reasonable time.
+final class MatchMergeSpeedTests: XCTestCase {
+    func testThousandsOfCardsAndHundredsOfScheduleMatches() {
+        let h: Int64 = 3_600_000, t0: Int64 = 1_795_550_400_000
+        var es: [MatchGuideRule.Entry] = []
+        for i in 0..<4000 {
+            let title = "Team\(i % 900) v Club\(i % 900)"
+            es.append(MatchGuideRule.Entry(channel: "C\(i % 50)", source: "S1", start: t0 + Int64(i % 40) * h / 2, stop: t0 + Int64(i % 40) * h / 2 + 2 * h,
+                                           title: title, teams: MatchGuideRule.teams(title)!, kind: .unknown))
+        }
+        let groups = MatchGuideRule.group(es)
+        let ms = (0..<300).map { i in MatchSourcesRule.ExtMatch(home: "Side\(i)", away: "Other\(i)", kickoff: t0 + Int64(i % 40) * h / 2, competition: nil, sport: "football",
+                                                                 channels: [MatchSourcesRule.ExtChannel(name: "X\(i)", country: nil, programmeStart: nil)]) }
+        let src = MatchSourcesRule.ExtSource(name: "S", kind: .broadcaster, url: nil, fetchedAt: 1, importedAt: 1, matches: ms)
+        let t = Date()
+        _ = MatchSourcesRule.merge(groups, sources: [src], idx: MatchSourcesRule.LibIndex([]), pool: MatchGuideRule.ExtraPool([]), manual: [],
+                                   guideSource: "EPG", guideAt: 0, from: t0 - 20 * h, to: t0 + 40 * h)
+        XCTAssertLessThan(Date().timeIntervalSince(t), 20)
+    }
+}
