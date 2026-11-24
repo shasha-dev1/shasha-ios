@@ -1,0 +1,365 @@
+{
+ "format": "shasha-rights",
+ "version": 2,
+ "competition": {
+  "name": "Serie A",
+  "keys": [
+   "serie a",
+   "italian serie a",
+   "الدوري الإيطالي",
+   "الدوري الايطالي"
+  ],
+  "excludes": [
+   "coppa",
+   "supercoppa",
+   "brazil",
+   "brasileiro",
+   "brasileirao",
+   "ecuador",
+   "femminile",
+   "women",
+   "womens",
+   "primavera",
+   "serie a2",
+   "futsal"
+  ]
+ },
+ "season": "2026/27",
+ "source": {
+  "url": "https://www.legaseriea.it/",
+  "title": "Lega Serie A",
+  "publisher": "Lega Serie A",
+  "kind": "official",
+  "retrievedAt": "2026-11-24"
+ },
+ "territories": [
+  {
+   "territory": "United Kingdom",
+   "region": "Europe",
+   "countries": [
+    "بريطانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "كل المباريات، سبع منها حصرية كل جولة"
+    },
+    {
+     "name": "TNT Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha",
+     "note": "من مصدر ثانوي (Sportcal) — بلا إعلان رسمي وجدناه"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "2026/27"
+  },
+  {
+   "territory": "Republic of Ireland",
+   "region": "Europe",
+   "countries": [
+    "إيرلندا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "كل المباريات، سبع منها حصرية كل جولة"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "2026/27"
+  },
+  {
+   "territory": "France",
+   "region": "Europe",
+   "countries": [
+    "فرنسا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري، كل المباريات"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "Germany",
+   "region": "Europe",
+   "countries": [
+    "ألمانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري، كل المباريات"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "Austria",
+   "region": "Europe",
+   "countries": [
+    "النمسا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري، كل المباريات"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "Switzerland",
+   "region": "Europe",
+   "countries": [
+    "سويسرا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري، كل المباريات"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "United States of America",
+   "region": "Americas",
+   "countries": [
+    "أمريكا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Paramount+",
+     "entity": "platform",
+     "rights": [
+      "live",
+      "digital"
+     ],
+     "channels": [],
+     "brands": [
+      "Paramount+"
+     ],
+     "brandsFrom": "shasha",
+     "note": "كل المباريات بثًا عبر Paramount+ (CBS Sports)"
+    }
+   ],
+   "source": {
+    "url": "https://www.paramountpressexpress.com/paramount-plus/releases/?view=112947-cbs-sports-and-lega-serie-a-extend-us-media-rights-partnership-through-20262027-season-with-all-matches-to-continue-to-be-streamed-on-paramount",
+    "title": "CBS Sports and Lega Serie A Extend U.S. Media Rights Partnership Through 2026/2027 Season (Paramount, 4 Jun 2026)",
+    "publisher": "Paramount",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى 2026/27"
+  },
+  {
+   "territory": "Cyprus",
+   "region": "Europe",
+   "countries": [
+    "قبرص"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Cytavision",
+     "entity": "company",
+     "rights": [
+      "live",
+      "selected"
+     ],
+     "channels": [],
+     "brands": [
+      "Cytavision"
+     ],
+     "brandsFrom": "shasha",
+     "note": "الصفحة: البث المباشر يشمل مباريات مختارة"
+    }
+   ],
+   "source": {
+    "url": "https://www.cyta.com.cy/cytavision-sports-content/en",
+    "title": "Cytavision Sports content (cyta.com.cy)",
+    "publisher": "Cyta",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "note": "الصفحة لا تذكر الموسم؛ كما هي في 2026-11-24"
+  },
+  {
+   "territory": "MENA",
+   "region": null,
+   "countries": [
+    "عربي"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة"
+  },
+  {
+   "territory": "Netherlands",
+   "region": null,
+   "countries": [
+    "هولندا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة"
+  },
+  {
+   "territory": "Türkiye",
+   "region": null,
+   "countries": [
+    "تركيا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة"
+  },
+  {
+   "territory": "Spain",
+   "region": null,
+   "countries": [
+    "إسبانيا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة"
+  },
+  {
+   "territory": "Portugal",
+   "region": null,
+   "countries": [
+    "البرتغال"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة"
+  },
+  {
+   "territory": "Italy",
+   "region": null,
+   "countries": [
+    "إيطاليا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة"
+  }
+ ],
+ "technicalWindow": {
+  "from": "2026-07-01",
+  "to": "2027-06-30",
+  "note": "نافذة تقنية مشتقة من اسم الموسم — ليست تواريخ عقد، ولا تُحذف البيانات بسببها"
+ }
+}

@@ -1,0 +1,70 @@
+{
+ "format": "shasha-rights",
+ "version": 2,
+ "competition": {
+  "name": "Ligue 1",
+  "keys": [
+   "ligue 1",
+   "الدوري الفرنسي"
+  ],
+  "excludes": [
+   "algeria",
+   "algerian",
+   "tunisia",
+   "ivory",
+   "cote",
+   "senegal",
+   "cameroon",
+   "benin",
+   "women",
+   "feminine"
+  ]
+ },
+ "season": "2026/27",
+ "source": {
+  "url": "https://www.cyta.com.cy/cytavision-sports-content/en",
+  "title": "Cytavision Sports content (cyta.com.cy)",
+  "publisher": "Cyta",
+  "kind": "official",
+  "retrievedAt": "2026-11-24"
+ },
+ "territories": [
+  {
+   "territory": "Cyprus",
+   "region": "Europe",
+   "countries": [
+    "قبرص"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Cytavision",
+     "entity": "company",
+     "rights": [
+      "live",
+      "selected"
+     ],
+     "channels": [],
+     "brands": [
+      "Cytavision"
+     ],
+     "brandsFrom": "shasha",
+     "note": "الصفحة: البث المباشر يشمل مباريات مختارة"
+    }
+   ],
+   "source": {
+    "url": "https://www.cyta.com.cy/cytavision-sports-content/en",
+    "title": "Cytavision Sports content (cyta.com.cy)",
+    "publisher": "Cyta",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "note": "الصفحة لا تذكر الموسم؛ كما هي في 2026-11-24"
+  }
+ ],
+ "technicalWindow": {
+  "from": "2026-07-01",
+  "to": "2027-06-30",
+  "note": "نافذة تقنية مشتقة من اسم الموسم — ليست تواريخ عقد، ولا تُحذف البيانات بسببها"
+ }
+}

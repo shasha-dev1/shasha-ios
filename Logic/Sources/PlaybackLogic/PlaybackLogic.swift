@@ -209,71 +209,118 @@ enum GroupOrderRule {
     }
 }
 
-// MARK: - 1.10.4 (owner 20:50): competition → territory → rights holder (same rules as the TV's RightsCore 0.9.57)
+// MARK: - 1.10.4 / 1.10.5 (owner 20:50, 21:17, 21:18): competition → territory → rights holder (TV RightsCore 0.9.58)
 
-/// Rights say who MAY show a competition in a country; never which channel shows a match. Holders are listed as «صاحب حقوق
-/// البطولة» (all countries; the country is an optional filter); the channel of a match comes only from a schedule or the EPG.
+/// Rights say who MAY show a competition in a country; never which channel shows a match. The channels of a match come only
+/// from a schedule or the EPG («القنوات الناقلة»); a holder whose network is in the library is a shortcut to its versions
+/// there (4K first), opened by hand. Each record keeps its source, season, stated contract and kind of rights; a technical
+/// season window only marks a match outside it; unverified territories are missing data, never guessed.
 enum RightsRule {
     struct BadFile: Error { let reason: String }
-    struct Holder: Equatable { let name: String; let highlightsOnly: Bool; let channels: [String] }
-    struct Territory: Equatable { let territory: String; let region: String?; let countries: [String]; let codes: [String]; let holders: [Holder] }
+    struct Source: Equatable {
+        let url: String, title: String, publisher: String, kind: String, retrievedAt: String
+        var label: String { "\(publisher) (\(kind == "official" ? "رسمي" : "مصدر ثانوي"))" }
+    }
+    struct Holder: Equatable {
+        let name: String, entity: String, rights: [String], channels: [String], brands: [String]
+        let brandsFrom: String?, sublicence: String?, note: String?
+        var highlightsOnly: Bool { !rights.isEmpty && rights.allSatisfy { $0 == "highlights" } }
+        var entityLabel: String? { ["company": "شركة", "platform": "منصة", "channel": "قناة"][entity] }
+        var rightsLabel: String { rights.compactMap { ["live": "مباشر", "highlights": "ملخصات", "digital": "رقمي", "selected": "مباريات مختارة"][$0] }.joined(separator: " · ") }
+    }
+    struct Territory: Equatable {
+        let territory: String, region: String?, countries: [String], status: String, source: Source?, contract: String?, note: String?, holders: [Holder]
+        var verified: Bool { status == "verified" }
+    }
     struct Rights: Equatable {
         let competition: String, keys: [String], excludes: [String], season: String
-        let validFrom: Int64, validTo: Int64, validityNote: String?
-        let sourceUrl: String, sourceTitle: String, publisher: String, kind: String, retrievedAt: String
-        let territories: [Territory]
-        var label: String { "\(publisher) (\(kind == "official" ? "رسمي" : "مصدر ثانوي")) · موسم \(season) · أُخذ \(retrievedAt)" }
+        let windowFrom: Int64?, windowTo: Int64?
+        let source: Source, territories: [Territory]
+        var label: String { "\(source.label) · موسم \(season)" }
     }
 
     private static func day(_ s: String) -> Int64? {
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "UTC"); f.dateFormat = "yyyy-MM-dd"
         return f.date(from: s).map { Int64($0.timeIntervalSince1970 * 1000) }
     }
+    private static func src(_ o: [String: Any]?) -> Source? {
+        guard let o else { return nil }
+        return Source(url: o["url"] as? String ?? "", title: o["title"] as? String ?? "", publisher: o["publisher"] as? String ?? "",
+                      kind: o["kind"] as? String ?? "", retrievedAt: o["retrievedAt"] as? String ?? "")
+    }
+    private static func str(_ v: Any?) -> String? { (v as? String).flatMap { $0.isEmpty ? nil : $0 } }
 
     static func parse(_ data: Data) throws -> Rights {
         guard let o = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw BadFile(reason: "ليس JSON") }
-        guard o["format"] as? String == "shasha-rights", o["version"] as? Int == 1 else { throw BadFile(reason: "ليس ملف shasha-rights الإصدار 1") }
-        guard let c = o["competition"] as? [String: Any], let s = o["source"] as? [String: Any], let url = s["url"] as? String, !url.isEmpty,
-              let season = o["season"] as? String, let vf = (o["validFrom"] as? String).flatMap(day), let vt = (o["validTo"] as? String).flatMap(day),
-              let ts = o["territories"] as? [[String: Any]] else { throw BadFile(reason: "حقول ناقصة") }
-        let terr = ts.map { t in
-            Territory(territory: t["territory"] as? String ?? "", region: t["region"] as? String, countries: t["countries"] as? [String] ?? [],
-                      codes: t["codes"] as? [String] ?? [],
-                      holders: (t["holders"] as? [[String: Any]] ?? []).map { Holder(name: $0["name"] as? String ?? "", highlightsOnly: $0["highlightsOnly"] as? Bool ?? false, channels: $0["channels"] as? [String] ?? []) })
+        guard o["format"] as? String == "shasha-rights", let v = o["version"] as? Int, (1...2).contains(v) else { throw BadFile(reason: "ليس ملف shasha-rights الإصدار 1 أو 2") }
+        guard let c = o["competition"] as? [String: Any], let source = src(o["source"] as? [String: Any]), !source.url.isEmpty,
+              let season = o["season"] as? String, let ts = o["territories"] as? [[String: Any]] else { throw BadFile(reason: "حقول ناقصة") }
+        let terr = ts.map { t -> Territory in
+            let hs = (t["holders"] as? [[String: Any]] ?? []).map { h -> Holder in
+                var rights = h["rights"] as? [String] ?? []
+                if rights.isEmpty { rights = (h["highlightsOnly"] as? Bool ?? false) ? ["highlights"] : ["live"] }   // v1
+                return Holder(name: h["name"] as? String ?? "", entity: h["entity"] as? String ?? "unknown", rights: rights, channels: h["channels"] as? [String] ?? [],
+                              brands: h["brands"] as? [String] ?? [], brandsFrom: str(h["brandsFrom"]), sublicence: str(h["sublicence"]), note: str(h["note"]))
+            }
+            return Territory(territory: t["territory"] as? String ?? "", region: str(t["region"]), countries: t["countries"] as? [String] ?? [],
+                             status: t["status"] as? String ?? "verified", source: src(t["source"] as? [String: Any]), contract: str(t["contract"]),
+                             note: str(t["note"]), holders: hs)
         }
+        let win = o["technicalWindow"] as? [String: Any]
+        let wf = (str(win?["from"]) ?? str(o["validFrom"])).flatMap(day)
+        let wt = (str(win?["to"]) ?? str(o["validTo"])).flatMap(day).map { $0 + 86_400_000 - 1 }
         return Rights(competition: c["name"] as? String ?? "", keys: (c["keys"] as? [String] ?? []).map(MatchGuideRule.words),
-                      excludes: (c["excludes"] as? [String] ?? []).map(MatchGuideRule.words), season: season,
-                      validFrom: vf, validTo: vt + 86_400_000 - 1, validityNote: o["validityNote"] as? String,
-                      sourceUrl: url, sourceTitle: s["title"] as? String ?? "", publisher: s["publisher"] as? String ?? "", kind: s["kind"] as? String ?? "",
-                      retrievedAt: s["retrievedAt"] as? String ?? "", territories: terr)
+                      excludes: (c["excludes"] as? [String] ?? []).map(MatchGuideRule.words), season: season, windowFrom: wf, windowTo: wt,
+                      source: source, territories: terr)
     }
 
-    static func appliesTo(_ r: Rights, competition: String?, kickoff: Int64) -> Bool {
+    /// About this competition: a key's words in its name, no excluded word (the season never hides rights).
+    static func appliesTo(_ r: Rights, competition: String?) -> Bool {
         guard let competition else { return false }
         let w = " " + MatchGuideRule.words(competition) + " "
-        if kickoff < r.validFrom || kickoff > r.validTo { return false }
         if r.excludes.contains(where: { !$0.isEmpty && w.contains(" \($0) ") }) { return false }
         return r.keys.contains { !$0.isEmpty && w.contains(" \($0) ") }
     }
 
-    struct Fact: Equatable { let rights: Rights; let territory: Territory; let holder: Holder; var inLibrary = 0 }
+    struct Fact: Equatable {
+        let rights: Rights; let territory: Territory; let holder: Holder
+        var library: [MatchSourcesRule.LibCh] = []
+        var outsideSeason = false
+        var inLibrary: Int { library.count }
+        var source: Source { territory.source ?? rights.source }
+        static func == (a: Fact, b: Fact) -> Bool { a.rights == b.rights && a.territory == b.territory && a.holder == b.holder && a.library.map(\.id) == b.library.map(\.id) }
+    }
 
-    private static let holderAlias = ["telefonica": "Movistar", "digi": "Digi Sport", "tnt sports": "TNT"]
+    private static let holderAlias = ["telefonica": "Movistar", "digi": "Digi Sport", "tnt sports": "TNT", "cyta": "Cytavision"]
     static func holderNetwork(_ name: String) -> String { holderAlias[MatchGuideRule.words(name)] ?? MatchGuideRule.network(name) }
+    static func holderNetworks(_ h: Holder) -> [String] {
+        let b = h.brands.map { let n = MatchGuideRule.network($0); return n == "أخرى" ? $0 : n }
+        return b.isEmpty ? [holderNetwork(h.name)] : b
+    }
+    private static let missing = Holder(name: "", entity: "unknown", rights: [], channels: [], brands: [], brandsFrom: nil, sublicence: nil, note: nil)
 
-    static func facts(_ all: [Rights], competitions: [String?], kickoff: Int64, idx: MatchSourcesRule.LibIndex? = nil) -> [Fact] {
+    static func facts(_ all: [Rights], competitions: [String?], kickoff: Int64, idx: MatchSourcesRule.LibIndex? = nil,
+                      quality: (String) -> Int = { _ in 0 }) -> [Fact] {
         var out: [Fact] = []; var seen = Set<String>()
-        for r in all where competitions.contains(where: { appliesTo(r, competition: $0, kickoff: kickoff) }) {
+        for r in all where competitions.contains(where: { appliesTo(r, competition: $0) }) {
+            var outside = false
+            if let a = r.windowFrom, let b = r.windowTo { outside = kickoff < a || kickoff > b }
             for t in r.territories {
+                if !t.verified {
+                    if seen.insert(r.competition + "|?|" + t.territory).inserted { out.append(Fact(rights: r, territory: t, holder: missing, outsideSeason: outside)) }
+                    continue
+                }
                 for h in t.holders {
                     // UEFA lists «Middle East/North Africa» and «MENA» both: one fact per holder and country set
                     guard seen.insert(r.competition + "|" + h.name + "|" + t.countries.sorted().joined(separator: ",") + "|" + (t.countries.isEmpty ? t.territory : "")).inserted else { continue }
-                    let net = holderNetwork(h.name)
-                    var n = 0
-                    if let idx, net != "أخرى", !t.countries.isEmpty {
-                        n = (idx.byNet[net] ?? []).filter { $0.origin.firm && t.countries.contains($0.origin.country ?? "") }.count
+                    let nets = holderNetworks(h).filter { $0 != "أخرى" }
+                    var lib: [MatchSourcesRule.LibCh] = []
+                    if let idx, !nets.isEmpty, !t.countries.isEmpty, !h.highlightsOnly {
+                        var ids = Set<String>()
+                        for n in nets { for e in idx.byNet[n] ?? [] where e.origin.firm && t.countries.contains(e.origin.country ?? "") && ids.insert(e.ch.id).inserted { lib.append(e.ch) } }
+                        lib.sort { (quality($0.name), $0.name) < (quality($1.name), $1.name) }
                     }
-                    out.append(Fact(rights: r, territory: t, holder: h, inLibrary: n))
+                    out.append(Fact(rights: r, territory: t, holder: h, library: lib, outsideSeason: outside))
                 }
             }
         }
@@ -284,26 +331,26 @@ enum RightsRule {
 
     static func noteFor(_ facts: [Fact], channelName: String, country: String?, firm: Bool) -> String? {
         guard !facts.isEmpty, let country, firm else { return nil }
-        let here = facts.filter { $0.territory.countries.contains(country) && !$0.holder.highlightsOnly }
+        let here = facts.filter { $0.territory.countries.contains(country) && $0.territory.verified && !$0.holder.highlightsOnly }
         guard let first = here.first else { return nil }
         let net = MatchGuideRule.network(channelName)
-        if net != "أخرى", let hit = here.first(where: { holderNetwork($0.holder.name) == net }) {
-            return "صاحب حقوق البطولة في \(hit.territory.territory): \(hit.holder.name) (\(hit.rights.label))"
+        if net != "أخرى", let hit = here.first(where: { holderNetworks($0.holder).contains(net) }) {
+            return "صاحب حقوق البطولة في \(hit.territory.territory): \(hit.holder.name) (\(hit.source.label) · موسم \(hit.rights.season))"
         }
-        return "أصحاب الحقوق المعلنون في \(first.territory.territory): \(here.map(\.holder.name).joined(separator: "، ")) — ليست منهم (\(first.rights.label))"
+        return "لم نجدها ضمن قائمة الحقوق المستخدمة لـ\(first.territory.territory) (\(first.source.label)) — غيابها لا يثبت أنها غير مرخّصة"
     }
 
     static func competitionsOf(_ r: MatchSourcesRule.Row) -> [String?] {
         [r.competition] + (r.group?.entries ?? []).flatMap { [$0.competition, $0.title] }
     }
 
-    /// The rows with their rights facts and a note on each linked channel (which channels are linked does not change).
-    static func annotate(_ rows: [MatchSourcesRule.Row], _ all: [Rights], idx: MatchSourcesRule.LibIndex?) -> [MatchSourcesRule.Row] {
+    static func annotate(_ rows: [MatchSourcesRule.Row], _ all: [Rights], idx: MatchSourcesRule.LibIndex?,
+                         quality: (String) -> Int = { _ in 0 }) -> [MatchSourcesRule.Row] {
         if all.isEmpty { return rows }
         var origins: [String: MatchSourcesRule.Origin] = [:]
         if let idx { for l in idx.byNet.values { for e in l { origins[e.ch.id] = e.origin } } }
         return rows.map { r in
-            let f = facts(all, competitions: competitionsOf(r), kickoff: r.kickoff ?? r.start, idx: idx)
+            let f = facts(all, competitions: competitionsOf(r), kickoff: r.kickoff ?? r.start, idx: idx, quality: quality)
             if f.isEmpty { return r }
             var x = r
             x.rights = f
@@ -318,7 +365,13 @@ enum RightsRule {
         }
     }
 
-    /// The rights files shipped in the app («rights-*.json»), read once; broken ones named.
+    static func holderLine(_ f: Fact) -> String {
+        [f.holder.entityLabel, f.holder.rightsLabel.isEmpty ? nil : f.holder.rightsLabel, f.holder.sublicence.map { "ترخيص فرعي: " + $0 }, f.holder.note,
+         f.territory.contract.map { "العقد: " + $0 } ?? "موسم \(f.rights.season)", f.outsideSeason ? "المباراة خارج موسم الملف (تقدير تقني)" : nil,
+         (f.holder.brandsFrom == "shasha" && !f.holder.brands.isEmpty) ? "أسماء القنوات في القوائم: \(f.holder.brands.joined(separator: "، ")) (ربطنا)" : nil,
+         f.source.label].compactMap { $0 }.joined(separator: " · ")
+    }
+
     static func load(_ urls: [URL]) -> (ok: [Rights], bad: [String]) {
         var ok: [Rights] = [], bad: [String] = []
         for u in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {

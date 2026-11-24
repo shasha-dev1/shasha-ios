@@ -1,0 +1,1958 @@
+{
+ "format": "shasha-rights",
+ "version": 2,
+ "competition": {
+  "name": "Premier League",
+  "keys": [
+   "premier league",
+   "english premier league",
+   "الدوري الإنجليزي الممتاز",
+   "الدوري الانجليزي الممتاز"
+  ],
+  "excludes": [
+   "egypt",
+   "egyptian",
+   "kuwait",
+   "bahrain",
+   "qatar",
+   "scottish",
+   "welsh",
+   "northern",
+   "irish",
+   "ukrainian",
+   "russian",
+   "israeli",
+   "maltese",
+   "armenian",
+   "kazakh",
+   "bangladesh",
+   "ghana",
+   "nigeria",
+   "kenya",
+   "south",
+   "hong",
+   "premier league 2",
+   "u21",
+   "u18",
+   "women",
+   "womens",
+   "sudan",
+   "lebanese",
+   "jordan",
+   "iraq",
+   "syrian",
+   "palestinian",
+   "tanzania",
+   "uganda",
+   "zambia",
+   "ethiopia",
+   "rwanda",
+   "malawi",
+   "libyan",
+   "omani",
+   "emirati",
+   "saudi",
+   "singapore",
+   "papua",
+   "kenyan",
+   "ghanaian",
+   "nigerian",
+   "ugandan",
+   "tanzanian",
+   "zambian",
+   "ethiopian",
+   "rwandan",
+   "malawian",
+   "sudanese",
+   "bahraini",
+   "kuwaiti",
+   "qatari",
+   "jordanian",
+   "iraqi",
+   "libya",
+   "oman",
+   "uae",
+   "kenya"
+  ]
+ },
+ "season": "2026/27",
+ "source": {
+  "url": "https://www.premierleague.com/en/news/3703577",
+  "title": "Premier League broadcast deals for 2025-2028 (premierleague.com)",
+  "publisher": "Premier League",
+  "kind": "official",
+  "retrievedAt": "2026-11-24"
+ },
+ "territories": [
+  {
+   "territory": "Albania",
+   "region": "Europe",
+   "countries": [
+    "ألبانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Digitalb",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Andorra",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Armenia",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Austria",
+   "region": "Europe",
+   "countries": [
+    "النمسا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Sky Deutschland",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Belarus",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Belgium",
+   "region": "Europe",
+   "countries": [
+    "بلجيكا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Telenet",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Bulgaria",
+   "region": "Europe",
+   "countries": [
+    "بلغاريا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "IMG",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Nova Sport"
+     ],
+     "brandsFrom": "shasha",
+     "sublicence": "Nova Broadcasting Group"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Croatia",
+   "region": "Europe",
+   "countries": [
+    "كرواتيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Cyprus",
+   "region": "Europe",
+   "countries": [
+    "قبرص"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Cytavision",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Cytavision"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Czech Republic",
+   "region": "Europe",
+   "countries": [
+    "التشيك"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Denmark",
+   "region": "Europe",
+   "countries": [
+    "الدنمارك"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Viaplay",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Estonia",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "TV3",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Finland",
+   "region": "Europe",
+   "countries": [
+    "فنلندا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Viaplay",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "France",
+   "region": "Europe",
+   "countries": [
+    "فرنسا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Georgia",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Germany",
+   "region": "Europe",
+   "countries": [
+    "ألمانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Sky Deutschland",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Greece",
+   "region": "Europe",
+   "countries": [
+    "اليونان"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "IMG",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Nova Sport"
+     ],
+     "brandsFrom": "shasha",
+     "sublicence": "Nova"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Hungary",
+   "region": "Europe",
+   "countries": [
+    "المجر"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "TV2",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Iceland",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Syn",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Israel",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Charlton",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Republic of Ireland (Eire)",
+   "region": "Europe",
+   "countries": [
+    "إيرلندا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Sky Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "Premier Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Premier Sports"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2028/29"
+  },
+  {
+   "territory": "Italy",
+   "region": "Europe",
+   "countries": [
+    "إيطاليا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Sky Italia",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Kosovo",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Latvia",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "TV3",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Lithuania",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "TV3",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Luxembourg",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Malta",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "TSN",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Moldova",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Montenegro",
+   "region": "Europe",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Netherlands",
+   "region": "Europe",
+   "countries": [
+    "هولندا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Viaplay",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "North Macedonia",
+   "region": "Europe",
+   "countries": [
+    "مقدونيا الشمالية"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Norway",
+   "region": "Europe",
+   "countries": [
+    "النرويج"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Viaplay",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Poland",
+   "region": "Europe",
+   "countries": [
+    "بولندا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Romania",
+   "region": "Europe",
+   "countries": [
+    "رومانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Portugal",
+   "region": "Europe",
+   "countries": [
+    "البرتغال"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Serbia",
+   "region": "Europe",
+   "countries": [
+    "صربيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Slovakia",
+   "region": "Europe",
+   "countries": [
+    "سلوفاكيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Slovenia",
+   "region": "Europe",
+   "countries": [
+    "سلوفينيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Arena Sport",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Spain",
+   "region": "Europe",
+   "countries": [
+    "إسبانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Sweden",
+   "region": "Europe",
+   "countries": [
+    "السويد"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Viaplay",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Switzerland",
+   "region": "Europe",
+   "countries": [
+    "سويسرا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha",
+     "note": "باللغة الفرنسية"
+    },
+    {
+     "name": "Sky Deutschland",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha",
+     "note": "بالألمانية"
+    },
+    {
+     "name": "Sky Italia",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha",
+     "note": "بالإيطالية"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Turkey",
+   "region": "Europe",
+   "countries": [
+    "تركيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "beIN Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "United Kingdom",
+   "region": "Europe",
+   "countries": [
+    "بريطانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Sky Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "BBC Sport",
+     "entity": "unknown",
+     "rights": [
+      "highlights"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2028/29"
+  },
+  {
+   "territory": "Ukraine",
+   "region": "Europe",
+   "countries": [
+    "أوكرانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Setanta",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Setanta"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Afghanistan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Australia",
+   "region": "Asia-Pacific",
+   "countries": [
+    "أستراليا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Stan Sport",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Stan Sport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Azerbaijan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Cambodia",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Jasmine International / Mono",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2030/31"
+  },
+  {
+   "territory": "China",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Migu",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Chinese Taipei",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "ELTA",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Hong Kong, China",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "PCCW",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Indonesia",
+   "region": "Asia-Pacific",
+   "countries": [
+    "إندونيسيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "EMTEK",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Japan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "U-Next",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2030/31"
+  },
+  {
+   "territory": "Kazakhstan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Kyrgyzstan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Laos",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Jasmine International / Mono",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2030/31"
+  },
+  {
+   "territory": "Macao, China",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "M Plus",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Malaysia",
+   "region": "Asia-Pacific",
+   "countries": [
+    "ماليزيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Astro",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Mongolia",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Unitel",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Myanmar",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "CANAL+",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "New Zealand",
+   "region": "Asia-Pacific",
+   "countries": [
+    "نيوزيلندا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Sky NZ",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Pacific Islands",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Digicel",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Singapore",
+   "region": "Asia-Pacific",
+   "countries": [
+    "سنغافورة"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "StarHub",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "South Asia",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "JioStar",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "South Korea",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Coupang",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Tajikistan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Thailand",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Jasmine International / Mono",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2030/31"
+  },
+  {
+   "territory": "Turkmenistan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Uzbekistan",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Saran Media",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Vietnam",
+   "region": "Asia-Pacific",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "FPT Play through Jasmine International / Mono (from 1 Jan 2026)",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": []
+    }
+   ],
+   "contract": "2026–2030/31 (من 1 يناير 2026)"
+  },
+  {
+   "territory": "Middle East and North Africa",
+   "region": "Middle East and North Africa (MENA) and Africa",
+   "countries": [
+    "عربي"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "beIN Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Sub-Saharan Africa",
+   "region": "Middle East and North Africa (MENA) and Africa",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "SuperSport",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "SuperSport"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Brazil",
+   "region": "Americas",
+   "countries": [
+    "البرازيل"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "ESPN",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "ESPN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Canada",
+   "region": "Americas",
+   "countries": [
+    "كندا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fubo",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fubo"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Caribbean",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "ESPN",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "ESPN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Costa Rica",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fox Broadcasting Corporation",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports Mexico",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "El Salvador",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fox Broadcasting Corporation",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports Mexico",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Guatemala",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fox Broadcasting Corporation",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports Mexico",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Honduras",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fox Broadcasting Corporation",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports Mexico",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Mexico",
+   "region": "Americas",
+   "countries": [
+    "المكسيك"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fox Broadcasting Corporation",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports Mexico",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Nicaragua",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fox Broadcasting Corporation",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports Mexico",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "Panama",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Fox Broadcasting Corporation",
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
+    },
+    {
+     "name": "TNT Sports Mexico",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "South America",
+   "region": "Americas",
+   "countries": [],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "ESPN",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "ESPN"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  },
+  {
+   "territory": "United States",
+   "region": "Americas",
+   "countries": [
+    "أمريكا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "NBC Sports",
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "NBC"
+     ],
+     "brandsFrom": "shasha"
+    }
+   ],
+   "contract": "2025/26–2027/28"
+  }
+ ],
+ "technicalWindow": {
+  "from": "2026-07-01",
+  "to": "2027-06-30",
+  "note": "نافذة تقنية مشتقة من اسم الموسم — ليست تواريخ عقد، ولا تُحذف البيانات بسببها"
+ }
+}

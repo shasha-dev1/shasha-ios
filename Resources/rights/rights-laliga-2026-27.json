@@ -1,0 +1,174 @@
+{
+ "format": "shasha-rights",
+ "version": 2,
+ "competition": {
+  "name": "LaLiga",
+  "keys": [
+   "laliga",
+   "la liga",
+   "laliga ea sports",
+   "primera division",
+   "الدوري الإسباني",
+   "الدوري الاسباني"
+  ],
+  "excludes": [
+   "hypermotion",
+   "segunda",
+   "2",
+   "liga f",
+   "women",
+   "womens",
+   "femenina",
+   "futsal",
+   "smartbank"
+  ]
+ },
+ "season": "2026/27",
+ "source": {
+  "url": "https://www.laliga.com/en-US/where-to-watch-laliga-easports",
+  "title": "LALIGA — where to watch (per match, by visitor's country)",
+  "publisher": "LALIGA",
+  "kind": "official",
+  "retrievedAt": "2026-11-24"
+ },
+ "territories": [
+  {
+   "territory": "MENA",
+   "region": "Africa and Middle East",
+   "countries": [
+    "عربي"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "beIN SPORTS",
+     "entity": "channel",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري، كل المباريات الـ380"
+    }
+   ],
+   "source": {
+    "url": "https://www.laliga.com/en-GB/news/bein-extends-exclusive-laliga-broadcast-rights-across-34-markets-in-mena-and-apac",
+    "title": "beIN Extends Exclusive LALIGA Broadcast Rights Across 34 Markets in MENA and APAC (laliga.com)",
+    "publisher": "LALIGA",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2027/28"
+  },
+  {
+   "territory": "Cyprus",
+   "region": "Europe",
+   "countries": [
+    "قبرص"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Cytavision",
+     "entity": "company",
+     "rights": [
+      "live",
+      "selected"
+     ],
+     "channels": [],
+     "brands": [
+      "Cytavision"
+     ],
+     "brandsFrom": "shasha",
+     "note": "الصفحة: البث المباشر يشمل مباريات مختارة · 4K متاح (ExperienceMore)"
+    }
+   ],
+   "source": {
+    "url": "https://www.cyta.com.cy/cytavision-sports-content/en",
+    "title": "Cytavision Sports content (cyta.com.cy)",
+    "publisher": "Cyta",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "note": "الصفحة لا تذكر الموسم؛ كما هي في 2026-11-24"
+  },
+  {
+   "territory": "United Kingdom",
+   "region": null,
+   "countries": [
+    "بريطانيا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة"
+  },
+  {
+   "territory": "France",
+   "region": null,
+   "countries": [
+    "فرنسا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة"
+  },
+  {
+   "territory": "Netherlands",
+   "region": null,
+   "countries": [
+    "هولندا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة"
+  },
+  {
+   "territory": "Türkiye",
+   "region": null,
+   "countries": [
+    "تركيا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة"
+  },
+  {
+   "territory": "United States of America",
+   "region": null,
+   "countries": [
+    "أمريكا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة"
+  },
+  {
+   "territory": "Italy",
+   "region": null,
+   "countries": [
+    "إيطاليا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة"
+  },
+  {
+   "territory": "Spain",
+   "region": null,
+   "countries": [
+    "إسبانيا"
+   ],
+   "status": "unverified",
+   "holders": [],
+   "note": "لم نجد إعلانًا رسميًا لموسم 2026/27 بعد — بيانات ناقصة؛ صفحة «أين تشاهد» في موقع LaLiga تعرض الناقل حسب دولة الزائر لكل مباراة"
+  }
+ ],
+ "technicalWindow": {
+  "from": "2026-07-01",
+  "to": "2027-06-30",
+  "note": "نافذة تقنية مشتقة من اسم الموسم — ليست تواريخ عقد، ولا تُحذف البيانات بسببها"
+ }
+}

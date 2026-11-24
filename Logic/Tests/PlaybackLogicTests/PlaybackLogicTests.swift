@@ -2248,65 +2248,109 @@ final class ReviewBatch2Tests: XCTestCase {
     }
 }
 
-/// 1.10.4 (owner 20:50): competition → country → rights holder, apart from the broadcasters of a match (TV RightsTest vectors).
+/// 1.10.4 / 1.10.5 (owner 20:50, 21:17, 21:18): rights apart from the broadcasters of a match (TV RightsTest 0.9.58 vectors).
 final class RightsTests: XCTestCase {
     typealias S = MatchSourcesRule
     var dir: URL { URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples/rights").standardizedFileURL }
-    func ucl() throws -> RightsRule.Rights { try RightsRule.parse(Data(contentsOf: dir.appendingPathComponent("uefa-champions-league-2026-27.json"))) }
-    func uel() throws -> RightsRule.Rights { try RightsRule.parse(Data(contentsOf: dir.appendingPathComponent("uefa-europa-league-2026-27.json"))) }
+    func load(_ n: String) throws -> RightsRule.Rights { try RightsRule.parse(Data(contentsOf: dir.appendingPathComponent(n + ".json"))) }
+    func all() throws -> [RightsRule.Rights] {
+        try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil).filter { $0.pathExtension == "json" }.map { try RightsRule.parse(Data(contentsOf: $0)) }
+    }
     let ko: Int64 = 1_795_542_300_000   // 2026-11-24 17:45 UTC
+    let q = { (n: String) in MatchSourcesRule.quality(MatchGuideRule.version(n)) }
 
-    func testTheOfficialFilesCarryTheirSourceSeasonAndPeriod() throws {
-        let u = try ucl()
-        XCTAssertEqual(u.season, "2026/27"); XCTAssertEqual(u.kind, "official"); XCTAssertEqual(u.publisher, "UEFA")
-        XCTAssertTrue(u.sourceUrl.hasPrefix("https://www.uefa.com/uefachampionsleague/"))
-        XCTAssertEqual(u.territories.count, 96)
-        XCTAssertEqual(u.territories.first { $0.territory == "Netherlands" }?.holders.map(\.name), ["Ziggo Sport"])
-        XCTAssertEqual(u.territories.first { $0.territory == "France" }?.holders.map(\.name), ["Canal+"])
-        let at = u.territories.first { $0.territory == "Austria" }!.holders
-        XCTAssertEqual(at.filter(\.highlightsOnly).map(\.name), ["ORF", "Servus TV"])
+    func testEveryRecordCarriesItsSourceSeasonAndRightsType() throws {
+        let a = try all()
+        XCTAssertEqual(a.count, 14)
+        for r in a {
+            XCTAssertTrue(r.source.url.hasPrefix("https://"), r.competition); XCTAssertFalse(r.season.isEmpty)
+            for t in r.territories where t.verified { for h in t.holders { XCTAssertFalse(h.rights.isEmpty, "\(r.competition) \(t.territory) \(h.name)") } }
+        }
+        let ucl = try load("uefa-champions-league-2026-27")
+        XCTAssertEqual(ucl.source.publisher, "UEFA"); XCTAssertEqual(ucl.source.kind, "official")
+        let at = Dictionary(uniqueKeysWithValues: ucl.territories.first { $0.territory == "Austria" }!.holders.map { ($0.name, $0.rights) })
+        XCTAssertEqual(at["ORF"], ["highlights"]); XCTAssertEqual(at["Sky Austria"], ["live"])
     }
 
-    func testRightsApplyToTheirCompetitionAndSeasonOnly() throws {
-        let u = try ucl(), e = try uel()
-        XCTAssertTrue(RightsRule.appliesTo(u, competition: "UEFA Champions League", kickoff: ko))
-        XCTAssertTrue(RightsRule.appliesTo(u, competition: "دوري أبطال أوروبا", kickoff: ko))
-        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Youth League", kickoff: ko))
-        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Women's Champions League", kickoff: ko))
-        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Europa League", kickoff: ko))
-        XCTAssertTrue(RightsRule.appliesTo(e, competition: "UEFA Europa League", kickoff: ko))
-        XCTAssertFalse(RightsRule.appliesTo(u, competition: "UEFA Champions League", kickoff: 1_816_624_800_000))   // 2027-07-26: another season
+    func testContractsOnlyWhenTheSourceStatesThem() throws {
+        let ucl = try load("uefa-champions-league-2026-27"), pl = try load("premier-league-2026-27"), ll = try load("laliga-2026-27")
+        XCTAssertNil(ucl.territories.first { $0.territory == "France" }?.contract)
+        XCTAssertEqual(pl.territories.first { $0.territory == "United Kingdom" }?.contract, "2025/26–2028/29")
+        XCTAssertEqual(ll.territories.first { $0.territory == "MENA" }?.contract, "حتى نهاية 2027/28")
+        let bg = pl.territories.first { $0.territory == "Bulgaria" }!.holders[0]
+        XCTAssertEqual(bg.name, "IMG"); XCTAssertEqual(bg.sublicence, "Nova Broadcasting Group"); XCTAssertEqual(bg.entity, "company")
+    }
+
+    func testSerieAIsNotTheCupAndUnverifiedCountriesAreMissingData() throws {
+        let sa = try load("serie-a-2026-27"), ci = try load("coppa-italia-2026-27")
+        XCTAssertTrue(RightsRule.appliesTo(sa, competition: "Italy - Serie A"))
+        XCTAssertFalse(RightsRule.appliesTo(sa, competition: "Italy - Coppa Italia"))
+        XCTAssertFalse(RightsRule.appliesTo(sa, competition: "Supercoppa Italiana"))
+        XCTAssertFalse(RightsRule.appliesTo(sa, competition: "Brazil - Serie A"))
+        XCTAssertTrue(RightsRule.appliesTo(ci, competition: "Italy - Coppa Italia"))
+        XCTAssertFalse(RightsRule.appliesTo(ci, competition: "Italy - Serie A"))
+        let f = RightsRule.facts(try all(), competitions: ["Italy - Serie A"], kickoff: ko)
+        XCTAssertTrue(f.allSatisfy { $0.rights.competition == "Serie A" })
+        XCTAssertEqual(f.first { $0.territory.territory == "France" }?.holder.name, "DAZN")
+        let mena = try XCTUnwrap(f.first { $0.territory.territory == "MENA" })
+        XCTAssertFalse(mena.territory.verified); XCTAssertEqual(mena.holder.name, "")
+        XCTAssertEqual(f.first { $0.territory.territory == "United States of America" }?.source.publisher, "Paramount")
+    }
+
+    func testATechnicalSeasonWindowMarksButNeverDrops() throws {
+        let ucl = try load("uefa-champions-league-2026-27")
+        let f = RightsRule.facts([ucl], competitions: ["UEFA Champions League"], kickoff: 1_820_016_000_000)   // 2027-09-04
+        XCTAssertFalse(f.isEmpty); XCTAssertTrue(f.allSatisfy(\.outsideSeason))
+        XCTAssertTrue(RightsRule.holderLine(f[0]).contains("تقدير تقني"))
+        XCTAssertTrue(RightsRule.facts([ucl], competitions: ["UEFA Champions League"], kickoff: ko).allSatisfy { !$0.outsideSeason })
     }
 
     func epgLink(_ id: String, _ name: String) -> S.Link { S.Link(channelId: id, name: name, proofs: [S.Proof(kind: .epg, source: "EPG", at: 0, detail: "«Bodø/Glimt v LASK»")]) }
 
-    func testHoldersAreListedNeverTurnedIntoBroadcasters() throws {
-        let lib = [S.LibCh(id: "1", name: "NL: ZIGGO SPORT 1 HD"), S.LibCh(id: "2", name: "NL: ZIGGO SPORT 2 HD"), S.LibCh(id: "3", name: "NL: ZIGGO SPORT 3 FHD"),
-                   S.LibCh(id: "4", name: "FR: BEIN SPORTS MAX 4"), S.LibCh(id: "5", name: "FR: CANAL+ SPORT 360"), S.LibCh(id: "6", name: "AR: beIN SPORTS 4 HD"), S.LibCh(id: "7", name: "ZIGGO SPORT 5")]
+    func testHoldersAreAShortcutNeverBroadcasters() throws {
+        let lib = [S.LibCh(id: "1", name: "NL: ZIGGO SPORT 1 HD"), S.LibCh(id: "2", name: "NL: ZIGGO SPORT 2 HD"), S.LibCh(id: "3", name: "NL: ZIGGO SPORT 3 4K"),
+                   S.LibCh(id: "4", name: "FR: BEIN SPORTS MAX 4"), S.LibCh(id: "5", name: "FR: CANAL+ SPORT 360"), S.LibCh(id: "6", name: "AR: beIN SPORTS 4 HD"),
+                   S.LibCh(id: "7", name: "ZIGGO SPORT 5"), S.LibCh(id: "8", name: "NL: ZIGGO SPORT 4 FHD")]
         let idx = S.LibIndex(lib)
         let row = S.Row(key: "k", home: "Bodø/Glimt", away: "LASK", competition: "UEFA Champions League", audience: [], kickoff: ko, kickoffFrom: "LiveSoccerTV", group: nil,
                         timeConflict: false, links: [epgLink("2", "NL: ZIGGO SPORT 2 HD"), epgLink("4", "FR: BEIN SPORTS MAX 4"), epgLink("6", "AR: beIN SPORTS 4 HD")],
                         missing: [], removed: [], sources: ["LiveSoccerTV"])
-        let r = RightsRule.annotate([row], [try ucl(), try uel()], idx: idx)[0]
-        XCTAssertEqual(r.links.map(\.channelId), ["2", "4", "6"])                       // rights add no channel
-        XCTAssertTrue(r.links.allSatisfy(\.confirmed))
+        let r = RightsRule.annotate([row], try all(), idx: idx, quality: q)[0]
+        XCTAssertEqual(r.links.map(\.channelId), ["2", "4", "6"]); XCTAssertTrue(r.links.allSatisfy(\.confirmed))
         let by = Dictionary(uniqueKeysWithValues: r.links.map { ($0.channelId, $0) })
         XCTAssertTrue(by["2"]?.rightsNote?.hasPrefix("صاحب حقوق البطولة في Netherlands: Ziggo Sport") == true)
-        XCTAssertTrue(by["6"]?.rightsNote?.contains("beIN") == true)
-        XCTAssertTrue(by["4"]?.rightsNote?.contains("ليست منهم") == true && by["4"]?.rightsNote?.contains("Canal+") == true)
-        XCTAssertTrue(r.rights.allSatisfy { $0.rights.competition == "UEFA Champions League" })
-        let terr = Set(r.rights.map(\.territory.territory))
-        XCTAssertTrue(terr.isSuperset(of: ["Netherlands", "France", "United States of America", "Australia", "Middle East/North Africa"]))
+        let fr = by["4"]?.rightsNote ?? ""
+        XCTAssertTrue(fr.hasPrefix("لم نجدها ضمن قائمة الحقوق المستخدمة") && fr.contains("لا يثبت أنها غير مرخّصة"), fr)
+        XCTAssertEqual(r.rights.first { $0.holder.name == "Ziggo Sport" }?.library.map(\.id), ["3", "8", "1", "2"])
         XCTAssertEqual(r.rights.filter { $0.holder.name == "beIN" && $0.territory.countries.contains("عربي") }.count, 1)
-        XCTAssertEqual(r.rights.first { $0.holder.name == "Ziggo Sport" }?.inLibrary, 3)
         XCTAssertEqual(r.rights.filter { RightsRule.passes($0, country: "هولندا") }.map(\.holder.name), ["Ziggo Sport"])
     }
 
     func testAMatchWithoutKnownRightsIsUnchanged() throws {
-        let row = S.Row(key: "k", home: "A", away: "B", competition: "Italy - Serie A", audience: [], kickoff: ko, kickoffFrom: "x", group: nil, timeConflict: false,
-                        links: [epgLink("1", "IT: DAZN 1")], missing: [], removed: [], sources: [])
-        let r = RightsRule.annotate([row], [try ucl(), try uel()], idx: nil)[0]
+        let row = S.Row(key: "k", home: "A", away: "B", competition: "Saudi Pro League", audience: [], kickoff: ko, kickoffFrom: "x", group: nil, timeConflict: false,
+                        links: [epgLink("1", "AR: SSC 1")], missing: [], removed: [], sources: [])
+        let r = RightsRule.annotate([row], try all(), idx: nil)[0]
         XCTAssertTrue(r.rights.isEmpty); XCTAssertNil(r.links[0].rightsNote)
+    }
+
+    func testPremierLeagueKeysDoNotCatchOtherPremierLeagues() throws {
+        let pl = try load("premier-league-2026-27")
+        XCTAssertTrue(RightsRule.appliesTo(pl, competition: "England - Premier League"))
+        for c in ["Egypt - Premier League", "Kenyan Premier League", "Premier League 2", "Scottish Premiership", "Bahraini Premier League"] {
+            XCTAssertFalse(RightsRule.appliesTo(pl, competition: c), c)
+        }
+    }
+
+    func testCytaIsTheCytavisionNetworkAndSelectedMatches() throws {
+        XCTAssertEqual(RightsRule.holderNetwork("CYTA"), "Cytavision")
+        let idx = S.LibIndex([.init(id: "1", name: "CY: CYTAVISION SPORTS 1 HD"), .init(id: "2", name: "CY: CYTAVISION SPORTS 2 FHD"), .init(id: "3", name: "CYTAVISION SPORTS 3")])
+        let row = S.Row(key: "k", home: "Como", away: "AEK Athens", competition: "UEFA Champions League", audience: [], kickoff: ko, kickoffFrom: "x", group: nil, timeConflict: false,
+                        links: [epgLink("1", "CY: CYTAVISION SPORTS 1 HD")], missing: [], removed: [], sources: [])
+        let r = RightsRule.annotate([row], try all(), idx: idx, quality: q)[0]
+        XCTAssertEqual(r.rights.first { $0.holder.name == "CYTA" }?.library.map(\.id), ["2", "1"])
+        XCTAssertTrue(r.links[0].rightsNote?.hasPrefix("صاحب حقوق البطولة في Cyprus: CYTA") == true)
+        let laliga = try XCTUnwrap(RightsRule.facts(try all(), competitions: ["Spain - LaLiga"], kickoff: ko, idx: idx, quality: q).first { $0.territory.territory == "Cyprus" })
+        XCTAssertTrue(laliga.holder.rights.contains("selected")); XCTAssertTrue(laliga.holder.note?.contains("4K") == true)
     }
 
     func testAnotherChannelOfTheSameNetworkIsNotANearMatch() {

@@ -1,0 +1,188 @@
+{
+ "format": "shasha-rights",
+ "version": 2,
+ "competition": {
+  "name": "Supercoppa Italiana",
+  "keys": [
+   "supercoppa italiana",
+   "supercoppa",
+   "السوبر الإيطالي"
+  ],
+  "excludes": [
+   "primavera",
+   "femminile",
+   "women"
+  ]
+ },
+ "season": "2026/27",
+ "source": {
+  "url": "https://www.legaseriea.it/",
+  "title": "Lega Serie A",
+  "publisher": "Lega Serie A",
+  "kind": "official",
+  "retrievedAt": "2026-11-24"
+ },
+ "territories": [
+  {
+   "territory": "France",
+   "region": "Europe",
+   "countries": [
+    "فرنسا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "Germany",
+   "region": "Europe",
+   "countries": [
+    "ألمانيا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "Austria",
+   "region": "Europe",
+   "countries": [
+    "النمسا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "Switzerland",
+   "region": "Europe",
+   "countries": [
+    "سويسرا"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "DAZN",
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha",
+     "note": "حصري"
+    }
+   ],
+   "source": {
+    "url": "https://dazngroup.com/press-room/dazn-renews-serie-a-rights-in-the-uk-ireland-for-the-2026-27-season/",
+    "title": "DAZN Renews Serie A Rights in the UK & Ireland for the 2026-27 Season (DAZN, 20 Aug 2026)",
+    "publisher": "DAZN",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "contract": "حتى نهاية 2028/29"
+  },
+  {
+   "territory": "Cyprus",
+   "region": "Europe",
+   "countries": [
+    "قبرص"
+   ],
+   "status": "verified",
+   "holders": [
+    {
+     "name": "Cytavision",
+     "entity": "company",
+     "rights": [
+      "live",
+      "selected"
+     ],
+     "channels": [],
+     "brands": [
+      "Cytavision"
+     ],
+     "brandsFrom": "shasha",
+     "note": "الصفحة: البث المباشر يشمل مباريات مختارة"
+    }
+   ],
+   "source": {
+    "url": "https://www.cyta.com.cy/cytavision-sports-content/en",
+    "title": "Cytavision Sports content (cyta.com.cy)",
+    "publisher": "Cyta",
+    "kind": "official",
+    "retrievedAt": "2026-11-24"
+   },
+   "note": "الصفحة لا تذكر الموسم؛ كما هي في 2026-11-24"
+  }
+ ],
+ "technicalWindow": {
+  "from": "2026-07-01",
+  "to": "2027-06-30",
+  "note": "نافذة تقنية مشتقة من اسم الموسم — ليست تواريخ عقد، ولا تُحذف البيانات بسببها"
+ }
+}

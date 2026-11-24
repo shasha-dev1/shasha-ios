@@ -1,14 +1,13 @@
 {
  "format": "shasha-rights",
- "version": 1,
+ "version": 2,
  "competition": {
   "name": "UEFA Europa League",
   "keys": [
    "uefa europa league",
    "europa league",
    "الدوري الأوروبي",
-   "الدوري الاوروبي",
-   "uel"
+   "الدوري الاوروبي"
   ],
   "excludes": [
    "women",
@@ -22,16 +21,12 @@
   ]
  },
  "season": "2026/27",
- "validFrom": "2026-07-01",
- "validTo": "2027-06-30",
- "validityNote": "مشتقة من اسم الموسم في الصفحة الرسمية (2026/27) — الصفحة لا تذكر تواريخ العقود",
  "source": {
   "url": "https://www.uefa.com/uefaeuropaleague/news/028d-1ae6d62165d6-69b17b354deb-1000--where-to-watch-the-europa-league-tv-broadcast-partners-li/",
   "title": "Where to watch the Europa League: TV broadcast partners, live streams (UEFA.com, modified 2026-11-23)",
   "publisher": "UEFA",
   "kind": "official",
-  "retrievedAt": "2026-11-24",
-  "note": "* = highlights only"
+  "retrievedAt": "2026-11-24"
  },
  "territories": [
   {
@@ -40,16 +35,22 @@
    "countries": [
     "ألبانيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "DigitAlb",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "RTSH",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -58,11 +59,14 @@
    "territory": "Armenia",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Fast Media",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -73,24 +77,38 @@
    "countries": [
     "النمسا"
    ],
-   "codes": [
-    "at",
-    "austria"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Canal+",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Sky Austria",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Servus TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -99,21 +117,30 @@
    "territory": "Azerbaijan",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "İçtimai TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "TVNet",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "CBC Sport",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -122,16 +149,22 @@
    "territory": "Belarus",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Okko",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "CTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -142,29 +175,38 @@
    "countries": [
     "بلجيكا"
    ],
-   "codes": [
-    "be",
-    "belgium"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "RTBF",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Telenet",
-     "highlightsOnly": false,
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "BeTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "VRT",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -175,12 +217,19 @@
    "countries": [
     "البوسنة"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Arena Sport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -190,16 +239,22 @@
    "countries": [
     "بلغاريا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "bTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "A1",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -210,12 +265,19 @@
    "countries": [
     "كرواتيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Arena Sport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -225,17 +287,27 @@
    "countries": [
     "قبرص"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "CyBC",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "CYTA",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Cytavision"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -245,22 +317,35 @@
    "countries": [
     "التشيك"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "TV Nova",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Sport 1",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Canal+",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -270,11 +355,14 @@
    "countries": [
     "الدنمارك"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Disney+",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -283,11 +371,14 @@
    "territory": "Estonia",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "TV3",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -298,12 +389,19 @@
    "countries": [
     "فنلندا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Viaplay",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -313,15 +411,19 @@
    "countries": [
     "فرنسا"
    ],
-   "codes": [
-    "fr",
-    "france"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Canal+",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -329,16 +431,26 @@
    "territory": "Georgia",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Setanta",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Setanta"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Silknet",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -349,20 +461,27 @@
    "countries": [
     "ألمانيا"
    ],
-   "codes": [
-    "de",
-    "germany"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "RTL",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Sky",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -370,11 +489,14 @@
    "territory": "Gibraltar",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Gibtelecom",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -385,19 +507,22 @@
    "countries": [
     "اليونان"
    ],
-   "codes": [
-    "gr",
-    "greece"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Antenna TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Magenta TV platform",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -408,21 +533,30 @@
    "countries": [
     "المجر"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "M4 Sport",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "RTL",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Sport 1",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -431,17 +565,27 @@
    "territory": "Iceland",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Syn",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Viaplay",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -449,11 +593,14 @@
    "territory": "Israel",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Charlton",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -464,15 +611,19 @@
    "countries": [
     "إيطاليا"
    ],
-   "codes": [
-    "it",
-    "italy"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Sky",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sky"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -480,16 +631,22 @@
    "territory": "Kazakhstan",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Qaz Sport",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Qsport",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -498,16 +655,22 @@
    "territory": "Kosovo",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "RTK",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Artmotion",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -516,11 +679,14 @@
    "territory": "Latvia",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "TV3",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -529,11 +695,14 @@
    "territory": "Lithuania",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "TV3",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -542,16 +711,22 @@
    "territory": "Luxembourg",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "RTL",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "BeTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -560,16 +735,22 @@
    "territory": "Malta",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "PBS",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Melita",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -578,21 +759,34 @@
    "territory": "Moldova",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Setanta",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Setanta"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Jurnal TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "WE SPORT TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -601,12 +795,19 @@
    "territory": "Montenegro",
    "region": "Europe",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Arena Sport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -616,15 +817,19 @@
    "countries": [
     "هولندا"
    ],
-   "codes": [
-    "nl",
-    "netherlands"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Ziggo Sport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Ziggo Sport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -634,12 +839,19 @@
    "countries": [
     "مقدونيا الشمالية"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Arena Sport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -649,12 +861,19 @@
    "countries": [
     "النرويج"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Viaplay",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Viaplay"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -664,15 +883,19 @@
    "countries": [
     "بولندا"
    ],
-   "codes": [
-    "pl",
-    "poland"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Polsat",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Polsat"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -682,20 +905,31 @@
    "countries": [
     "البرتغال"
    ],
-   "codes": [
-    "pt",
-    "portugal"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Sport TV",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sport TV"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "DAZN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -705,15 +939,19 @@
    "countries": [
     "إيرلندا"
    ],
-   "codes": [
-    "ie",
-    "ireland"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Premier Sports",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Premier Sports"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -723,16 +961,26 @@
    "countries": [
     "رومانيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "DIGI",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Digi Sport"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Clever Media",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -743,16 +991,22 @@
    "countries": [
     "روسيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Okko",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "CTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -763,16 +1017,26 @@
    "countries": [
     "صربيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Arena Sport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Arena Sport"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "RTS",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -783,16 +1047,22 @@
    "countries": [
     "سلوفاكيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "JOJ",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Sport1",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -803,16 +1073,22 @@
    "countries": [
     "سلوفينيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Šport TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Sportklub",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -823,15 +1099,19 @@
    "countries": [
     "إسبانيا"
    ],
-   "codes": [
-    "es",
-    "spain"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Telefonica",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Movistar"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -841,11 +1121,14 @@
    "countries": [
     "السويد"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Disney+",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -856,19 +1139,22 @@
    "countries": [
     "سويسرا"
    ],
-   "codes": [
-    "ch",
-    "switzerland"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "blue",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "SRG",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -879,15 +1165,14 @@
    "countries": [
     "تركيا"
    ],
-   "codes": [
-    "tr",
-    "turkey",
-    "türkiye"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "TRT",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -898,16 +1183,22 @@
    "countries": [
     "أوكرانيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Megogo",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Football TV UA",
-     "highlightsOnly": true,
+     "entity": "unknown",
+     "rights": [
+      "highlights"
+     ],
      "channels": []
     }
    ]
@@ -918,17 +1209,19 @@
    "countries": [
     "بريطانيا"
    ],
-   "codes": [
-    "gb",
-    "uk",
-    "united kingdom",
-    "england"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "TNT Sports",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TNT"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -936,21 +1229,34 @@
    "territory": "Cameroon",
    "region": "Africa and Middle East",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "CRTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "SuperSport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "SuperSport"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "New World TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -959,21 +1265,34 @@
    "territory": "Mauritius",
    "region": "Africa and Middle East",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "MBC",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "SuperSport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "SuperSport"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "New World TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -984,42 +1303,19 @@
    "countries": [
     "عربي"
    ],
-   "codes": [
-    "mena",
-    "qa",
-    "qatar",
-    "sa",
-    "saudi arabia",
-    "ae",
-    "united arab emirates",
-    "bh",
-    "bahrain",
-    "kw",
-    "kuwait",
-    "om",
-    "oman",
-    "eg",
-    "egypt",
-    "jo",
-    "jordan",
-    "lb",
-    "lebanon",
-    "iq",
-    "iraq",
-    "ma",
-    "morocco",
-    "dz",
-    "algeria",
-    "tn",
-    "tunisia",
-    "ly",
-    "libya"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1027,12 +1323,19 @@
    "territory": "Nigeria",
    "region": "Africa and Middle East",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "SuperSport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "SuperSport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1042,12 +1345,19 @@
    "countries": [
     "جنوب أفريقيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "SuperSport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "SuperSport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1055,16 +1365,26 @@
    "territory": "Sub-Saharan Africa",
    "region": "Africa and Middle East",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "SuperSport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "SuperSport"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "New World TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1075,14 +1395,14 @@
    "countries": [
     "البرازيل"
    ],
-   "codes": [
-    "br",
-    "brazil"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "CazéTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1093,19 +1413,26 @@
    "countries": [
     "كندا"
    ],
-   "codes": [
-    "ca",
-    "canada"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "DAZN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "OneSoccer",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1114,11 +1441,14 @@
    "territory": "Caribbean",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "CPSL (Flow Sports & Rush Sports)",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1127,17 +1457,27 @@
    "territory": "Central America",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Claro",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "FOX",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1145,21 +1485,34 @@
    "territory": "Costa Rica",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "8 Clanes",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "FOX",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Claro",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1168,21 +1521,30 @@
    "territory": "Dominican Republic",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Televideo",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Claro",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "CPSL",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1191,16 +1553,26 @@
    "territory": "Haiti",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Canal+",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "CPSL",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1209,21 +1581,34 @@
    "territory": "Honduras",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "8 Clanes",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "FOX",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Claro",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1234,20 +1619,27 @@
    "countries": [
     "المكسيك"
    ],
-   "codes": [
-    "mx",
-    "mexico"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Claro",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "ESPN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "ESPN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1255,21 +1647,34 @@
    "territory": "Panama",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "8 Clanes",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "FOX",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Fox Sports"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Claro",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1278,12 +1683,19 @@
    "territory": "South America (excluding Brazil)",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "ESPN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "ESPN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1291,21 +1703,34 @@
    "territory": "Suriname",
    "region": "Americas",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "ATV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "ESPN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "ESPN"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "CPSL",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1316,26 +1741,43 @@
    "countries": [
     "أمريكا"
    ],
-   "codes": [
-    "us",
-    "usa",
-    "united states"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Paramount+",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Paramount+"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "DAZN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "TUDN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "TUDN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1345,15 +1787,19 @@
    "countries": [
     "أستراليا"
    ],
-   "codes": [
-    "au",
-    "australia"
-   ],
+   "status": "verified",
    "holders": [
     {
      "name": "Stan Sport",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Stan Sport"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1361,17 +1807,27 @@
    "territory": "Bangladesh",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Tapmad",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Sony",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sony"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1379,12 +1835,19 @@
    "territory": "Brunei",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1392,12 +1855,19 @@
    "territory": "Cambodia",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1405,11 +1875,14 @@
    "territory": "PR China",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "iQIYI",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1418,12 +1891,19 @@
    "territory": "Hong Kong SAR",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1431,12 +1911,19 @@
    "territory": "Indian Sub-Continent",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Sony",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sony"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1446,16 +1933,26 @@
    "countries": [
     "إندونيسيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "SCTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1464,21 +1961,30 @@
    "territory": "Japan",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "WOWOW",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "U-NEXT",
-     "highlightsOnly": true,
+     "entity": "platform",
+     "rights": [
+      "highlights"
+     ],
      "channels": []
     },
     {
      "name": "Lemino",
-     "highlightsOnly": true,
+     "entity": "platform",
+     "rights": [
+      "highlights"
+     ],
      "channels": []
     }
    ]
@@ -1487,11 +1993,14 @@
    "territory": "Kyrgyzstan",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Quest Media",
-     "highlightsOnly": false,
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1500,12 +2009,19 @@
    "territory": "Laos",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1513,11 +2029,14 @@
    "territory": "Macau SAR",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "TDM",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1528,12 +2047,19 @@
    "countries": [
     "ماليزيا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1541,11 +2067,14 @@
    "territory": "Mongolia",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Premier Sports Network",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1554,12 +2083,19 @@
    "territory": "Myanmar",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Canal+",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Canal+"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1569,12 +2105,19 @@
    "countries": [
     "نيوزيلندا"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "DAZN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "DAZN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1582,11 +2125,14 @@
    "territory": "Pacific Islands",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Digicel",
-     "highlightsOnly": false,
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1597,16 +2143,26 @@
    "countries": [
     "باكستان"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Sony",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "Sony"
+     ],
+     "brandsFrom": "shasha"
     },
     {
      "name": "Tapmad",
-     "highlightsOnly": false,
+     "entity": "platform",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1615,12 +2171,19 @@
    "territory": "Philippines",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1628,11 +2191,14 @@
    "territory": "Republic of Korea",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "SPO TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1643,12 +2209,19 @@
    "countries": [
     "سنغافورة"
    ],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1656,11 +2229,14 @@
    "territory": "Taiwan/Chinese Taipei",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Elta",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1669,11 +2245,14 @@
    "territory": "Tajikistan",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Quest Media",
-     "highlightsOnly": false,
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1682,12 +2261,19 @@
    "territory": "Thailand",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1695,12 +2281,19 @@
    "territory": "Timor-Leste",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "beIN",
-     "highlightsOnly": false,
-     "channels": []
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
+     "channels": [],
+     "brands": [
+      "beIN"
+     ],
+     "brandsFrom": "shasha"
     }
    ]
   },
@@ -1708,11 +2301,14 @@
    "territory": "Turkmenistan",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Quest Media",
-     "highlightsOnly": false,
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1721,16 +2317,22 @@
    "territory": "Uzbekistan",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Quest Media",
-     "highlightsOnly": false,
+     "entity": "company",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Z'Or TV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1739,21 +2341,30 @@
    "territory": "Vietnam",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "VTVCab",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "Viettel",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     },
     {
      "name": "MyTV",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
@@ -1762,14 +2373,22 @@
    "territory": "In-flight and in-ship broadcasts",
    "region": "Asia and Pacific",
    "countries": [],
-   "codes": [],
+   "status": "verified",
    "holders": [
     {
      "name": "Sport24",
-     "highlightsOnly": false,
+     "entity": "unknown",
+     "rights": [
+      "live"
+     ],
      "channels": []
     }
    ]
   }
- ]
+ ],
+ "technicalWindow": {
+  "from": "2026-07-01",
+  "to": "2027-06-30",
+  "note": "نافذة تقنية مشتقة من اسم الموسم — ليست تواريخ عقد، ولا تُحذف البيانات بسببها"
+ }
 }

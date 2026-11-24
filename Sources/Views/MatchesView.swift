@@ -193,7 +193,8 @@ final class MatchStore: ObservableObject {
                 let idx = needIdx ? MatchSourcesRule.LibIndex(libList) : (oldIdx ?? MatchSourcesRule.LibIndex([]))
                 let merged = MatchSourcesRule.merge(gs, sources: srcs, idx: idx, pool: pl, manual: man, guideSource: guideSource, guideAt: guideAt, from: from, to: to)
                 // 1.10.4 (owner 20:50): rights holders per competition and country — never added as channels of the match
-                return (idx, RightsRule.annotate(merged, rts, idx: idx))
+                let lbl = idx.labels
+                return (idx, RightsRule.annotate(merged, rts, idx: idx, quality: { MatchSourcesRule.quality(MatchGuideRule.version($0, labelPrefixes: lbl)) }))
             }.value
             guard gen == mergeGen else { return }
             if needIdx { libIdx = idx; libStamp = stamp }
@@ -226,7 +227,8 @@ final class MatchStore: ObservableObject {
             let focus = libList.filter { focusIds.contains($0.id) }
             return "\n— الجداول المستوردة\n" + names.joined(separator: "\n") + "\n\n" + MatchSourcesRule.compare(rows, fmt: MatchIndexBuilder.fmt)
                 + "\n" + MatchSourcesRule.guideVsLibrary(srcs, idx: idx, focus: focus)
-                + "\n" + MatchStore.rightsReport(RightsRule.annotate(rows, MatchStore.rights.ok, idx: idx))
+                + "\n" + MatchStore.rightsReport(RightsRule.annotate(rows, MatchStore.rights.ok, idx: idx,
+                    quality: { MatchSourcesRule.quality(MatchGuideRule.version($0, labelPrefixes: idx.labels)) }))
         }.value)
     }
 
@@ -255,8 +257,12 @@ final class MatchStore: ObservableObject {
     nonisolated static func rightsReport(_ rows: [MatchSourcesRule.Row]) -> String {
         var s = "— حقوق البطولات (صاحب الحقوق ليس ناقلًا للمباراة؛ الناقل من جدول المباريات أو EPG فقط)\n"
         for x in rights.ok {
-            s += "   \(x.competition) · \(x.label) · سريان \(MatchIndexBuilder.fmt(x.validFrom)) – \(MatchIndexBuilder.fmt(x.validTo))" + (x.validityNote.map { " (\($0))" } ?? "")
-                + " · \(x.territories.count) منطقة · \(x.territories.reduce(0) { $0 + $1.holders.count }) صاحب حقوق · \(RedactRule.link(x.sourceUrl))\n"
+            let ver = x.territories.filter(\.verified), miss = x.territories.filter { !$0.verified }
+            s += "   \(x.competition) · \(x.label) · \(ver.count) منطقة متحقق منها · \(ver.reduce(0) { $0 + $1.holders.count }) صاحب حقوق · \(RedactRule.link(x.source.url))"
+                + (miss.isEmpty ? "" : " · بيانات ناقصة: " + miss.map(\.territory).joined(separator: "، ")) + "\n"
+            var seen = Set<String>()
+            for t in x.territories { if let ts = t.source, ts != x.source, seen.insert(ts.url).inserted {
+                s += "      مصدر سجل: \(ts.label) · \(ts.title) · \(RedactRule.link(ts.url)) · أُخذ \(ts.retrievedAt)\n" } }
         }
         for b in rights.bad { s += "   ملف حقوق لم يُقرأ: \(b)\n" }
         let with = rows.filter { !$0.rights.isEmpty }
@@ -264,11 +270,12 @@ final class MatchStore: ObservableObject {
         for r in with {
             let linked = r.links.filter(\.confirmed)
             let fits = linked.filter { $0.rightsNote?.hasPrefix("صاحب حقوق") == true }.count
-            let other = linked.filter { $0.rightsNote?.hasPrefix("أصحاب الحقوق المعلنون") == true }
-            let inLib = r.rights.filter { $0.inLibrary > 0 }.map { "\($0.holder.name) (\($0.territory.territory)، \($0.inLibrary))" }.joined(separator: "، ")
-            s += "   \(MatchIndexBuilder.fmt(r.start)) · \(r.home) × \(r.away): \(Set(r.rights.map(\.territory.territory)).count) منطقة · قنوات مؤكدة \(linked.count)، منها من شبكة صاحب الحقوق في دولتها \(fits)"
-                + (other.isEmpty ? "" : " · لا تطابق صاحب الحقوق المعلن: " + other.map(\.name).joined(separator: "، "))
-                + " · أصحاب حقوق لهم قنوات في مكتبتك (غير محددة للمباراة): " + (inLib.isEmpty ? "—" : inLib) + "\n"
+            let other = linked.filter { $0.rightsNote?.hasPrefix("لم نجدها") == true }
+            let mine = r.rights.filter { $0.inLibrary > 0 }.map { "\($0.holder.name) (\($0.territory.territory)، \($0.inLibrary))" }.joined(separator: "، ")
+            let miss = Array(Set(r.rights.filter { !$0.territory.verified }.map(\.territory.territory))).sorted()
+            s += "   \(MatchIndexBuilder.fmt(r.start)) · \(r.home) × \(r.away): القنوات الناقلة \(linked.count)، منها من شبكة صاحب الحقوق في دولتها \(fits)"
+                + (other.isEmpty ? "" : " · لم نجدها ضمن قائمة الحقوق: " + other.map(\.name).joined(separator: "، "))
+                + " · أصحاب حقوق عندك قنواتهم: " + (mine.isEmpty ? "—" : mine) + (miss.isEmpty ? "" : " · بيانات ناقصة: " + miss.joined(separator: "، ")) + "\n"
         }
         return s
     }
@@ -501,8 +508,14 @@ struct MatchRowView: View {
         List {
             Section { info(r) }
             filters(r)
-            linkSection("مؤكدة", sec.confirmed, zap: true, r,
+            if sec.confirmed.isEmpty && r.rights.contains(where: { $0.inLibrary > 0 }) {
+                Section { Text("قناة المباراة لم تُحدّد").font(.subheadline) } footer: {
+                    Text("لا جدول ولا دليل يذكر قناة لهذه المباراة. تقدر تفتح قنوات صاحب الحقوق تحت وتختار بنفسك.")
+                }
+            }
+            linkSection("القنوات الناقلة", sec.confirmed, zap: true, r,
                         footer: "مؤكدة بدليل: EPG المزوّد، أو اسم مطابق بنفس الدولة في جدول ناقل/دليل نقل، أو أضفتها يدويًا. الترتيب: 4K ثم 1080p ثم 720p ثم SD ثم غير المعروفة (الدقة من الاسم). التنقل بين القنوات داخل هذه القائمة فقط.")
+            rightsSection(r)
             linkSection("بدائل 4K محتملة (قد لا تكون نفس البث)", sec.alternatives, zap: false, r,
                         footer: "جدول يذكر قناة 4K (مثل Sky Sports Ultra HDR أو TNT Sports Ultimate)؛ هذه نسخ 4K لقنوات مذكورة معها. غير مؤكدة، وتُشغَّل فقط إذا اخترتها.")
             linkSection("محتملة", sec.possible, zap: false, r,
@@ -557,34 +570,57 @@ struct MatchRowView: View {
                     Text("منصة أو شبكة كاملة، لا تُربط بقناة من مكتبتك تخمينًا.")
                 }
             }
-            rightsSection(r)
         }
     }
 
-    /// 1.10.4 (owner 20:50): who holds the competition's rights in each country (every country; the country filter narrows it).
+    /// 1.10.5 (owner 21:17): the rights as a shortcut — holders whose channels you have first, each opening to its versions
+    /// in the library (4K first) to play alone or add by hand; the others and the unverified countries folded away.
     @ViewBuilder private func rightsSection(_ r: MatchSourcesRule.Row) -> some View {
         let c: String? = showAll || country.isEmpty ? nil : country
         let facts = r.rights.filter { RightsRule.passes($0, country: c) }
-        if !facts.isEmpty {
-            let linked = Set(r.links.filter(\.confirmed).map(MatchSourcesRule.linkCountry))
-            let groups = Dictionary(grouping: facts, by: \.territory.territory).values.sorted { a, b in
-                let la = a.reduce(0) { $0 + $1.inLibrary }, lb = b.reduce(0) { $0 + $1.inLibrary }
-                if la != lb { return la > lb }
-                let ma = a[0].territory.countries.contains(where: linked.contains), mb = b[0].territory.countries.contains(where: linked.contains)
-                if ma != mb { return ma }
-                return a[0].territory.territory < b[0].territory.territory
-            }
+        let mine = facts.filter { $0.inLibrary > 0 }.sorted { ($1.inLibrary, $0.holder.name) < ($0.inLibrary, $1.holder.name) }
+        let others = facts.filter { $0.inLibrary == 0 && $0.territory.verified }
+        let missing = facts.filter { !$0.territory.verified }
+        if !mine.isEmpty {
             Section {
-                ForEach(Array(groups.enumerated()), id: \.offset) { _, g in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(g[0].territory.territory): " + g.map { $0.holder.name + ($0.holder.highlightsOnly ? " (ملخصات فقط)" : "") }.joined(separator: "، ")).font(.footnote)
-                        Text("صاحب حقوق البطولة — قناة هذه المباراة غير محددة · في مكتبتك \(g.reduce(0) { $0 + $1.inLibrary }) نسخة من هذه الشبكة لتلك الدولة · \(g[0].rights.label)")
-                            .font(.caption2).foregroundStyle(.secondary)
+                ForEach(Array(mine.enumerated()), id: \.offset) { _, f in
+                    DisclosureGroup {
+                        ForEach(f.library, id: \.id) { ch in
+                            Button { play([ch.id], 0) } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(ch.name).lineLimit(1).foregroundStyle(.primary)
+                                    Text("\(versionOf(ch.name).label()) · من شبكة \(f.holder.name) — غير محددة لهذه المباراة").font(.caption2).foregroundStyle(.secondary)
+                                }
+                            }
+                            .contextMenu {
+                                Button { store.setManual(row: r, channelId: ch.id, name: ch.name, add: true) } label: { Label("أضفها لهذه المباراة", systemImage: "plus.circle") }
+                            }
+                        }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(f.holder.name) — \(f.territory.territory) · \(f.inLibrary) في مكتبتك").font(.footnote)
+                            Text("صاحب حقوق البطولة · " + RightsRule.holderLine(f)).font(.caption2).foregroundStyle(.secondary).lineLimit(3)
+                        }
                     }
                 }
-            } header: { Text("أصحاب حقوق البطولة (ليست قنوات هذه المباراة) (\(groups.count))") } footer: {
-                Text("من يملك حقوق البطولة في كل دولة (مصدر رسمي). صاحب الحقوق ليس ناقلًا لهذه المباراة: القناة تأتي فقط من جدول مباريات أو الدليل. فلتر الدولة اختياري.")
+            } header: { Text("أصحاب حقوق عندك قنواتهم") } footer: {
+                Text("افتح صاحب الحقوق لترى قنواته في مكتبتك (4K أولًا). اضغط قناة لتشغيلها وحدها، أو اضغط مطوّلًا لإضافتها لهذه المباراة. ليست قنوات المباراة إلا إذا اخترتها.")
             }
+        }
+        if !others.isEmpty || !missing.isEmpty {
+            Section {
+                DisclosureGroup("أصحاب حقوق آخرون (\(others.count)) · بيانات ناقصة (\(Set(missing.map(\.territory.territory)).count))") {
+                    ForEach(Array(Dictionary(grouping: others, by: \.territory.territory).sorted { $0.key < $1.key }.enumerated()), id: \.offset) { _, g in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(g.key): " + g.value.map(\.holder.name).joined(separator: "، ")).font(.footnote)
+                            Text(g.value.map(RightsRule.holderLine).joined(separator: " | ")).font(.caption2).foregroundStyle(.secondary)
+                        }
+                    }
+                    ForEach(Array(Set(missing.map(\.territory.territory))).sorted(), id: \.self) { t in
+                        Text("\(t): لم نتحقق من حقوقها بعد (بيانات ناقصة)").font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+            } footer: { Text("أصحاب حقوق ليست قنواتهم في مكتبتك، ودول لم نتحقق منها بعد. الدولة فلتر اختياري.") }
         }
     }
 
