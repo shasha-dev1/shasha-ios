@@ -1807,3 +1807,31 @@ extension MatchSourcesUpdateTests {
         XCTAssertEqual(MatchFetchRule.priority(xs).map(\.id), ["2", "3", "1"])
     }
 }
+
+/// 1.9.3 (owner 08:38): the same match listed once; versions ordered by quality, highest first.
+final class MatchDupQualityTests: XCTestCase {
+    typealias S = MatchSourcesRule
+    let ko: Int64 = 1_795_550_400_000
+    func src(_ n: String, _ k: Int64, _ ch: String) -> S.ExtSource {
+        S.ExtSource(name: n, kind: .broadcaster, url: nil, fetchedAt: 1, importedAt: 1,
+                    matches: [S.ExtMatch(home: "Real Madrid", away: "PSV", kickoff: k, competition: "UEFA Champions League", sport: "football",
+                                         channels: [S.ExtChannel(name: ch, country: nil, programmeStart: nil)])])
+    }
+    func merge(_ s: [S.ExtSource]) -> [S.Row] {
+        S.merge([], sources: s, idx: S.LibIndex([]), pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0,
+                from: ko - 20 * 3_600_000, to: ko + 40 * 3_600_000, tz: TimeZone(identifier: "UTC")!)
+    }
+    func testTwoSitesALittleApartAreOneRow() {
+        let rows = merge([src("A", ko, "beIN Sports 1"), src("B", ko + 15 * 60_000, "Tring Sport 3")])
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(rows[0].sources.count, 2)
+    }
+    func testAnotherDayStaysApart() {
+        XCTAssertEqual(merge([src("A", ko, "x"), src("B", ko + 86_400_000, "y")]).count, 2)
+    }
+    func testHighestQualityFirst() {
+        let names = ["AR: beIN 1 HD", "AR: beIN 1 SD", "AR: beIN 1 RAW", "AR: beIN 1", "AR: beIN 1 FHD", "AR: beIN 1 4K", "AR: beIN 1 FHD RAW"]
+        let order = names.sorted { S.quality(MatchGuideRule.version($0)) < S.quality(MatchGuideRule.version($1)) }
+        XCTAssertEqual(order, ["AR: beIN 1 4K", "AR: beIN 1 FHD RAW", "AR: beIN 1 FHD", "AR: beIN 1 RAW", "AR: beIN 1", "AR: beIN 1 HD", "AR: beIN 1 SD"])
+    }
+}

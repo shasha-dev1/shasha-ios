@@ -1927,11 +1927,26 @@ enum MatchSourcesRule {
         for s in sources {
             for m in s.matches where m.kickoff >= from - 3 * 3_600_000 && m.kickoff < to {
                 if let i = accs.firstIndex(where: { $0.group != nil && sameMatch($0.group!, m) }) ?? accs.firstIndex(where: { a in
-                    a.group == nil && a.ext.contains { $0.1.kickoff == m.kickoff && teamsMatch($0.1.home, m.home) && teamsMatch($0.1.away, m.away) } }) {
+                    a.group == nil && a.ext.contains { abs($0.1.kickoff - m.kickoff) <= 20 * 60_000 && teamsMatch($0.1.home, m.home) && teamsMatch($0.1.away, m.away) } }) {
                     accs[i].ext.append((s, m))
                 } else { accs.append((nil, [(s, m)])) }
             }
         }
+        // 1.9.3 (owner: the same match listed more than once): schedule-only rows of the same match (same teams after
+        // short names, same day, within 3 h) are one row. Same rule as the TV's 0.9.47.
+        var seen: [String: Int] = [:]
+        var merged: [(group: MatchGuideRule.Group?, ext: [(ExtSource, ExtMatch)])] = []
+        for a in accs {
+            guard a.group == nil, let m = a.ext.first?.1 else { merged.append(a); continue }
+            let k = matchKey(home: m.home, away: m.away, audience: MatchGuideRule.audience(m.home + " " + m.away), at: m.kickoff, tz: tz)
+            if let i = seen[k], a.ext.allSatisfy({ x in merged[i].ext.contains { abs($0.1.kickoff - x.1.kickoff) <= 3 * 3_600_000 } }) {
+                merged[i].ext += a.ext
+            } else {
+                if seen[k] == nil { seen[k] = merged.count }
+                merged.append(a)
+            }
+        }
+        accs = merged
         // keys first, so a manual choice saved under an older key finds its match again (same teams, nearest row within 3 days)
         let keys: [(String, Int64)] = accs.map { a in
             let g = a.group, first = a.ext.first?.1
@@ -2170,11 +2185,23 @@ enum MatchSourcesRule {
         return cOk && gOk
     }
 
+    /// 1.9.3 (owner: the highest qualities first — UHD, FHD, RAW): 4K, 1080p (RAW first), RAW, unknown, 720p, SD.
+    static func quality(_ v: MatchGuideRule.Version) -> Int {
+        switch v.res {
+        case .uhd: return v.raw ? 0 : 1
+        case .fhd: return v.raw ? 2 : 3
+        default:
+            if v.raw { return 4 }
+            return v.res == .unknown ? 5 : v.res == .hd ? 6 : 7
+        }
+    }
+
     static func sections(_ r: Row, versionOf: (String) -> MatchGuideRule.Version, hideHd: Bool, hideSd: Bool,
                          country: String? = nil, lang: String? = nil) -> Sections {
         func ok(_ l: Link) -> Bool { let x = versionOf(l.name).res; return !(hideHd && x == .hd) && !(hideSd && x == .sd) && passes(l, country: country, lang: lang) }
         func sorted(_ l: [Link]) -> [Link] {
-            l.sorted { (versionOf($0.name).res.rawValue, $0.best.rawValue, $0.name, $0.channelId) < (versionOf($1.name).res.rawValue, $1.best.rawValue, $1.name, $1.channelId) }
+            let q = Dictionary(l.map { ($0.channelId, quality(versionOf($0.name))) }, uniquingKeysWith: { a, _ in a })
+            return l.sorted { (q[$0.channelId] ?? 9, $0.best.rawValue, $0.name, $0.channelId) < (q[$1.channelId] ?? 9, $1.best.rawValue, $1.name, $1.channelId) }
         }
         let confirmed = r.links.filter(\.confirmed)
         let alternatives = r.links.filter { !$0.confirmed && $0.alt4k }

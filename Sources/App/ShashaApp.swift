@@ -47,6 +47,28 @@ struct RootView: View {
     @EnvironmentObject var epg: EPG
     @State private var play: PlayItem?
     @State private var minimized = false
+    /// 1.9.3: a new item asked for while one is up (or hidden in picture in picture) waits for the old player to close.
+    @State private var switching = 0
+
+    /// 1.9.3 (owner: choosing a match's channel from the schedule played sound only, then the app froze and closed):
+    /// replacing the item swapped the player in one step, so the new mpv engine started before the old one stopped and
+    /// the old screen's leaving code (portrait, stop) ran over the new one. Now: the old player closes first, then the
+    /// new one opens (after the old model is gone, at most 2 s).
+    private func open(_ next: PlayItem?) {
+        guard let next else { play = nil; return }
+        guard play != nil else { play = next; return }
+        if play?.id == next.id && !minimized { return }
+        switching += 1; let mine = switching
+        minimized = false; play = nil
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            var waited = 400
+            while PlayerModel.alive > 0 && waited < 2_000 { try? await Task.sleep(nanoseconds: 100_000_000); waited += 100 }
+            guard mine == switching else { return }          // a later choice wins
+            play = next
+        }
+    }
+    private var playBinding: Binding<PlayItem?> { Binding(get: { play }, set: { open($0) }) }
 
     @AppStorage(FreezeBehindPlayer.key) private var freezeBehind = false
 
@@ -64,7 +86,7 @@ struct RootView: View {
                     Perf.shared.untilNextFrame("رجوع من المشغّل"); minimized = false; play = nil
                     Downloads.shared.playing(network: nil)    // 1.8.0: a paused download goes on
                     Task { try? await Task.sleep(nanoseconds: 1_500_000_000); await CloudSync.sync(library, force: true) }
-                }, minimized: $minimized, replace: { play = $0 })
+                }, minimized: $minimized, replace: { open($0) })
                     .id(item.id)
                     .environmentObject(library).environmentObject(epg)
                     .opacity(minimized ? 0 : 1)
@@ -106,10 +128,10 @@ struct RootView: View {
                 NavigationStack { SetupView() }
             } else {
                 TabView {
-                    HomeView(play: $play).tabItem { Label("الرئيسية", systemImage: "house") }
-                    LiveView(play: $play).tabItem { Label("القنوات", systemImage: "tv") }
-                    MoviesView(play: $play).tabItem { Label("الأفلام", systemImage: "film") }
-                    SeriesView(play: $play).tabItem { Label("المسلسلات", systemImage: "play.rectangle.on.rectangle") }
+                    HomeView(play: playBinding).tabItem { Label("الرئيسية", systemImage: "house") }
+                    LiveView(play: playBinding).tabItem { Label("القنوات", systemImage: "tv") }
+                    MoviesView(play: playBinding).tabItem { Label("الأفلام", systemImage: "film") }
+                    SeriesView(play: playBinding).tabItem { Label("المسلسلات", systemImage: "play.rectangle.on.rectangle") }
                     SettingsView().tabItem { Label("الإعدادات", systemImage: "gearshape") }
                 }
             }

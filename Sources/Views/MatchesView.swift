@@ -372,9 +372,9 @@ struct MatchRowView: View {
 
     private var row: MatchSourcesRule.Row? { store.rows.first { MatchStore.key($0) == key } }
 
-    private func versionOf(_ name: String) -> MatchGuideRule.Version {
-        MatchGuideRule.version(name, labelPrefixes: store.result?.labels.values.reduce(Set<String>()) { $0.union($1) } ?? [])
-    }
+    /// 1.9.3: the label prefixes are gathered once per screen update, not once per channel name.
+    private var labelPrefixes: Set<String> { store.result?.labels.values.reduce(Set<String>()) { $0.union($1) } ?? [] }
+    private func versionOf(_ name: String) -> MatchGuideRule.Version { MatchGuideRule.version(name, labelPrefixes: labelPrefixes) }
 
     var body: some View {
         SwiftUI.Group {
@@ -386,13 +386,14 @@ struct MatchRowView: View {
     }
 
     @ViewBuilder private func content(_ r: MatchSourcesRule.Row) -> some View {
-        let sec = MatchSourcesRule.sections(r, versionOf: versionOf, hideHd: hideHd && !showAll, hideSd: hideSd && !showAll,
+        let lp = labelPrefixes
+        let sec = MatchSourcesRule.sections(r, versionOf: { MatchGuideRule.version($0, labelPrefixes: lp) }, hideHd: hideHd && !showAll, hideSd: hideSd && !showAll,
                                             country: showAll || country.isEmpty ? nil : country, lang: showAll || lang.isEmpty ? nil : lang)
         List {
             Section { info(r) }
             filters(r)
             linkSection("مؤكدة", sec.confirmed, zap: true, r,
-                        footer: "مؤكدة بدليل: EPG المزوّد، أو اسم مطابق في جدول ناقل/دليل نقل، أو أضفتها يدويًا. 4K أولًا ثم 1080p. التنقل بين القنوات داخل هذه القائمة فقط.")
+                        footer: "مؤكدة بدليل: EPG المزوّد، أو اسم مطابق في جدول ناقل/دليل نقل، أو أضفتها يدويًا. الأعلى جودة أولًا: 4K ثم 1080p ثم RAW. التنقل بين القنوات داخل هذه القائمة فقط.")
             linkSection("بدائل 4K محتملة (قد لا تكون نفس البث)", sec.alternatives, zap: false, r,
                         footer: "جدول يذكر قناة 4K (مثل Sky Sports Ultra HDR أو TNT Sports Ultimate)؛ هذه نسخ 4K لقنوات مذكورة معها. غير مؤكدة، وتُشغَّل فقط إذا اخترتها.")
             linkSection("محتملة", sec.possible, zap: false, r,
