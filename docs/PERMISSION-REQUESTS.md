@@ -1,7 +1,7 @@
 # Permission requests (the owner reviews and sends them himself)
 
-Status: LiveSoccerTV — sent by the owner, **agreed** (owner, 24/11 07:24; keep their reply in docs/permissions/).
-Live-FootballOnTV — not sent.
+Status (owner, 24/11 07:25): Live-FootballOnTV — sent, **agreed** (keep their reply in docs/permissions/).
+LiveSoccerTV — no reply.
 
 Shasha is a personal player app; the data would be used to list which channels show a match, with the source named.
 No playback links or subscription data are ever sent to these sites.
