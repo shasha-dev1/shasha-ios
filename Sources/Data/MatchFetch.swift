@@ -27,7 +27,7 @@ final class MatchFetch: ObservableObject {
     private func set(_ s: String, _ x: String, _ v: Int64) { d.set(Double(v), forKey: k(s, x)) }
 
     let sites = [MatchFetchRule.lfotv, MatchFetchRule.lstv]
-    private static func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
+    nonisolated private static func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
     func due(_ s: String, force: Bool) -> Bool {
         MatchFetchRule.due(now: Self.now(), lastAttempt: lastAttempt(s), lastSuccess: lastSuccess(s), blockedUntil: blockedUntil(s), force: force)
     }
@@ -100,7 +100,8 @@ final class MatchFetch: ObservableObject {
                 let t0 = Date()
                 let html = try await Self.get(MatchFetchRule.lfotvURL)
                 guard MatchFetchRule.looksLikeLfotv(html) else { throw Unexpected() }
-                var s = await Task.detached { MatchFetchRule.parseLfotv(html, fetchedAt: Self.now(), from: from, to: to) }.value
+                let at = Self.now()
+                var s = await Task.detached { MatchFetchRule.parseLfotv(html, fetchedAt: at, from: from, to: to) }.value
                 s.status = "جلب كامل للصفحة"
                 if s.matches.isEmpty { line = "الصفحة بلا مباريات لليوم وبكرة — بقي الجدول السابق" }
                 else if let e = keep(s) { line = "لم يُحفظ: " + e }
