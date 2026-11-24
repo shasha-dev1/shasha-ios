@@ -1607,7 +1607,13 @@ enum MatchSourcesRule {
         var fetchedAt: Int64? = nil }
     struct ExtSource { let name: String; let kind: Kind; let url: String?; let fetchedAt: Int64; let importedAt: Int64; var matches: [ExtMatch]
         /// How complete it is (an automatic fetch says «partial…» and its last complete fetch).
-        var status: String? = nil }
+        var status: String? = nil
+        /// 1.10.0 (TV 0.9.44/0.9.46/0.9.53): the times are programme starts from a channel listing (build-up included), not kickoffs.
+        var programmeTimes = false
+        /// A channel listing with no live marker: only adds channels to a match another source gives with its real kickoff.
+        var confirmOnly = false
+        /// Where the data first comes from when the source relays another (epgshare01 → bein.com): one witness, not two.
+        var origin: String? = nil }
     struct BadFile: Error { let reason: String }
 
     private static func time(_ s: String?, _ what: String) throws -> Int64 {
@@ -1663,7 +1669,9 @@ enum MatchSourcesRule {
                                 fetchedAt: str(m, "fetchedAt").isEmpty ? nil : try time(str(m, "fetchedAt"), "المباراة \(i + 1): وقت أخذ القنوات")))
         }
         return ExtSource(name: name, kind: kind, url: str(src, "url").isEmpty ? nil : str(src, "url"), fetchedAt: fetched, importedAt: now, matches: out,
-                         status: str(src, "status").isEmpty ? nil : str(src, "status"))
+                         status: str(src, "status").isEmpty ? nil : str(src, "status"),
+                         programmeTimes: str(src, "times") == "programme", confirmOnly: str(src, "confirm") == "only",
+                         origin: str(src, "origin").isEmpty ? nil : str(src, "origin"))
     }
 
     // ---------- kept schedules: one file per source, an update replaces it ----------
@@ -1786,12 +1794,17 @@ enum MatchSourcesRule {
     final class LibIndex {
         struct E { let ch: LibCh; let own: Set<String>; let body: Set<String>; let res: MatchGuideRule.Res }
         let byNet: [String: [E]]
+        /// 1.10.0 (TV 0.9.53): group labels of this library («8K:» before beIN SD / ᴴᴰ / ʰᵉᵛᶜ / ᴿᴬᵂ) — without them every
+        /// version with no quality after the label (HEVC, RAW) was taken for a 4K channel and left out of the plain channel.
+        let labels: Set<String>
         init(_ lib: [LibCh]) {
             var d: [String: [E]] = [:]
+            let labels = MatchGuideRule.prefixLabels(lib.map(\.name))
+            self.labels = labels
             for ch in lib {
                 let net = MatchGuideRule.network(ch.name)
                 d[net, default: []].append(E(ch: ch, own: distinct(ch.name, net: net), body: bodyNoCountry(ch.name),
-                                             res: MatchGuideRule.version(ch.name).res))
+                                             res: MatchGuideRule.version(ch.name, labelPrefixes: labels).res))
             }
             byNet = d
         }
@@ -1975,7 +1988,9 @@ enum MatchSourcesRule {
         for s in sources {
             for m in s.matches where m.kickoff >= from - 3 * 3_600_000 && m.kickoff < to { autoreleasepool {
                 if let i = accs.firstIndex(where: { $0.group != nil && sameMatch($0.group!, m) }) ?? accs.firstIndex(where: { a in
-                    a.group == nil && a.ext.contains { abs($0.1.kickoff - m.kickoff) <= 20 * 60_000 && teamsMatch($0.1.home, m.home) && teamsMatch($0.1.away, m.away) } }) {
+                    a.group == nil && a.ext.contains { o in
+                        abs(o.1.kickoff - m.kickoff) <= ((o.0.programmeTimes || s.programmeTimes) ? 2 * 3_600_000 : 20 * 60_000)
+                            && teamsMatch(o.1.home, m.home) && teamsMatch(o.1.away, m.away) } }) {
                     accs[i].ext.append((s, m))
                 } else { accs.append((nil, [(s, m)])) }
             } }
@@ -2000,7 +2015,7 @@ enum MatchSourcesRule {
             let g = a.group, first = a.ext.first?.1
             let home = g?.home ?? first!.home, away = g?.away ?? first!.away
             let audience = g.map { Set($0.entries.flatMap(\.audience)) } ?? MatchGuideRule.audience(home + " " + away)
-            let ko = a.ext.enumerated().sorted { ($0.element.0.kind.rawValue, $0.offset) < ($1.element.0.kind.rawValue, $1.offset) }.first?.element.1.kickoff
+            let ko = a.ext.enumerated().sorted { ($0.element.0.programmeTimes ? 1 : 0, $0.element.0.kind.rawValue, $0.offset) < ($1.element.0.programmeTimes ? 1 : 0, $1.element.0.kind.rawValue, $1.offset) }.first?.element.1.kickoff
             let at = ko ?? g!.start
             return (matchKey(home: home, away: away, audience: audience, at: at, tz: tz), at)
         }
@@ -2017,12 +2032,14 @@ enum MatchSourcesRule {
         var rows: [Row] = []
         for (ai, a) in accs.enumerated() {
             let g = a.group
+            if g == nil && a.ext.allSatisfy({ $0.0.confirmOnly }) { continue }      // nothing confirms it is a live match
             let first = a.ext.first?.1
             let home = g?.home ?? first!.home, away = g?.away ?? first!.away
             let audience = g.map { Set($0.entries.flatMap(\.audience)) } ?? MatchGuideRule.audience(home + " " + away)
-            let sched = a.ext.enumerated().sorted { ($0.element.0.kind.rawValue, $0.offset) < ($1.element.0.kind.rawValue, $1.offset) }.map(\.element)
+            let sched = a.ext.enumerated().sorted { ($0.element.0.programmeTimes ? 1 : 0, $0.element.0.kind.rawValue, $0.offset) < ($1.element.0.programmeTimes ? 1 : 0, $1.element.0.kind.rawValue, $1.offset) }.map(\.element)
             let kickoff = sched.first?.1.kickoff
-            let conflict = (kickoff != nil && g != nil && !timesFit(g!, kickoff!)) || Set(sched.map(\.1.kickoff)).count > 1
+            let trueKickoffs = Set(sched.filter { !$0.0.programmeTimes }.map(\.1.kickoff))
+            let conflict = (kickoff != nil && g != nil && !(sched.first?.0.programmeTimes ?? false) && !timesFit(g!, kickoff!)) || trueKickoffs.count > 1
             let key = keys[ai].0
             var links: [String: Link] = [:]; var order: [String] = []
             func add(_ id: String, _ name: String, _ p: Proof, possible: Bool = false, alt: Bool = false) {
@@ -2037,6 +2054,8 @@ enum MatchSourcesRule {
             var platforms: [(String, String)] = []
             for (s, m) in a.ext {
                 for c in m.channels {
+                    // a channel listing's airing well after the real kickoff is a later showing, not the live one
+                    if s.programmeTimes, let k0 = trueKickoffs.min(), m.kickoff - k0 > 90 * 60_000 { continue }
                     if delayedName(c.name) { continue }          // «(Delayed)», highlights, replay: not live
                     if typeOf(c, idx) != .channel {
                         if !platforms.contains(where: { $0.0 == c.name && $0.1 == s.name }) { platforms.append((c.name, s.name)) }
@@ -2672,8 +2691,148 @@ enum MatchFetchRule {
         }
         var src: [String: Any] = ["name": s.name, "kind": s.kind == .broadcaster ? "broadcaster" : "guide", "fetchedAt": iso(s.fetchedAt)]
         if let u = s.url { src["url"] = u }; if let st = s.status { src["status"] = st }
+        if s.programmeTimes { src["times"] = "programme" }; if s.confirmOnly { src["confirm"] = "only" }; if let o = s.origin { src["origin"] = o }
         let root: [String: Any] = ["format": "shasha-matches", "version": 1, "source": src, "matches": ms,
                                    "note": "Read automatically by Shasha for the owner's personal use; source: \(s.name)."]
         return (try? JSONSerialization.data(withJSONObject: root)) ?? Data()
+    }
+}
+
+// MARK: - 1.10.0: published XMLTV guides as match schedules (TV 0.9.44 / 0.9.53)
+
+/// Reads a published XMLTV guide for match schedules: channel names, and only the programmes that name two sides.
+/// Same rules as the TV's GuideXmltv + GuideScheduleCore.
+enum GuideFeedRule {
+    struct Prog { let channel: String; let start: Int64; let stop: Int64; let title: String; let subTitle: String?; let category: String?
+        /// The UTC offset the file states for `start`, in minutes (some feeds state a wrong one).
+        let offsetMin: Int? }
+
+    final class Reader: NSObject, XMLParserDelegate {
+        var channels: [String: String] = [:]
+        var progs: [Prog] = []
+        let from: Int64, to: Int64
+        private var ch = "", start: Int64?, stop: Int64?, off: Int?, title: String?, sub: String?, cat: String?
+        private var text = "", inProg = false, chanId: String?
+        init(from: Int64, to: Int64) { self.from = from; self.to = to }
+        static let twoSides = try! NSRegularExpression(pattern: "(?i)\\s(v|vs\\.?)\\s")
+        static func time(_ s: String?) -> (Int64, Int?)? {
+            guard let s = s?.trimmingCharacters(in: .whitespaces), s.count >= 14 else { return nil }
+            let d = String(s.prefix(14))
+            var c = DateComponents(); c.timeZone = TimeZone(identifier: "UTC")
+            guard let y = Int(d.prefix(4)), let mo = Int(d.dropFirst(4).prefix(2)), let da = Int(d.dropFirst(6).prefix(2)),
+                  let h = Int(d.dropFirst(8).prefix(2)), let mi = Int(d.dropFirst(10).prefix(2)), let se = Int(d.dropFirst(12).prefix(2)) else { return nil }
+            c.year = y; c.month = mo; c.day = da; c.hour = h; c.minute = mi; c.second = se
+            guard let date = Calendar(identifier: .gregorian).date(from: c) else { return nil }
+            var off: Int? = nil
+            let rest = s.dropFirst(14).trimmingCharacters(in: .whitespaces)
+            if rest.count == 5, let sign = rest.first, let hh = Int(rest.dropFirst().prefix(2)), let mm = Int(rest.suffix(2)) {
+                off = (hh * 60 + mm) * (sign == "-" ? -1 : 1)
+            }
+            return (Int64(date.timeIntervalSince1970 * 1000) - Int64((off ?? 0) * 60_000), off)
+        }
+        func parser(_ p: XMLParser, didStartElement e: String, namespaceURI: String?, qualifiedName: String?, attributes a: [String: String] = [:]) {
+            text = ""
+            switch e {
+            case "channel": chanId = a["id"]
+            case "programme":
+                inProg = true; ch = a["channel"] ?? ""
+                let t = Self.time(a["start"]); start = t?.0; off = t?.1; stop = Self.time(a["stop"])?.0
+                title = nil; sub = nil; cat = nil
+            default: break
+            }
+        }
+        func parser(_ p: XMLParser, foundCharacters s: String) { text += s }
+        func parser(_ p: XMLParser, didEndElement e: String, namespaceURI: String?, qualifiedName: String?) {
+            let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            switch e {
+            case "display-name": if let id = chanId, !t.isEmpty, channels[id] == nil { channels[id] = t }
+            case "channel": chanId = nil
+            case "title" where inProg: if title == nil { title = t }
+            case "sub-title" where inProg: if sub == nil { sub = t }
+            case "category" where inProg: if !t.isEmpty { cat = cat.map { $0 + " / " + t } ?? t }
+            case "programme":
+                inProg = false
+                // a ±1 day margin: a feed whose stated offset is wrong is corrected after this window check
+                if let st = start, !ch.isEmpty, st >= from - 27 * 3_600_000, st < to + 24 * 3_600_000 {
+                    let both = " \(title ?? "") ", sb = " \(sub ?? "") "
+                    if Self.twoSides.firstMatch(in: both, range: NSRange(both.startIndex..., in: both)) != nil
+                        || Self.twoSides.firstMatch(in: sb, range: NSRange(sb.startIndex..., in: sb)) != nil {
+                        progs.append(Prog(channel: ch, start: st, stop: stop ?? st + 2 * 3_600_000, title: title ?? "", subTitle: sub, category: cat, offsetMin: off))
+                    }
+                }
+            default: break
+            }
+            text = ""
+        }
+    }
+
+    static func read(_ data: Data, from: Int64, to: Int64) -> Reader {
+        let r = Reader(from: from, to: to)
+        let p = XMLParser(data: data); p.delegate = r; p.parse()
+        return r
+    }
+
+    // ---------- beIN MENA guide relayed by epgshare01 (origin: bein.com) ----------
+
+    static let beinFeed = "https://epgshare01.online/epgshare01/epg_ripper_BEIN1.xml.gz"
+    static let beinZone = TimeZone(identifier: "Asia/Qatar")!
+
+    private static func m(_ pattern: String, _ s: String) -> [String]? {
+        guard let rx = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+              let r = rx.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) else { return nil }
+        return (0..<r.numberOfRanges).map { r.range(at: $0).location == NSNotFound ? "" : String(s[Range(r.range(at: $0), in: s)!]) }
+    }
+
+    /// The feed's channel ids → channel names (both the _AR and _EN ids: their lists are not always the same).
+    static func beinName(_ id: String) -> String? {
+        guard let g = m("^(.*)_(EN|AR)\\.bein$", id) else { return nil }
+        let s = g[1]
+        if m("^4k_DIGITAL", s) != nil { return "beIN SPORTS 4K" }
+        if m("^4K-HDR", s) != nil { return "beIN SPORTS 4K HDR" }
+        if let x = m("^beIN_SPORTS(\\d)_(ENGLISH|FRENCH)", s) { return "beIN SPORTS \(x[1]) \(x[2].lowercased().capitalized)" }
+        if let x = m("^beIN_SPORTS([1-9])_DIGITAL", s) { return "beIN SPORTS \(x[1])" }
+        if let x = m("^beIN_SPORTS_MAX(\\d)", s) { return "beIN SPORTS MAX \(x[1])" }
+        if let x = m("^beIN_SPORTS_XTRA_?(?:Digital_)?0?(\\d)", s) { return "beIN SPORTS XTRA \(x[1])" }
+        if let x = m("^logos-_beINSPORTSXTRA(\\d)", s) { return "beIN SPORTS XTRA \(x[1])" }
+        if let x = m("^logos-_beINSPORTS(\\d)", s) { return "beIN SPORTS \(x[1])" }
+        if let x = m("^Alkass_(\\d)", s) { return "Alkass \(x[1])" }
+        return nil
+    }
+
+    /// [ms] was read with the file's stated offset; the same wall-clock time in [zone] instead.
+    static func wallClock(_ ms: Int64, statedOffsetMin: Int?, zone: TimeZone) -> Int64 {
+        var utc = Calendar(identifier: .gregorian); utc.timeZone = TimeZone(identifier: "UTC")!
+        let c = utc.dateComponents([.year, .month, .day, .hour, .minute, .second],
+                                   from: Date(timeIntervalSince1970: Double(ms + Int64((statedOffsetMin ?? 0) * 60_000)) / 1000))
+        var z = Calendar(identifier: .gregorian); z.timeZone = zone
+        return Int64((z.date(from: c)?.timeIntervalSince1970 ?? Double(ms) / 1000) * 1000)
+    }
+
+    private static let notMatch = try! NSRegularExpression(pattern: "(?i)\\b(magazine|preview|review|highlights|goals|ملخص|أهداف|استوديو|studio|countdown|road to)\\b")
+
+    /// The beIN feed → confirm-only matches (no live marker), Qatar wall-clock times (the file states «+0100»; checked 24/11:
+    /// «Galatasaray vs Aston Villa» 20:00 on beIN SPORTS 1 English for a 17:45 UTC kickoff). Same rule as the TV's 0.9.53.
+    static func fromBeinFeed(name: String, url: String?, progs: [Prog], fetchedAt: Int64, from: Int64, to: Int64) -> MatchSourcesRule.ExtSource {
+        var order: [String] = []
+        var acc: [String: (home: String, away: String, start: Int64, comp: String?, chs: [String])] = [:]
+        for p in progs {
+            guard let ch = beinName(p.channel) else { continue }
+            let title = p.title.trimmingCharacters(in: .whitespaces), sub = (p.subTitle ?? "").trimmingCharacters(in: .whitespaces)
+            if notMatch.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)) != nil { continue }
+            guard let teams = MatchGuideRule.teams(title) else { continue }
+            if MatchGuideRule.sport(title: "\(title) \(sub)", description: nil, category: p.category, channel: ch).sport != .football { continue }
+            let start = wallClock(p.start, statedOffsetMin: p.offsetMin, zone: beinZone)
+            if start < from - 3 * 3_600_000 || start >= to { continue }
+            let key = MatchGuideRule.teamKey(teams.home) + "|" + MatchGuideRule.teamKey(teams.away) + "@\(start)"
+            if acc[key] == nil { acc[key] = (teams.home, teams.away, start, sub.isEmpty ? p.category : sub, []); order.append(key) }
+            if !acc[key]!.chs.contains(ch) { acc[key]!.chs.append(ch) }
+        }
+        let matches = order.compactMap { acc[$0] }.map { a in
+            MatchSourcesRule.ExtMatch(home: a.home, away: a.away, kickoff: a.start, competition: a.comp, sport: "football",
+                                      channels: a.chs.map { MatchSourcesRule.ExtChannel(name: $0, country: "QA", programmeStart: a.start) })
+        }.sorted { $0.kickoff < $1.kickoff }
+        return MatchSourcesRule.ExtSource(name: name, kind: .broadcaster, url: url, fetchedAt: fetchedAt, importedAt: fetchedAt, matches: matches,
+            status: "\(matches.count) مباراة كرة قدم في الدليل · أوقات بداية البرنامج بتوقيت قطر · يضيف قنوات beIN لمباراة معروفة من جدول آخر فقط · المصدر الأصلي bein.com عبر epgshare01",
+            programmeTimes: true, confirmOnly: true, origin: "bein.com")
     }
 }

@@ -1880,3 +1880,43 @@ final class MatchMergeSpeedTests: XCTestCase {
         XCTAssertLessThan(Date().timeIntervalSince(t), 30)   // debug build on the CI simulator (unoptimised); was 42 s before 1.9.5, minutes on the phone
     }
 }
+
+/// 1.10.0 — beIN MENA guide (bein.com via epgshare01) and the library «8K:» label, with names from the owner's reports.
+final class BeinFeedTests: XCTestCase {
+    typealias S = MatchSourcesRule
+    let from: Int64 = 1_795_467_600_000
+    var to: Int64 { from + 2 * 86_400_000 }
+    var dir: URL { URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../docs/samples").standardizedFileURL }
+    func feed() throws -> S.ExtSource {
+        let r = GuideFeedRule.read(try Data(contentsOf: dir.appendingPathComponent("guides/epgshare01-bein1-2026-11-24-excerpt.xml")), from: from, to: to)
+        return GuideFeedRule.fromBeinFeed(name: "beIN", url: GuideFeedRule.beinFeed, progs: r.progs, fetchedAt: 1, from: from, to: to)
+    }
+    let names = ["8K: beIN SP⚽RTS 1 ENGLISH ᴴᴰ ◉", "8K: beIN SP⚽RTS 1 ENGLISH ʰᵉᵛᶜ", "8K: beIN SP⚽RTS 1 ENGLISH ᴿᴬᵂ", "8K: beIN SP⚽RTS 1 ENGLISH SD",
+                 "8K: beIN SP⚽RTS 2 ENGLISH ᴴᴰ ◉", "8K: beIN SP⚽RTS 4 ʰᵉᵛᶜ", "AR: beIN SPORTS 4K"]
+    var idx: S.LibIndex { S.LibIndex(names.enumerated().map { S.LibCh(id: "\(100 + $0.offset)", name: $0.element) }) }
+
+    func testNamesAndQatarTime() throws {
+        XCTAssertEqual(GuideFeedRule.beinName("beIN_SPORTS1_ENGLISH_Digital_Mono_EN.bein"), "beIN SPORTS 1 English")
+        XCTAssertEqual(GuideFeedRule.beinName("4k_DIGITAL_Mono_AR.bein"), "beIN SPORTS 4K")
+        XCTAssertNil(GuideFeedRule.beinName("NEWS_DIGITAL_Mono_EN.bein"))
+        let s = try feed()
+        let gal = try XCTUnwrap(s.matches.first { $0.home == "Galatasaray" })
+        XCTAssertEqual(gal.kickoff, 1_795_539_600_000)   // 2026-11-24 17:00 UTC = 20:00 in Qatar
+        XCTAssertEqual(gal.channels.map(\.name), ["beIN SPORTS 1 English"])
+        XCTAssertTrue(s.confirmOnly && s.programmeTimes && s.origin == "bein.com")
+    }
+
+    func testAddsTheOwnersBeinVersionsToTheLiveMatchOnly() throws {
+        let lstv = try S.parse(Data(contentsOf: dir.appendingPathComponent("shasha-matches-livesoccertv-2026-11-24.json")), now: 0)
+        let b = try S.parse(MatchFetchRule.toJSON(try feed()), now: 0)
+        let rows = S.merge([], sources: [lstv, b], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: from, to: to)
+        let gal = try XCTUnwrap(rows.first { $0.home == "Galatasaray" })
+        XCTAssertEqual(gal.kickoff, 1_795_542_300_000)   // 17:45 UTC from the schedule, not the programme start
+        let got = Set(gal.links.map(\.name))
+        XCTAssertTrue(got.isSuperset(of: ["8K: beIN SP⚽RTS 1 ENGLISH ʰᵉᵛᶜ", "8K: beIN SP⚽RTS 1 ENGLISH ᴿᴬᵂ", "8K: beIN SP⚽RTS 1 ENGLISH ᴴᴰ ◉"]), "\(got)")
+        XCTAssertFalse(got.contains("AR: beIN SPORTS 4K"))
+        XCTAssertTrue(rows.first { $0.home.hasPrefix("Bod") }?.links.contains { $0.name == "8K: beIN SP⚽RTS 4 ʰᵉᵛᶜ" } ?? false)
+        let alone = S.merge([], sources: [lstv], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: from, to: to)
+        XCTAssertEqual(rows.count, alone.count)   // the beIN rows never stand alone
+    }
+}

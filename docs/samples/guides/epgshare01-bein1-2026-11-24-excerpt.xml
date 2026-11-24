@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- excerpt of https://epgshare01.online/epgshare01/epg_ripper_BEIN1.xml.gz (fetched 2026-11-24): a few channels, 24/11 only; test fixture -->
+<tv>
+<channel id="4k_DIGITAL_Mono_AR.bein">
+    <display-name lang="en">4k_DIGITAL_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="4k_DIGITAL_Mono_EN.bein">
+    <display-name lang="en">4k_DIGITAL_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS1_DIGITAL_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <display-name lang="en">beIN_SPORTS1_ENGLISH_Digital_Mono_AR</display-name>
+    <url>http://www.bein.com_sports_ar</url>
+  </channel>
+<channel id="beIN_SPORTS1_ENGLISH_Digital_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS1_ENGLISH_Digital_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS1_FRENCH_Digital_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS1_FRENCH_Digital_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS2_DIGITAL_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS2_DIGITAL_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS2_ENGLISH_Digital_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS2_FRENCH_Digital_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<channel id="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <display-name lang="en">beIN_SPORTS4_DIGITAL_Mono_EN</display-name>
+    <url>http://www.bein.com_sports_en</url>
+  </channel>
+<programme start="20261124014000 +0100" stop="20261124034500 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">F1 Las Vegas Grand Prix</title>
+    <sub-title lang="ar">FIA Formula 1 World Championship 2026</sub-title>
+    <category lang="ar">بطولة العالم للفورمولا وان</category>
+  </programme>
+<programme start="20261124034500 +0100" stop="20261124053000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City v Fulham</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124053000 +0100" stop="20261124072000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Newcastle United v Arsenal</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124072000 +0100" stop="20261124090500 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Liverpool v Manchester United</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124090500 +0100" stop="20261124111000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">F1 Las Vegas Grand Prix</title>
+    <sub-title lang="ar">FIA Formula 1 World Championship 2026</sub-title>
+    <category lang="ar">بطولة العالم للفورمولا وان</category>
+  </programme>
+<programme start="20261124111000 +0100" stop="20261124125500 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City v Fulham</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124125500 +0100" stop="20261124144500 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Newcastle United v Arsenal</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124144500 +0100" stop="20261124163000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Liverpool v Manchester United</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124163000 +0100" stop="20261124183500 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">F1 Las Vegas Grand Prix</title>
+    <sub-title lang="ar">FIA Formula 1 World Championship 2026</sub-title>
+    <category lang="ar">بطولة العالم للفورمولا وان</category>
+  </programme>
+<programme start="20261124183500 +0100" stop="20261124202000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Manchester City v Fulham</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124202000 +0100" stop="20261124221000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Newcastle United v Arsenal</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124221000 +0100" stop="20261125000000 +0100" channel="4k_DIGITAL_Mono_AR.bein">
+    <title lang="ar">Liverpool v Manchester United</title>
+    <sub-title lang="ar">English Premier League 2026/2027</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124235500 +0100" stop="20261125014000 +0100" channel="4k_DIGITAL_Mono_EN.bein">
+    <title lang="en">Liverpool v Manchester United</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124000000 +0100" stop="20261124003000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Ligue 1 Weekly Review</title>
+    <sub-title lang="en">2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124003000 +0100" stop="20261124010000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Neftchi vs Al Hilal</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124010000 +0100" stop="20261124013000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Al Shamal vs Al Ahli</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124013000 +0100" stop="20261124020000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Al Quwa Al Jawiya vs Al Gharafa</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124020000 +0100" stop="20261124023000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Manchester City vs Fulham</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124023000 +0100" stop="20261124024500 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Chelsea vs Leeds United</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124024500 +0100" stop="20261124030000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Newcastle United vs Arsenal</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124030000 +0100" stop="20261124033000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Liverpool vs Manchester United</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124033000 +0100" stop="20261124060000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Brooklyn vs Minnesota</title>
+    <sub-title lang="en">NBA Season</sub-title>
+    <category lang="en">Basketball - NBA</category>
+  </programme>
+<programme start="20261124060000 +0100" stop="20261124063000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Barcelona vs Villarreal</title>
+    <sub-title lang="en">Spanish LaLiga 2026/2027</sub-title>
+    <category lang="en">Spanish League - Primera División</category>
+  </programme>
+<programme start="20261124063000 +0100" stop="20261124064300 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="en">Spanish LaLiga 2026/2027</sub-title>
+    <category lang="en">Spanish League - Primera División</category>
+  </programme>
+<programme start="20261124064300 +0100" stop="20261124070000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Morocco in FIFA World Cup U17 (2026)</title>
+    <sub-title lang="en">Morocco in FIFA World Cup U17 (2026)</sub-title>
+    <category lang="en">FIFA U-17 World Cup</category>
+  </programme>
+<programme start="20261124070000 +0100" stop="20261124073000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">EPL Stories  2026/2027 EP.19</title>
+    <sub-title lang="en">EPL Stories  2026/2027 EP.19</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124073000 +0100" stop="20261124100000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Neftchi vs Al Hilal</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124100000 +0100" stop="20261124122500 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Al Shamal vs Al Ahli</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124122500 +0100" stop="20261124151500 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Al Quwa Al Jawiya vs Al Gharafa</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124151500 +0100" stop="20261124160700 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">EPL Weekly Review</title>
+    <sub-title lang="en">2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124160700 +0100" stop="20261124163500 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Liverpool vs Manchester United</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124163500 +0100" stop="20261124185000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">East Bengal vs Al Hussein</title>
+    <sub-title lang="en">AFC Champions League Two 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124185000 +0100" stop="20261124210000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Al Seeb vs Al Shorta</title>
+    <sub-title lang="en">AFC Champions League Two 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124210000 +0100" stop="20261124211300 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Neftchi vs Al Hilal</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124211300 +0100" stop="20261124213000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Morocco in FIFA World Cup U17 (2026)</title>
+    <sub-title lang="en">Morocco in FIFA World Cup U17 (2026)</sub-title>
+    <category lang="en">FIFA U-17 World Cup</category>
+  </programme>
+<programme start="20261124213000 +0100" stop="20261124220000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">UEFA UCL  Magazine2026/2027</title>
+    <sub-title lang="en">MD5 Preview</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124220000 +0100" stop="20261125013000 +0100" channel="beIN_SPORTS1_DIGITAL_Mono_EN.bein">
+    <title lang="en">Real Madrid vs PSV Eindhoven</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124023000 +0100" stop="20261124030000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Newcastle United vs Arsenal</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124030000 +0100" stop="20261124033000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Barcelona vs Villarreal</title>
+    <sub-title lang="ar">Week 13</sub-title>
+    <category lang="ar">الدوري الإسباني لكرة القدم</category>
+  </programme>
+<programme start="20261124033000 +0100" stop="20261124060000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Brooklyn vs Minnesota</title>
+    <sub-title lang="ar">2026</sub-title>
+    <category lang="ar">الدوري الأميركي لكرة السلة</category>
+  </programme>
+<programme start="20261124060000 +0100" stop="20261124063000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">EFL Highlights 2026/27</title>
+    <sub-title lang="ar">E16</sub-title>
+    <category lang="ar">مسلسلات</category>
+  </programme>
+<programme start="20261124063000 +0100" stop="20261124103500 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Brentford vs Everton</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124103500 +0100" stop="20261124125000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Newcastle Jets vs Kashiwa Reysol</title>
+    <sub-title lang="ar">MD 5</sub-title>
+    <category lang="ar">ترفيه</category>
+  </programme>
+<programme start="20261124125000 +0100" stop="20261124150500 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Daejeon Hana Citizen vs Beijing Guoan</title>
+    <sub-title lang="ar">MD 5</sub-title>
+    <category lang="ar">ترفيه</category>
+  </programme>
+<programme start="20261124150500 +0100" stop="20261124171500 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Shanghai Port vs Buriram United</title>
+    <sub-title lang="ar">MD 5</sub-title>
+    <category lang="ar">ترفيه</category>
+  </programme>
+<programme start="20261124171500 +0100" stop="20261124173000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Barcelona vs Villarreal</title>
+    <sub-title lang="ar">Week 13</sub-title>
+    <category lang="ar">الدوري الإسباني لكرة القدم</category>
+  </programme>
+<programme start="20261124173000 +0100" stop="20261124180000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Liverpool vs Manchester United</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124180000 +0100" stop="20261124183000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Manchester City vs Fulham</title>
+    <sub-title lang="ar">Week 11</sub-title>
+    <category lang="ar">الدوري الإنجليزي الممتاز</category>
+  </programme>
+<programme start="20261124183000 +0100" stop="20261124190000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">French Ligue 1 Highlights 2026/27</title>
+    <sub-title lang="ar">E11</sub-title>
+    <category lang="ar">مسلسلات</category>
+  </programme>
+<programme start="20261124190000 +0100" stop="20261124200000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">EN EPL Generation xG 2026/27</title>
+    <sub-title lang="ar">E11</sub-title>
+    <category lang="ar">مسلسلات</category>
+  </programme>
+<programme start="20261124200000 +0100" stop="20261124230000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Galatasaray vs Aston Villa</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124230000 +0100" stop="20261125014500 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_AR.bein">
+    <title lang="ar">Real Madrid vs PSV Eindhoven</title>
+    <sub-title lang="ar">UEFA Champions League MD5</sub-title>
+    <category lang="ar">دوري أبطال أوروبا لكرة القدم</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125023000 +0100" channel="beIN_SPORTS1_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Brentford vs Everton</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124224000 +0100" stop="20261125004500 +0100" channel="beIN_SPORTS1_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Nantes vs Grenoble</title>
+    <sub-title lang="en">Ligue 2</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125013000 +0100" channel="beIN_SPORTS2_DIGITAL_Mono_EN.bein">
+    <title lang="en">Brentford vs Everton</title>
+    <sub-title lang="en">English Premier League 2026/2027</sub-title>
+    <category lang="en">English Premier League</category>
+  </programme>
+<programme start="20261124000000 +0100" stop="20261124010000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">EN T100 2026 Highlights</title>
+    <sub-title lang="en">Dubai</sub-title>
+    <category lang="en">Series</category>
+  </programme>
+<programme start="20261124010000 +0100" stop="20261124015100 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Moto GP</title>
+    <sub-title lang="en">Portugal GP</sub-title>
+    <category lang="en">Moto GP - World Championship</category>
+  </programme>
+<programme start="20261124015100 +0100" stop="20261124021600 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Moto 3</title>
+    <sub-title lang="en">Portugal GP</sub-title>
+    <category lang="en">Moto GP - World Championship</category>
+  </programme>
+<programme start="20261124021600 +0100" stop="20261124030000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Moto GP</title>
+    <sub-title lang="en">Portugal GP</sub-title>
+    <category lang="en">Moto GP - World Championship</category>
+  </programme>
+<programme start="20261124030000 +0100" stop="20261124033000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Premier Padel Highlights 2026</title>
+    <sub-title lang="en">Dubai P1</sub-title>
+    <category lang="en">Entertainment</category>
+  </programme>
+<programme start="20261124033000 +0100" stop="20261124040000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">EN ATP Tour: This Week 2026 Ep.45</title>
+    <sub-title lang="en">EN ATP Tour: This Week 2026 Ep.45</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124040000 +0100" stop="20261124053000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Premier Padel</title>
+    <sub-title lang="en">Mexico Major 2026</sub-title>
+    <category lang="en">Padel</category>
+  </programme>
+<programme start="20261124053000 +0100" stop="20261124070000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Premier Padel</title>
+    <sub-title lang="en">Mexico Major 2026</sub-title>
+    <category lang="en">Padel</category>
+  </programme>
+<programme start="20261124070000 +0100" stop="20261124073000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">EN One Weekly 2026</title>
+    <sub-title lang="en">Ep 48</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124073000 +0100" stop="20261124080000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Spirit Of Sport Season 12 Ep.1</title>
+    <sub-title lang="en">Spirit Of Sport Season 12 Ep.1</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124080000 +0100" stop="20261124090000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">EN T100 2026 Highlights</title>
+    <sub-title lang="en">Dubai</sub-title>
+    <category lang="en">Series</category>
+  </programme>
+<programme start="20261124090000 +0100" stop="20261124103000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Premier Padel</title>
+    <sub-title lang="en">Mexico Major 2026</sub-title>
+    <category lang="en">Padel</category>
+  </programme>
+<programme start="20261124103000 +0100" stop="20261124120000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Premier Padel</title>
+    <sub-title lang="en">Mexico Major 2026</sub-title>
+    <category lang="en">Padel</category>
+  </programme>
+<programme start="20261124120000 +0100" stop="20261124125000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Spirit Of Sport Season 12 Ep.1</title>
+    <sub-title lang="en">Spirit Of Sport Season 12 Ep.1</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124125000 +0100" stop="20261124150500 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Kyoto Sanga vs Pohang Steelers</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Entertainment</category>
+  </programme>
+<programme start="20261124150500 +0100" stop="20261124173000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Công An Hà Nội vs Vissel Kobe</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Entertainment</category>
+  </programme>
+<programme start="20261124173000 +0100" stop="20261124193000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Brooklyn vs Minnesota</title>
+    <sub-title lang="en">NBA Season</sub-title>
+    <category lang="en">Basketball - NBA</category>
+  </programme>
+<programme start="20261124193000 +0100" stop="20261124200000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">EN ATP Tour: This Week 2026 Ep.45</title>
+    <sub-title lang="en">EN ATP Tour: This Week 2026 Ep.45</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124200000 +0100" stop="20261124203000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Spirit Of Sport Season 12 Ep.1</title>
+    <sub-title lang="en">Spirit Of Sport Season 12 Ep.1</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124203000 +0100" stop="20261124224500 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Bodo/Glimt vs Lask</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124224500 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS2_ENGLISH_Digital_Mono_EN.bein">
+    <title lang="en">Manchester City vs Napoli</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124010000 +0100" stop="20261124014500 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Made in England</title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124014500 +0100" stop="20261124041000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Indianapolis Colts vs Houston Texans</title>
+    <sub-title lang="en">NFL</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124041000 +0100" stop="20261124080000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Cincinnati Bengals vs Commanders</title>
+    <sub-title lang="en">NFL</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124080000 +0100" stop="20261124100000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Kocaelispor vs Fenerbahce</title>
+    <sub-title lang="en">Championnat de Turquie</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124100000 +0100" stop="20261124120000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Saint</title>
+    <sub-title lang="en">Etienne vs Reims</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124120000 +0100" stop="20261124140000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Nice vs PSG</title>
+    <sub-title lang="en">Ligue 1</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124140000 +0100" stop="20261124160000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Trabzonspor vs Eyupspor</title>
+    <sub-title lang="en">Championnat de Turquie</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124160000 +0100" stop="20261124180000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Real Madrid vs Celta Vigo</title>
+    <sub-title lang="en">Liga</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124180000 +0100" stop="20261124200000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Nantes vs Grenoble</title>
+    <sub-title lang="en">Ligue 2</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124200000 +0100" stop="20261124203000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Made in England</title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124203000 +0100" stop="20261124223000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Galatasaray vs Samsunspor</title>
+    <sub-title lang="en">Championnat de Turquie</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261124225500 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Salon VIP</title>
+    <sub-title lang="en">Magazine 2026</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124225500 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS2_FRENCH_Digital_Mono_EN.bein">
+    <title lang="en">Real Madrid vs PSV</title>
+    <sub-title lang="en">Champions League J05</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124003000 +0100" stop="20261124023000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Monaco vs Auxerre</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124023000 +0100" stop="20261124042500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Lille vs Lyon</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124042500 +0100" stop="20261124063000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Levante vs Elche</title>
+    <sub-title lang="en">Spanish LaLiga 2026/2027</sub-title>
+    <category lang="en">Spanish League - Primera División</category>
+  </programme>
+<programme start="20261124063000 +0100" stop="20261124083000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Nice vs PSG</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124083000 +0100" stop="20261124101500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Marseille vs Le Mans</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124101500 +0100" stop="20261124121500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Troyes vs Havre AC</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124121500 +0100" stop="20261124130000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Nice vs PSG</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124130000 +0100" stop="20261124150500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Lorient vs Rennes</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124150500 +0100" stop="20261124174500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Ratchaburi vs Johor Darul Ta'zim</title>
+    <sub-title lang="en">AFC Champions League Elite 2026/2027</sub-title>
+    <category lang="en">Sports General</category>
+  </programme>
+<programme start="20261124174500 +0100" stop="20261124194500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Paris FC vs Angers</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124194500 +0100" stop="20261124201500 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Nice vs PSG</title>
+    <sub-title lang="en">French Ligue 1 2026/2027</sub-title>
+    <category lang="en">French League - Ligue 1</category>
+  </programme>
+<programme start="20261124201500 +0100" stop="20261124223000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Bodo/Glimt vs Lask</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+<programme start="20261124223000 +0100" stop="20261125010000 +0100" channel="beIN_SPORTS4_DIGITAL_Mono_EN.bein">
+    <title lang="en">Arsenal vs Borussia Dortmund</title>
+    <sub-title lang="en">UEFA Champions League MD5</sub-title>
+    <category lang="en">UEFA Champions League</category>
+  </programme>
+</tv>

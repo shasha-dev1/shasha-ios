@@ -3,7 +3,7 @@ import Foundation
 /// 1.8.6: imported fixtures / broadcaster files and the owner's manual links, kept on this phone only
 /// (Application Support, not sent anywhere). Same format and limits as the TV (docs/MATCH-SOURCES.md).
 enum MatchSourceFiles {
-    static let maxFiles = 6
+    static let maxFiles = 10
     static let maxBytes = 5 * 1_048_576
 
     struct Item { let file: String; let source: MatchSourcesRule.ExtSource }

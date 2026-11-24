@@ -246,6 +246,7 @@ struct MatchesView: View {
     @State private var showFiles = false
     /// Owner 07:51: FIFA, big five + cups, Turkey, Saudi, UEFA only (default); Italy → Spain → England first.
     @AppStorage("match.importantOnly") private var importantOnly = true
+    @AppStorage(MatchFetch.beinKey) private var beinGuide = false
 
     private var shown: [MatchSourcesRule.Row] { store.shown }
     private static let hhmm: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "ar"); f.dateFormat = "HH:mm"; return f }()
@@ -272,6 +273,7 @@ struct MatchesView: View {
                 if case .success(let urls) = r, let u = urls.first { store.importFile(u) }
             }
             .sheet(isPresented: $showFiles) { NavigationStack { MatchFilesView() } }
+            .onChange(of: beinGuide) { on in if on { store.fetchSchedules(force: true) } }
     }
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
@@ -279,6 +281,10 @@ struct MatchesView: View {
             Menu {
                 Toggle("إخفاء HD (720p)", isOn: $hideHd)
                 Toggle("إخفاء SD", isOn: $hideSd)
+                Divider()
+                // 1.10.0: the owner's approval for the beIN MENA guide (published file; origin bein.com, relayed by epgshare01)
+                Toggle("دليل beIN الشرق الأوسط (bein.com عبر epgshare01)", isOn: $beinGuide)
+                Text("يضيف قنوات beIN (ومنها 4K) لمباراة معروفة من جدول آخر فقط، مرتين في اليوم على الأكثر.")
                 Text("4K و1080p والنسخ مجهولة الجودة تبقى دائمًا. الجودة مأخوذة من اسم القناة.")
                 Divider()
                 Button { importing = true } label: { Label("استيراد جدول مباريات…", systemImage: "square.and.arrow.down") }

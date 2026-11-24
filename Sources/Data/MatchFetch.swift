@@ -27,14 +27,21 @@ final class MatchFetch: ObservableObject {
     private func set(_ s: String, _ x: String, _ v: Int64) { d.set(Double(v), forKey: k(s, x)) }
 
     let sites = [MatchFetchRule.lfotv, MatchFetchRule.lstv]
+    /// 1.10.0: the beIN MENA guide (bein.com via epgshare01), only after the owner approves it; every 12 h (6 when asked).
+    static let beinKey = "matchFetch.beinApproved"
+    static let bein = "beIN الشرق الأوسط (bein.com عبر epgshare01)"
+    var beinApproved: Bool { d.bool(forKey: Self.beinKey) }
+    func beinDue(force: Bool) -> Bool {
+        beinApproved && Self.now() >= blockedUntil(Self.bein) && Self.now() - lastAttempt(Self.bein) >= (force ? 6 : 12) * 3_600_000
+    }
     nonisolated private static func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
     func due(_ s: String, force: Bool) -> Bool {
         MatchFetchRule.due(now: Self.now(), lastAttempt: lastAttempt(s), lastSuccess: lastSuccess(s), blockedUntil: blockedUntil(s), force: force)
     }
-    func anyDue(force: Bool) -> Bool { !running && sites.contains { due($0, force: force) } }
+    func anyDue(force: Bool) -> Bool { !running && (sites.contains { due($0, force: force) } || beinDue(force: force)) }
 
     func summary() -> String {
-        sites.map { s in
+        (sites + (beinApproved ? [Self.bein] : [])).map { s in
             let f = { (t: Int64) in t == 0 ? "—" : MatchIndexBuilder.fmt(t) }
             var l = "\(s): آخر محاولة \(f(lastAttempt(s))) · آخر نجاح \(f(lastSuccess(s)))"
             if blockedUntil(s) > Self.now() { l += " · ينتظر طلب الموقع لين \(f(blockedUntil(s)))" }
@@ -58,6 +65,32 @@ final class MatchFetch: ObservableObject {
         guard (200..<300).contains(code) else { throw Refused(code: code, retryAfter: http?.value(forHTTPHeaderField: "Retry-After")) }
         guard data.count <= 8 * 1_048_576 else { throw URLError(.dataLengthExceedsMaximum) }
         return String(decoding: data, as: UTF8.self)
+    }
+
+    /// A published guide file (.xml or .xml.gz), at most 64 MB.
+    private nonisolated static func getData(_ url: String) async throws -> Data {
+        guard let u = URL(string: url) else { throw URLError(.badURL) }
+        var r = URLRequest(url: u, timeoutInterval: 60)
+        r.setValue("Shasha (personal player; guide approved by the user)", forHTTPHeaderField: "User-Agent")
+        let (data, resp) = try await URLSession.shared.data(for: r)
+        let http = resp as? HTTPURLResponse
+        let code = http?.statusCode ?? 0
+        guard (200..<300).contains(code) else { throw Refused(code: code, retryAfter: http?.value(forHTTPHeaderField: "Retry-After")) }
+        guard data.count <= 64 * 1_048_576 else { throw URLError(.dataLengthExceedsMaximum) }
+        return data
+    }
+
+    /// gzip → bytes (the deflate stream inside, via Foundation's raw-deflate decoder); plain data is returned as is.
+    nonisolated static func gunzip(_ d: Data) -> Data? {
+        let b = [UInt8](d)
+        guard b.count > 18, b[0] == 0x1f, b[1] == 0x8b, b[2] == 8 else { return d }
+        let flg = b[3]; var i = 10
+        if flg & 4 != 0 { guard i + 2 <= b.count else { return nil }; i += 2 + Int(b[i]) + Int(b[i + 1]) << 8 }
+        if flg & 8 != 0 { while i < b.count && b[i] != 0 { i += 1 }; i += 1 }
+        if flg & 16 != 0 { while i < b.count && b[i] != 0 { i += 1 }; i += 1 }
+        if flg & 2 != 0 { i += 2 }
+        guard i < b.count - 8 else { return nil }
+        return try? (Data(b[i..<(b.count - 8)]) as NSData).decompressed(using: .zlib) as Data
     }
 
     private func refused(_ s: String, _ e: Refused) -> String {
@@ -169,6 +202,29 @@ final class MatchFetch: ObservableObject {
             catch is Unexpected { line = "وصلت صفحات غير متوقعة (حماية من الروبوتات أو تغيّر شكلها) — بقي الجدول السابق" }
             catch { line = "تعذّر (\(error.localizedDescription)) — بقي الجدول السابق" }
             d.set(MatchIndexBuilder.fmt(Self.now()) + " · " + line, forKey: k(ls, "line"))
+        }
+        // beIN MENA guide (approved by the owner): one .gz file, its football matches confirm-only
+        if beinDue(force: force) {
+            let b = Self.bein
+            set(b, "attempt", Self.now()); progress = "beIN: نجلب الدليل…"
+            var line: String
+            do {
+                let t0 = Date()
+                let raw = try await Self.getData(GuideFeedRule.beinFeed)
+                progress = "beIN: نقرأ الدليل…"
+                let s = try await Task.detached(priority: .utility) { () throws -> MatchSourcesRule.ExtSource in
+                    guard let xml = Self.gunzip(raw) else { throw Unexpected() }
+                    let r = GuideFeedRule.read(xml, from: from, to: to)
+                    if r.channels.isEmpty { throw Unexpected() }
+                    return GuideFeedRule.fromBeinFeed(name: b, url: GuideFeedRule.beinFeed, progs: r.progs, fetchedAt: Self.now(), from: from, to: to)
+                }.value
+                if s.matches.isEmpty { line = "لا مباريات كرة قدم لليوم وبكرة في الدليل · بقي السابق" }
+                else if let err = keep(s) { line = "لم يُحفظ: \(err)" }
+                else { set(b, "success", Self.now()); line = "\(s.matches.count) مباراة · \(counts(s)) · \(Int(Date().timeIntervalSince(t0))) ث" }
+            } catch let e as Refused { line = refused(b, e) }
+            catch is Unexpected { line = "ليس دليل XMLTV — بقي السابق" }
+            catch { line = "تعذّر (\(error.localizedDescription)) — بقي السابق" }
+            d.set(MatchIndexBuilder.fmt(Self.now()) + " · " + line, forKey: k(b, "line"))
         }
         return changed
     }
