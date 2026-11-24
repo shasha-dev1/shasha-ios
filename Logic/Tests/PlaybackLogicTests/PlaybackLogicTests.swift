@@ -1345,7 +1345,7 @@ final class MatchSourcesRuleTests: XCTestCase {
     func testScheduleChannelsMatchTheLibraryWithoutGuessingUhd() {
         func hits(_ n: String, _ c: String?) -> [String] { S.libraryMatches(.init(name: n, country: c, programmeStart: nil), idx).map { "\($0.0.ch.id):\($0.1)" } }
         XCTAssertEqual(hits("Sky Sports Main Event", "GB"), ["2:true"])
-        XCTAssertEqual(hits("beIN Sports HD 2", "Bahrain"), ["1:true", "5:false"])
+        XCTAssertEqual(hits("beIN Sports HD 2", "Bahrain"), ["1:true"])   // 1.10.1: another country is another channel (not even possible)
         XCTAssertEqual(hits("Canal+ Foot", "France"), ["4:true"])
         XCTAssertTrue(hits("USA Network", "USA").isEmpty)
         XCTAssertTrue(hits("Sky Sports UHD Event", "GB").contains("3:true"))
@@ -1452,7 +1452,7 @@ final class MatchSourcesTypesTests: XCTestCase {
         let lib = S.LibIndex([.init(id: "1", name: "HR: ARENA SPORT 3 HD"), .init(id: "2", name: "SR: ARENA SPORT 3 ᴿᴬᵂ"),
                               .init(id: "3", name: "FR: CANAL+ SPORT HD"), .init(id: "4", name: "FR: CANAL+ HD"), .init(id: "5", name: "PL: TVP SPORT ᴴᴰ")])
         func hits(_ n: String, _ c: String?) -> Set<String> { set(S.libraryMatches(S.ExtChannel(name: n, country: c, programmeStart: nil), lib)) }
-        XCTAssertEqual(hits("Arena Sport 3 Croatia", "Croatia"), ["1:true", "2:false"])
+        XCTAssertEqual(hits("Arena Sport 3 Croatia", "Croatia"), ["1:true"])   // 1.10.1: the Serbian Arena 3 is another channel
         XCTAssertEqual(hits("Canal+ Sport", "France"), ["3:true"])
         XCTAssertTrue(hits("Canal+", "Poland").isEmpty)
         XCTAssertEqual(hits("TVP Sport", "Poland"), ["5:true"])
@@ -1918,5 +1918,53 @@ final class BeinFeedTests: XCTestCase {
         XCTAssertTrue(rows.first { $0.home.hasPrefix("Bod") }?.links.contains { $0.name == "8K: beIN SP⚽RTS 4 ʰᵉᵛᶜ" } ?? false)
         let alone = S.merge([], sources: [lstv], idx: idx, pool: MatchGuideRule.ExtraPool([]), manual: [], guideSource: "EPG", guideAt: 0, from: from, to: to)
         XCTAssertEqual(rows.count, alone.count)   // the beIN rows never stand alone
+    }
+}
+
+/// 1.10.1 (owner 18:47 §3, §10): channel identity — French vs Arabic beIN of the same number, ESPN of different countries.
+final class ChannelIdentityTests: XCTestCase {
+    typealias S = MatchSourcesRule
+    let names = ["8K: beIN SP⚽RTS 1 FRANCE ᴿᴬᵂ", "8K: beIN SP⚽RTS 1 ᴴᴰ ◉", "8K: beIN SP⚽RTS 1 SD", "8K: beIN SP⚽RTS 1 ENGLISH ʰᵉᵛᶜ",
+                 "TR: beIN SPORTS 1 HD", "FR: beIN SPORTS 1 FHD", "NL: ESPN 1 FHD", "NL: ESPN 1 HD", "US: ESPN HD", "BR: ESPN 4 HD", "NL: ZIGGO SPORT 2 FHD"]
+    var idx: S.LibIndex { S.LibIndex(names.enumerated().map { S.LibCh(id: "\($0.offset)", name: $0.element) }) }
+    func hits(_ q: String, _ c: String?) -> Set<String> { Set(S.libraryHits(S.ExtChannel(name: q, country: c, programmeStart: nil), idx).map(\.e.ch.name)) }
+
+    func testFrenchAndArabicBeinOfTheSameNumberStayApart() {
+        XCTAssertEqual(hits("beIN SPORTS 1 French", "QA"), ["8K: beIN SP⚽RTS 1 FRANCE ᴿᴬᵂ"])
+        let ar = hits("beIN SPORTS 1", "QA")
+        XCTAssertTrue(ar.isSuperset(of: ["8K: beIN SP⚽RTS 1 ᴴᴰ ◉", "8K: beIN SP⚽RTS 1 SD"]), "\(ar)")
+        XCTAssertFalse(ar.contains { $0.contains("FRANCE") || $0.contains("ENGLISH") || $0.hasPrefix("TR:") || $0.hasPrefix("FR:") })
+        XCTAssertEqual(hits("beIN SPORTS 1 English", "QA"), ["8K: beIN SP⚽RTS 1 ENGLISH ʰᵉᵛᶜ"])
+        XCTAssertTrue(hits("beIN Sports 1", "FR").contains("FR: beIN SPORTS 1 FHD"))
+        XCTAssertFalse(hits("beIN Sports 1", "FR").contains { $0.hasPrefix("TR:") })
+    }
+    func testEspnOfDifferentCountries() {
+        XCTAssertEqual(hits("ESPN 1", "NL"), ["NL: ESPN 1 FHD", "NL: ESPN 1 HD"])
+        XCTAssertFalse(hits("ESPN", "US").contains { $0.hasPrefix("NL:") || $0.hasPrefix("BR:") })
+        XCTAssertEqual(hits("Ziggo Sport 2", "NL"), ["NL: ZIGGO SPORT 2 FHD"])
+    }
+}
+
+/// 1.10.1 — the Dutch / French diagnosis picks the right channels and names the real reason.
+final class FocusDiagnosisTests: XCTestCase {
+    func testWhichChannelsAndWhy() {
+        XCTAssertTrue(MatchGuideRule.isFocus("NL: ZIGGO SPORT 2 FHD"))
+        XCTAssertTrue(MatchGuideRule.isFocus("FR: CANAL+ FOOT HD"))
+        XCTAssertTrue(MatchGuideRule.isFocus("8K: beIN SP⚽RTS 1 FRANCE ᴿᴬᵂ"))
+        XCTAssertFalse(MatchGuideRule.isFocus("UK: SKY SPORTS MAIN EVENT"))
+        let now: Int64 = 1_000_000_000
+        var f = MatchGuideRule.Focus(channelId: "1", name: "NL: ESPN 1", list: "L", tvgId: nil, how: 0, guideId: nil)
+        XCTAssertEqual(f.reasonKind(now: now), "ما عندها معرّف EPG")
+        f = MatchGuideRule.Focus(channelId: "1", name: "NL: ESPN 1", list: "L", tvgId: "espn1.nl", how: 0, guideId: nil)
+        XCTAssertEqual(f.reasonKind(now: now), "المعرّف غير موجود في الدليل المحمّل")
+        f = MatchGuideRule.Focus(channelId: "1", name: "NL: ESPN 1", list: "L", tvgId: "espn1.nl", how: 1, guideId: "espn1.nl")
+        f.first = 1; f.last = now - 1
+        XCTAssertEqual(f.reasonKind(now: now), "الدليل قديم")
+        f.last = now + 100; f.upcoming = 12; f.withSep = 0
+        XCTAssertEqual(f.reasonKind(now: now), "البرامج بلا عناوين مباريات")
+        f.withSep = 3
+        XCTAssertEqual(f.reasonKind(now: now), "قواعد الاكتشاف استبعدتها")
+        f.matches = 2
+        XCTAssertEqual(f.reasonKind(now: now), "تعمل")
     }
 }

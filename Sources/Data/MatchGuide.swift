@@ -25,6 +25,8 @@ enum MatchIndexBuilder {
         var networkVersions: [String: (Int, Int)] = [:]
         var readError: String?
         var source = ""
+        /// 1.10.1 (owner 18:47): every Dutch and French sports channel of the library, with why its matches are missing.
+        var focus: [MatchGuideRule.Focus] = []
     }
 
     struct Result {
@@ -56,6 +58,11 @@ enum MatchIndexBuilder {
         var from: Int64 = 0, to: Int64 = 0, since: Int64 = 0
         var total = 0, withCat = 0, withDesc = 0, minStart: Int64 = .max, maxStop: Int64 = 0
         var cancel: MatchGuideReport.CancelFlag?
+        /// 1.10.1 diagnosis (report only): per guide id — first start, last stop, programmes now→`to`, those with a separator, a few titles
+        var diag = false, now: Int64 = 0
+        var range: [String: (Int64, Int64)] = [:]
+        var upcoming: [String: (Int, Int)] = [:]
+        var samples: [String: [String]] = [:]
         private var chId: String?; private var inName = false; private var text = ""
         private var prog: (ch: String, start: Int64, stop: Int64)?; private var field = ""
         private var title = "", desc = "", cat = ""
@@ -103,9 +110,16 @@ enum MatchIndexBuilder {
                 if !c.isEmpty { withCat += 1 }
                 if !desc.isEmpty { withDesc += 1 }
                 if pr.stop > since { perId[pr.ch, default: 0] += 1 }
-                guard pr.stop > from && pr.start < to else { break }
                 let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
                 let low = t.lowercased()
+                if diag {
+                    let r = range[pr.ch]; range[pr.ch] = (min(r?.0 ?? .max, pr.start), max(r?.1 ?? 0, pr.stop))
+                    if pr.stop > now && pr.start < to {
+                        var u = upcoming[pr.ch] ?? (0, 0); u.0 += 1; if Self.seps.contains(where: { low.contains($0) }) { u.1 += 1 }; upcoming[pr.ch] = u
+                        if (samples[pr.ch]?.count ?? 0) < 4 { samples[pr.ch, default: []].append(t) }
+                    }
+                }
+                guard pr.stop > from && pr.start < to else { break }
                 guard Self.seps.contains(where: { low.contains($0) }) else { break }
                 let d = desc.trimmingCharacters(in: .whitespacesAndNewlines)
                 candidates.append(Candidate(id: pr.ch, start: pr.start, stop: pr.stop, title: t, desc: d.isEmpty ? nil : String(d.prefix(300)),
@@ -129,6 +143,7 @@ enum MatchIndexBuilder {
         let nowMs = ms(now)
         let p = Parser()
         p.cancel = cancel; p.from = from; p.to = to; p.since = nowMs - 12 * 3_600_000
+        p.diag = withStats; p.now = nowMs
         p.wantedNames = Set(channels.map { nameKey($0.name) })
         var readError: String?
         if let stream = InputStream(url: file) {
@@ -152,6 +167,12 @@ enum MatchIndexBuilder {
             let sp = MatchGuideRule.isSportsChannel(name: ch.name, group: ch.group)
             isSports[ch.id] = sp
             if let id { onId[id, default: []].append(ch) } else if sp { unguided.append(.init(id: ch.id, name: ch.name, source: source)) }
+            if sp, let st, MatchGuideRule.isFocus(ch.name) {
+                var f = MatchGuideRule.Focus(channelId: ch.id, name: ch.name, list: source, tvgId: ch.epg, how: how, guideId: id)
+                if let id { f.first = p.range[id]?.0 ?? 0; f.last = p.range[id]?.1 ?? 0; f.upcoming = p.upcoming[id]?.0 ?? 0
+                            f.withSep = p.upcoming[id]?.1 ?? 0; f.samples = p.samples[id] ?? [] }
+                st.focus.append(f)
+            }
             if sp, let st {
                 st.sports += 1
                 switch how { case 1: st.sportsById += 1; case 2: st.sportsByName += 1; default: st.sportsUnlinked += 1 }
@@ -197,6 +218,10 @@ enum MatchIndexBuilder {
             }
         }
         mark("استخراج المباريات (\(entries.count) نسخة)")
+        if let st, !st.focus.isEmpty {
+            var per: [String: Int] = [:]; for e in entries { per[e.channelId, default: 0] += 1 }
+            for i in st.focus.indices { st.focus[i].matches = per[st.focus[i].channelId] ?? 0 }
+        }
         var res = Result(built: ms(Date()), from: from, to: to, entries: entries, labels: labels, stats: st)
         res.guideMB = size / 1_048_576
         res.unguided = unguided
@@ -308,6 +333,21 @@ enum MatchIndexBuilder {
         for (src, l) in r.labels where !l.isEmpty { line("بادئات اعتُبرت تسمية مجموعة (لا دقة) في «\(src)» بعد فحص أسماء قنواته: \(l.sorted().joined(separator: ", "))") }
         line("نسبة تغطية مباريات اليوم: لا يمكن حسابها — تحتاج جدول مباريات مستقلًا للمقارنة. الأرقام أعلاه هي ما وجدناه في الدليل فقط.")
         line()
+        if !st.focus.isEmpty {
+            let nowMs = ms(Date())
+            line("— القنوات الهولندية والفرنسية في مكتبتك (\(st.focus.count) نسخة · \(Set(st.focus.map { MatchGuideRule.channelKey($0.name) }).count) قناة فريدة) — كل نسخة وسبب أي نقص")
+            var byReason: [String: Int] = [:]
+            for f in st.focus { byReason[f.reasonKind(now: nowMs), default: 0] += 1 }
+            for (k, n) in byReason.sorted(by: { $0.value > $1.value }) { line("   \(k): \(n)") }
+            for f in st.focus.sorted(by: { (MatchGuideRule.country($0.name), $0.name) < (MatchGuideRule.country($1.name), $1.name) }) {
+                line("   - \(f.name) · \(f.list) · tvg-id: \(f.tvgId ?? "—") · ربط: \(f.how == 1 ? "بالمعرّف" : f.how == 2 ? "بالاسم" : "لا يوجد")"
+                     + (f.guideId.map { " «\($0)»" } ?? "") + " · برامج قادمة \(f.upcoming)"
+                     + (f.first > 0 ? " · النطاق \(fmt(f.first)) – \(fmt(f.last))" : "") + " · مباريات \(f.matches)")
+                line("     السبب: \(f.reason(now: nowMs, fmt: fmt))")
+                if f.matches == 0 && !f.samples.isEmpty { line("     أمثلة عناوين: " + f.samples.map { "«\($0)»" }.joined(separator: " | ")) }
+            }
+            line()
+        }
         line("قنوات رياضية بلا دليل: \(r.unguided.count) — تُعرض تحت المباراة كـ«قد تنقلها (غير مؤكد)» إذا كانت من نفس الشبكة واسمها يطابق قناة ناقلة (مثل Sky Sports UHD Event ↔ Sky Sports Main Event).")
         let pool = MatchGuideRule.ExtraPool(r.unguided)
         let withExtra = football.filter { !MatchScreenRule.extras($0, pool: pool, versionOf: { n, src in MatchGuideRule.version(n, labelPrefixes: r.labels[src] ?? []) }, hideHd: false, hideSd: false).isEmpty }.count

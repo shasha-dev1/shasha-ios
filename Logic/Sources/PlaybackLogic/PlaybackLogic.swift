@@ -1737,9 +1737,15 @@ enum MatchSourcesRule {
         "supersport", "polsat sport", "nova sport", "digi sport", "cosmote sport", "sport klub", "sportklub"]
 
     static func distinct(_ name: String, net: String? = nil) -> Set<String> {
-        MatchGuideRule.ownWords(name, net: net ?? MatchGuideRule.network(name)).subtracting(countryWords)
+        MatchGuideRule.ownWords(name, net: net ?? MatchGuideRule.network(name)).subtracting(countryWords).subtracting(editionWords.keys)
     }
-    private static func bodyNoCountry(_ name: String) -> Set<String> { MatchGuideRule.bodyWords(name).subtracting(countryWords) }
+    private static func bodyNoCountry(_ name: String) -> Set<String> { MatchGuideRule.bodyWords(name).subtracting(countryWords).subtracting(editionWords.keys) }
+
+    /// 1.10.1 (owner 18:47: keep beIN French apart from the Arabic and Turkish ones; FRANCE vs French): the language / edition a
+    /// name states after its prefix — read before the country words are dropped. Same rule as the TV's 0.9.54.
+    private static let editionWords: [String: String] = ["french": "fr", "france": "fr", "francais": "fr", "english": "en", "eng": "en",
+        "turkiye": "tr", "turkey": "tr", "turk": "tr", "arabic": "ar", "arab": "ar"]
+    static func edition(_ name: String) -> Set<String> { Set(MatchGuideRule.bodyWords(name).compactMap { editionWords[$0] }) }
     private static func toks(_ name: String) -> [String] { MatchGuideRule.words(name).split(separator: " ").map(String.init) }
 
     static func channelType(_ name: String) -> ChType {
@@ -1792,7 +1798,7 @@ enum MatchSourcesRule {
     }
 
     final class LibIndex {
-        struct E { let ch: LibCh; let own: Set<String>; let body: Set<String>; let res: MatchGuideRule.Res }
+        struct E { let ch: LibCh; let own: Set<String>; let body: Set<String>; let res: MatchGuideRule.Res; var ed: Set<String> = [] }
         let byNet: [String: [E]]
         /// 1.10.0 (TV 0.9.53): group labels of this library («8K:» before beIN SD / ᴴᴰ / ʰᵉᵛᶜ / ᴿᴬᵂ) — without them every
         /// version with no quality after the label (HEVC, RAW) was taken for a 4K channel and left out of the plain channel.
@@ -1804,7 +1810,7 @@ enum MatchSourcesRule {
             for ch in lib {
                 let net = MatchGuideRule.network(ch.name)
                 d[net, default: []].append(E(ch: ch, own: distinct(ch.name, net: net), body: bodyNoCountry(ch.name),
-                                             res: MatchGuideRule.version(ch.name, labelPrefixes: labels).res))
+                                             res: MatchGuideRule.version(ch.name, labelPrefixes: labels).res, ed: edition(ch.name)))
             }
             byNet = d
         }
@@ -1849,8 +1855,13 @@ enum MatchSourcesRule {
         let uhdOwn = own.subtracting(ultraWords)
         let sib = siblings.filter { MatchGuideRule.network($0) == net && !namesUhd($0) }.map { distinct($0, net: net) }
         var out: [Hit] = []
+        let ed = edition(c.name)
         for e in list {
             if e.res == .uhd && !wantsUhd { continue }
+            // 1.10.1: a stated edition must be the same on both sides; a known country on both sides too (ESPN NL ≠ ESPN US)
+            if e.ed != ed { continue }
+            let libCountry = MatchGuideRule.country(e.ch.name)
+            if c.country != nil && libCountry != "بدون بادئة" && !libCountry.hasPrefix("تسمية") && !countryFits(c.country, e.ch.name) { continue }
             let exact = e.own == own && (!own.isEmpty || e.body == body)
             let possible = !exact && !own.isEmpty && own.isSubset(of: e.body)
             var alt = false
@@ -2834,5 +2845,47 @@ enum GuideFeedRule {
         return MatchSourcesRule.ExtSource(name: name, kind: .broadcaster, url: url, fetchedAt: fetchedAt, importedAt: fetchedAt, matches: matches,
             status: "\(matches.count) مباراة كرة قدم في الدليل · أوقات بداية البرنامج بتوقيت قطر · يضيف قنوات beIN لمباراة معروفة من جدول آخر فقط · المصدر الأصلي bein.com عبر epgshare01",
             programmeTimes: true, confirmOnly: true, origin: "bein.com")
+    }
+}
+
+// MARK: - 1.10.1: Dutch / French channel diagnosis (owner 18:47 §1) — same rules as the TV's 0.9.54
+extension MatchGuideRule {
+    /// Dutch and French sports channels (by prefix, or the networks the owner named).
+    static func isFocus(_ name: String) -> Bool {
+        let c = country(name)
+        if c == "هولندا" || c == "فرنسا" { return true }
+        let w = " " + words(name) + " "
+        return [" ziggo ", " france ", " french ", " canal ", " rmc ", " eurosport 360 ", " l equipe ", " ligue 1 "].contains { w.contains($0) }
+    }
+
+    /// One library channel in the diagnosis. `how`: 1 guide id (tvg-id), 2 name, 0 none.
+    struct Focus {
+        let channelId: String, name: String, list: String, tvgId: String?, how: Int, guideId: String?
+        var upcoming = 0, withSep = 0, matches = 0
+        var first: Int64 = 0, last: Int64 = 0
+        var samples: [String] = []
+
+        /// The kind of reason, for the counts (the owner's list, in his order).
+        func reasonKind(now: Int64) -> String {
+            if guideId == nil { return (tvgId ?? "").trimmingCharacters(in: .whitespaces).isEmpty ? "ما عندها معرّف EPG" : "المعرّف غير موجود في الدليل المحمّل" }
+            if last == 0 { return "مربوطة لكن لا برامج لها" }
+            if last < now { return "الدليل قديم" }
+            if upcoming == 0 { return "لا برامج قادمة في النطاق" }
+            if matches == 0 && withSep == 0 { return "البرامج بلا عناوين مباريات" }
+            if matches == 0 { return "قواعد الاكتشاف استبعدتها" }
+            return "تعمل"
+        }
+        func reason(now: Int64, fmt: (Int64) -> String) -> String {
+            switch reasonKind(now: now) {
+            case "ما عندها معرّف EPG": return "ما عندها معرّف EPG (tvg-id فاضي) ولا اسم يطابق قناة في الدليل"
+            case "المعرّف غير موجود في الدليل المحمّل": return "المعرّف «\(tvgId ?? "")» غير موجود في الدليل المحمّل ولا اسم يطابق — الدليل لا يغطيها (مصدر الدليل غير مضاف) أو المعرّف مختلف"
+            case "مربوطة لكن لا برامج لها": return "مربوطة بالدليل («\(guideId ?? "")»\(how == 2 ? " بالاسم" : "")) لكن لا برامج لها فيه"
+            case "الدليل قديم": return "الدليل قديم: آخر برنامج لها ينتهي \(fmt(last))"
+            case "لا برامج قادمة في النطاق": return "لا برامج قادمة في نطاق اليوم وبكرة"
+            case "البرامج بلا عناوين مباريات": return "البرامج موجودة (\(upcoming)) لكن لا عنوان فيه فريقان (الدليل يكتب أسماء برامج عامة)"
+            case "قواعد الاكتشاف استبعدتها": return "البرامج موجودة وفيها \(withSep) عنوان بفاصل، لكن قواعد اكتشاف المباريات استبعدتها"
+            default: return "تعمل: \(matches) مباراة"
+            }
+        }
     }
 }
